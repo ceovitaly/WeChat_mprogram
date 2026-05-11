@@ -1,0 +1,87 @@
+<!-- pages/register/index.wxml -->
+<view class="page">
+
+<!-- Фоновый градиент -->
+<view class="bg-gradient" />
+
+<!-- ─── Спиннер при проверке сессии ─── -->
+<view wx:if="{{checking}}" class="checking-wrap">
+  <view class="spinner" />
+</view>
+
+<!-- ─── Основной экран ─── -->
+<block wx:else>
+
+  <!-- Логотип -->
+  <view class="logo-wrap">
+    <view class="logo-box">
+      <text class="logo-main">Yue!</text>
+      <text class="logo-sub">悦 · Живи ярче</text>
+    </view>
+  </view>
+
+  <!-- Карточка входа -->
+  <view class="card">
+    <text class="card-title">Добро пожаловать</text>
+    <text class="card-desc">Войдите чтобы получить доступ к событиям и билетам</text>
+
+    <!-- Обычная кнопка — показывает Privacy -->
+    <view
+      wx:if="{{!privacyAgreed}}"
+      class="btn-login"
+      bind:tap="onLoginTap"
+    >
+      <text class="btn-login-text">Войти через WeChat</text>
+    </view>
+
+    <!-- После agree — кнопка с open-type для получения телефона -->
+    <button
+      wx:else
+      class="btn-login btn-login--phone"
+      open-type="getPhoneNumber"
+      bind:getphonenumber="onGetPhoneNumber"
+    >
+      <text class="btn-login-text">Разрешить доступ к номеру</text>
+    </button>
+
+  </view>
+
+  <!-- Слоган -->
+  <view class="footer">
+    <text class="footer-text">Yue! · 悦 · 2026</text>
+  </view>
+
+</block>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- ─── Модалка Privacy Notice ─── -->
+<!-- ═══════════════════════════════════════ -->
+<view
+  wx:if="{{showPrivacy}}"
+  class="mask"
+  bind:tap="onDisagree"
+>
+  <view class="sheet" catch:tap="noop">
+
+    <view class="sheet-handle" />
+
+    <text class="sheet-title">Политика конфиденциальности</text>
+
+    <view class="sheet-body">
+      <text class="sheet-body-heading">Уведомление о конфиденциальности{{'\n\n'}}</text>
+      <text class="sheet-body-text">Перед использованием Yue! ознакомьтесь с политикой конфиденциальности. Мы используем ваши данные исключительно для предоставления сервиса — просмотра событий и получения билетов. Нажимая «Принять», вы соглашаетесь с условиями.</text>
+    </view>
+
+    <view class="sheet-actions">
+      <view class="btn-agree" bind:tap="onAgree">
+        <text class="btn-agree-text">Принять</text>
+      </view>
+      <view class="btn-disagree" bind:tap="onDisagree">
+        <text class="btn-disagree-text">Отказаться</text>
+      </view>
+    </view>
+
+  </view>
+</view>
+
+</view>

@@ -1,0 +1,132 @@
+<view class="container">
+
+<view class="hero-section">
+  <block wx:if="{{event.promoImage}}">
+    <image src="{{event.promoImage}}" class="hero-image" mode="aspectFill" />
+  </block>
+  <view wx:else class="image-placeholder">
+    <text class="placeholder-text">No Image</text>
+  </view>
+</view>
+
+<view class="main-card">
+  <view class="title-row">
+    <text class="event-title">{{event.title}}</text>
+    <view class="share-btn" bindtap="handleShare">
+      <text class="share-icon">↑</text>
+    </view>
+  </view>
+  <view class="venue-row">
+    <text class="venue-icon">📍</text>
+    <text class="venue-name">{{event.venue || 'TBA'}}</text>
+  </view>
+  <view class="meta-row">
+    <view class="meta-chip">
+      <text class="meta-text">📅 {{event.date}}</text>
+    </view>
+    <view class="meta-chip">
+      <text class="meta-text">🕐 {{event.time}}</text>
+    </view>
+  </view>
+  <view class="divider"></view>
+  <view class="section" wx:if="{{event.description}}">
+    <text class="section-label">ABOUT</text>
+    <text class="section-content">{{event.description}}</text>
+  </view>
+  <view class="section" wx:if="{{event.promoMaterials && event.promoMaterials.length > 0}}">
+    <text class="section-label">PROMO</text>
+    <scroll-view scroll-x class="promo-scroll">
+      <view class="promo-list">
+        <image
+          wx:for="{{event.promoMaterials}}"
+          wx:key="index"
+          src="{{item}}"
+          class="promo-thumb"
+          mode="aspectFill"
+          bindtap="previewMaterial"
+          data-url="{{item}}"
+        />
+      </view>
+    </scroll-view>
+  </view>
+</view>
+
+<view class="action-bar">
+  <view wx:if="{{isRegistered}}" class="registered-bar">
+    <text class="registered-icon">✓</text>
+    <text class="registered-text">You're on the list</text>
+  </view>
+  <block wx:else>
+    <button class="btn-register" bindtap="openTicketModal">Sign Up</button>
+  </block>
+</view>
+
+</view>
+
+<!-- Модал вне container -->
+<view wx:if="{{showTicketModal}}" class="ticket-mask">
+<view class="ticket-modal">
+  <view class="modal-handle"></view>
+  <text class="modal-title">Sign Up</text>
+
+  <view class="promo-input-row">
+    <text class="promo-input-label">Have a promo code?</text>
+    <view class="promo-input-wrap {{promoCodeValid ? 'input-valid' : ''}}">
+      <input
+        class="promo-input"
+        placeholder="Enter code"
+        value="{{promoCodeInput}}"
+        bindinput="onPromoCodeInput"
+        maxlength="20"
+      />
+    </view>
+    <view wx:if="{{promoCodeInput.length > 0 && !promoCodeValid}}" class="check-btn" bindtap="verifyPromoCode">
+      <text class="check-btn-text">Check Code</text>
+    </view>
+    <text wx:if="{{promoCodeValid}}" class="promo-promoter-name">✓ Code from {{verifiedPromoterName}}</text>
+    <text wx:elif="{{promoCodeError}}" class="promo-error">{{promoCodeError}}</text>
+  </view>
+
+  <view class="divider"></view>
+  <text class="modal-subtitle">SELECT TICKET</text>
+
+  <view
+    class="ticket-option {{selectedTicketType === 'free' ? 'ticket-selected' : ''}}"
+    wx:if="{{event.isFree}}"
+    bindtap="selectTicketType"
+    data-type="free"
+  >
+    <view class="ticket-left">
+      <text class="ticket-name">Free Entry</text>
+      <text class="ticket-desc">Standard guest list</text>
+    </view>
+    <text class="ticket-price free">FREE</text>
+  </view>
+
+  <view
+    class="ticket-option {{selectedTicketType === 'paid' ? 'ticket-selected' : ''}}"
+    wx:if="{{event.isPaid}}"
+    bindtap="selectTicketType"
+    data-type="paid"
+  >
+    <view class="ticket-left">
+      <text class="ticket-name">Paid Entry</text>
+      <text class="ticket-desc">{{event.paymentLink ? 'External payment' : 'At the door'}}</text>
+    </view>
+    <text class="ticket-price paid">¥ {{event.price || '—'}}</text>
+  </view>
+
+  <button
+    wx:if="{{selectedTicketType}}"
+    class="register-btn"
+    bindtap="handleJoin"
+    data-type="{{selectedTicketType}}"
+  >
+    Register
+  </button>
+
+  <view class="modal-cancel" bindtap="closeTicketModal">
+    <text>Cancel</text>
+  </view>
+</view>
+</view>

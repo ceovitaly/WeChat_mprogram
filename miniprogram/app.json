@@ -1,0 +1,28 @@
+{
+  "pages": [
+    "pages/feed/feed",
+    "pages/event-detail/event-detail",
+    "pages/mytickets/mytickets",
+    "pages/me/me",
+    "pages/register/register"
+  ],
+  "tabBar": {
+    "custom": true,
+    "color": "#8E8E93",
+    "selectedColor": "#007AFF",
+    "backgroundColor": "#ffffff",
+    "list": [
+      { "pagePath": "pages/feed/feed", "text": "Events" },
+      { "pagePath": "pages/mytickets/mytickets", "text": "Tickets" },
+      { "pagePath": "pages/me/me", "text": "Me" }
+    ]
+  },
+  "window": {
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F2F2F7",
+    "enablePullDownRefresh": false
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

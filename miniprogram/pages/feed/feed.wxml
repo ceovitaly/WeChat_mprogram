@@ -1,0 +1,32 @@
+<view class="container">
+  <view class="header">Explore Events</view>
+  
+  <view wx:if="{{loading}}" class="loader">Loading...</view>
+
+  <block wx:if="{{events.length > 0}}">
+    <view 
+      class="event-wrapper" 
+      wx:for="{{events}}" 
+      wx:key="_id" 
+      bindtap="goToDetail" 
+      data-id="{{item._id}}"
+    >
+      <view class="image-box">
+        <image wx:if="{{item.promoImage}}" class="full-cover" src="{{item.promoImage}}" mode="aspectFill"></image>
+        <view wx:else class="cover-placeholder">No Image</view>
+      </view>
+
+      <view class="info-box">
+        <text class="event-title">{{item.title}}</text>
+        <view class="event-meta">
+          <text>📅 {{item.date}} | {{item.time}}</text>
+          <text>📍 {{item.venue || 'No location'}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <view wx:elif="{{!loading}}" class="empty">
+    <text>No events found</text>
+  </view>
+</view>

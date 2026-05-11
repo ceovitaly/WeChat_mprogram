@@ -1,0 +1,59 @@
+page {
+  background: #F2F2F7;
+  font-family: -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Shared nav ── */
+.nav-bar {
+  background: #FFFFFF;
+  padding: 16rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 0.5px solid #C6C6C8;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #000;
+}
+.nav-back-text {
+  font-size: 28rpx;
+  color: #007AFF;
+  min-width: 100rpx;
+}
+
+/* ── Shared card ── */
+.card {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 40rpx;
+  gap: 16rpx;
+}
+.empty-icon { font-size: 80rpx; }
+.empty-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #000;
+}
+.empty-sub {
+  font-size: 26rpx;
+  color: #8E8E93;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── Tab bar spacer ── */
+.tab-bar-spacer { height: 160rpx; }
