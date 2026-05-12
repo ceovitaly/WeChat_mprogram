@@ -13,10 +13,9 @@ Page({
     hasLoadedOnce: false,
     // Filter states
     selectedDate: '',
-    selectedLocation: '',
-    selectedPrice: '',
     uniqueLocations: [],
-    filterOpen: ''
+    filterOpen: '',
+    searchKeyword: ''
   },
 
   onLoad: function() {
@@ -96,24 +95,10 @@ Page({
     const updateData = {};
     if (type === 'date') {
       updateData.selectedDate = value;
-    } else if (type === 'location') {
-      updateData.selectedLocation = value;
-    } else if (type === 'price') {
-      updateData.selectedPrice = value;
     }
     
     updateData.filterOpen = '';
     this.setData(updateData);
-    this.applyFilters();
-  },
-
-  clearFilters: function() {
-    this.setData({
-      selectedDate: '',
-      selectedLocation: '',
-      selectedPrice: '',
-      filterOpen: ''
-    });
     this.applyFilters();
   },
 
@@ -125,30 +110,14 @@ Page({
       filtered = filtered.filter(event => event.date === this.data.selectedDate);
     }
 
-    // Filter by location
-    if (this.data.selectedLocation) {
-      filtered = filtered.filter(event =>
-        event.venue && event.venue.includes(this.data.selectedLocation)
+    // Filter by search keyword
+    if (this.data.searchKeyword) {
+      const keyword = this.data.searchKeyword.toLowerCase();
+      filtered = filtered.filter(event => 
+        (event.title && event.title.toLowerCase().includes(keyword)) ||
+        (event.venue && event.venue.toLowerCase().includes(keyword)) ||
+        (event.description && event.description.toLowerCase().includes(keyword))
       );
-    }
-
-    // Filter by price
-    if (this.data.selectedPrice) {
-      filtered = filtered.filter(event => {
-        const price = parseFloat(event.price) || 0;
-        switch (this.data.selectedPrice) {
-          case 'free':
-            return price === 0;
-          case 'low':
-            return price > 0 && price < 20;
-          case 'medium':
-            return price >= 20 && price <= 50;
-          case 'high':
-            return price > 50;
-          default:
-            return true;
-        }
-      });
     }
 
     // Sort by date and time
@@ -162,6 +131,20 @@ Page({
       filteredEvents: filtered,
       featuredEvents: filtered.slice(0, 5)
     });
+  },
+
+  onSearchInput: function(e) {
+    this.setData({
+      searchKeyword: e.detail.value
+    });
+    this.applyFilters();
+  },
+
+  onSearchConfirm: function(e) {
+    this.setData({
+      searchKeyword: e.detail.value
+    });
+    this.applyFilters();
   },
 
   loadEventsFromCacheOrFetch: function() {

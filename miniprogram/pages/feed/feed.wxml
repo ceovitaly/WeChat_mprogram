@@ -7,8 +7,9 @@
 
   <!-- Main Scrollable Content -->
   <scroll-view class="scroll-content" scroll-y enable-flex enhanced show-scrollbar="false" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
-    <!-- Featured Events Slider -->
-    <view class="section">
+    <!-- Featured Events Slider with Background Card -->
+    <view class="section-card featured-card">
+      <view class="section-title">Hot Offers</view>
       <swiper class="featured-swiper" indicator-dots autoplay circular interval="3000">
         <swiper-item wx:for="{{featuredEvents}}" wx:key="_id">
           <view class="slide-card" bindtap="goToDetail" data-id="{{item._id}}">
@@ -23,53 +24,30 @@
       <view wx:if="{{featuredEvents.length === 0 && !loading}}" class="empty-state">No featured events</view>
     </view>
   
-    <!-- Compact Filter Section -->
-    <view class="section">
+    <!-- Compact Filter Section with Background Card -->
+    <view class="section-card filter-card">
       <view class="filter-row">
-        <view class="filter-trigger" bindtap="toggleFilter" data-type="date">
-          <text class="filter-text">{{selectedDate || 'Date'}}</text>
+        <view class="filter-trigger calendar-trigger" bindtap="toggleFilter" data-type="date">
+          <text class="filter-text">{{selectedDate || 'Select Date'}}</text>
           <text class="filter-arrow">{{filterOpen === 'date' ? '▲' : '▼'}}</text>
         </view>
-        <view class="filter-trigger" bindtap="toggleFilter" data-type="location">
-          <text class="filter-text">{{selectedLocation || 'Location'}}</text>
-          <text class="filter-arrow">{{filterOpen === 'location' ? '▲' : '▼'}}</text>
-        </view>
-        <view class="filter-trigger" bindtap="toggleFilter" data-type="price">
-          <text class="filter-text">{{selectedPrice || 'Price'}}</text>
-          <text class="filter-arrow">{{filterOpen === 'price' ? '▲' : '▼'}}</text>
+        <view class="search-input-wrapper">
+          <input class="search-input" placeholder="Search events..." placeholder-class="search-placeholder" value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearchConfirm" />
+          <text class="search-icon">🔍</text>
         </view>
       </view>
 
-      <!-- Expandable Filter Panels -->
+      <!-- Expandable Calendar Panel -->
       <view class="filter-panel {{filterOpen === 'date' ? 'active' : ''}}">
         <view class="option-item {{selectedDate === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="date" data-value="">Any Date</view>
         <view wx:for="{{dateList}}" wx:key="dateStr" class="option-item {{selectedDate === item.dateStr ? 'selected' : ''}}" bindtap="selectFilter" data-type="date" data-value="{{item.dateStr}}">
           {{item.dayName}}, {{item.dayNum}}
         </view>
       </view>
-
-      <view class="filter-panel {{filterOpen === 'location' ? 'active' : ''}}">
-        <view class="option-item {{selectedLocation === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="location" data-value="">Any Location</view>
-        <view wx:for="{{uniqueLocations}}" wx:key="*this" class="option-item {{selectedLocation === item ? 'selected' : ''}}" bindtap="selectFilter" data-type="location" data-value="{{item}}">
-          {{item}}
-        </view>
-      </view>
-
-      <view class="filter-panel {{filterOpen === 'price' ? 'active' : ''}}">
-        <view class="option-item {{selectedPrice === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="">Any Price</view>
-        <view class="option-item {{selectedPrice === 'free' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="free">Free</view>
-        <view class="option-item {{selectedPrice === 'low' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="low">Under $20</view>
-        <view class="option-item {{selectedPrice === 'medium' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="medium">$20 - $50</view>
-        <view class="option-item {{selectedPrice === 'high' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="high">Over $50</view>
-      </view>
-
-      <view class="filter-actions {{filterOpen ? 'visible' : ''}}">
-        <view class="filter-clear-btn" bindtap="clearFilters">Clear Filters</view>
-      </view>
     </view>
   
-    <!-- Event List -->
-    <view class="section">
+    <!-- Event List with Background Card -->
+    <view class="section-card events-card">
       <view class="section-title">Upcoming Events</view>
       <view class="event-list">
         <view 
