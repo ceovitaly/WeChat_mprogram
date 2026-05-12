@@ -1,18 +1,17 @@
 <view class="page-container">
   <!-- Header -->
-  <view class="header">
+  <view class="common-header">
+    <view class="back-btn" bindtap="goBack">
+      <svg class="back-icon" viewBox="0 0 48 48">
+        <path d="M28 16L16 24l12 8V16z"/>
+      </svg>
+    </view>
     <text class="header-title">My Tickets</text>
   </view>
   
-  <view class="back-btn" bindtap="goBack">
-    <svg class="back-icon" viewBox="0 0 48 48">
-      <path d="M28 16L16 24l12 8V16z"/>
-    </svg>
-  </view>
-
   <scroll-view class="scroll-content" scroll-y enhanced show-scrollbar="false">
     <!-- Past Events Section -->
-    <view class="section" style="margin-top: 40rpx;">
+    <view class="section">
       <view class="card past-events-card" bindtap="goToPastEvents">
         <view class="past-events-header">
           <text class="past-events-title">Past Events</text>

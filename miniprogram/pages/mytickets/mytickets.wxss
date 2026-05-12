@@ -1,57 +1,20 @@
 .page-container {
   height: 100vh;
+  width: 100vw;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background-color: var(--page-bg);
-}
-
-/* ===== HEADER ===== */
-.header {
-  height: calc(88rpx + env(safe-area-inset-top));
-  padding-top: env(safe-area-inset-top);
-  background-color: var(--page-bg);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header-title {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: var(--text-primary);
-  text-align: center;
-}
-
-.back-btn {
-  position: absolute;
-  left: 32rpx;
-  top: calc(44rpx + env(safe-area-inset-top));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 50%;
-  z-index: 101;
-}
-
-.back-icon {
-  width: 48rpx;
-  height: 48rpx;
-  fill: var(--text-primary);
-}
-
-.loading {
-  text-align: center;
-  padding: 100rpx;
-  color: var(--text-secondary);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 /* ===== PAST EVENTS CARD ===== */
 .past-events-card {
-  padding: 32rpx;
+  padding: 40rpx 32rpx;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 32rpx;
   display: flex;
@@ -79,6 +42,12 @@
 .past-events-sub {
   font-size: 24rpx;
   color: rgba(255,255,255,0.8);
+}
+
+.loading {
+  text-align: center;
+  padding: 100rpx;
+  color: var(--text-secondary);
 }
 
 .empty-state {
@@ -186,10 +155,4 @@
 .badge-confirmed {
   background: #f2f2f7;
   color: #c7c7cc;
-}
-
-.scroll-content {
-  flex: 1;
-  padding: 0 32rpx calc(32rpx + env(safe-area-inset-bottom));
-  box-sizing: border-box;
 }
