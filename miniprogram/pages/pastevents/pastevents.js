@@ -2,33 +2,23 @@ const app = getApp();
 
 Page({
   data: {
-    tickets: [],
+    pastTickets: [],
     isLoading: false
   },
   
   onLoad() {
-    // Обновляем активную вкладку таб-бара
-    this.updateTabBar(1);
+    // Обновляем активную вкладку таб-бара (индекс 1 - Tickets, но это отдельная страница)
+    // Для_past events_ нет вкладки в таб-баре, поэтому не обновляем
   },
 
   onShow() {
-    // Обновляем активную вкладку при возврате на страницу
-    this.updateTabBar(1);
-    
     app.getCloud((cloud) => {
       this.cloud = cloud;
-      this.fetchTickets();
+      this.fetchPastTickets();
     });
   },
 
-  updateTabBar: function(index) {
-    const tabBar = this.getTabBar();
-    if (tabBar && tabBar.updateActive) {
-      tabBar.updateActive(index);
-    }
-  },
-
-  fetchTickets: async function() {
+  fetchPastTickets: async function() {
     const openid = app.globalData.openid;
     if (!openid) return;
     if (!this.cloud) return;
@@ -38,29 +28,30 @@ Page({
       const db = this.cloud.database();
       const now = new Date().getTime();
       
+      // Получаем все регистрации пользователя
       const res = await db.collection('registrations')
         .where({ _openid: openid })
         .orderBy('createdAt', 'desc')
         .get();
       
-      // Фильтруем только будущие и текущие события
-      const upcomingTickets = (res.data || []).filter(ticket => {
+      // Фильтруем прошедшие события
+      const pastTickets = (res.data || []).filter(ticket => {
         const eventDate = new Date(ticket.eventDate).getTime();
-        return eventDate >= now;
+        return eventDate < now;
       });
       
       this.setData({
-        tickets: upcomingTickets,
+        pastTickets: pastTickets,
         isLoading: false
       });
     } catch (err) {
       this.setData({ isLoading: false });
-      console.error('Fetch tickets error:', err);
+      console.error('Fetch past tickets error:', err);
     }
   },
 
   onPullDownRefresh: async function() {
-    await this.fetchTickets();
+    await this.fetchPastTickets();
     wx.stopPullDownRefresh();
   }
 });

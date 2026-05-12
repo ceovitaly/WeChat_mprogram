@@ -1,0 +1,40 @@
+<view class="container">
+
+<view class="header">
+  <text class="header-title">Past Events</text>
+  <text class="header-sub">{{pastTickets.length}} events</text>
+</view>
+
+<view wx:if="{{isLoading}}" class="loading">
+  <text>Loading...</text>
+</view>
+
+<view wx:elif="{{pastTickets.length === 0}}" class="empty-state">
+  <text class="empty-icon">📅</text>
+  <text class="empty-text">No past events</text>
+  <text class="empty-sub">Your past event tickets will appear here</text>
+</view>
+
+<view wx:else class="tickets-list">
+  <view
+    wx:for="{{pastTickets}}"
+    wx:key="_id"
+    class="ticket-card"
+  >
+    <view class="ticket-info">
+      <text class="ticket-title">{{item.eventTitle}}</text>
+      <view class="ticket-meta">
+        <view class="dot past"></view>
+        <text class="ticket-venue">{{item.eventDate}}</text>
+        <text class="ticket-time">Completed</text>
+      </view>
+    </view>
+    <view class="ticket-actions">
+      <view class="status-badge badge-completed">
+        <text>✓</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+</view>

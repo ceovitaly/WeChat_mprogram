@@ -1,1 +1,22 @@
-Nothing should be ignored based on the provided file changes. The only modified file is a source code file (.js) which should not be ignored.
+```
+# WeChat Mini Program specific ignores
+miniprogram/.npm/
+miniprogram/dist/
+miniprogram/build/
+
+# Dependencies
+node_modules/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Editors
+.vscode/
+.idea/
+```

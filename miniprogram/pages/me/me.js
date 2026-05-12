@@ -117,6 +117,10 @@ Page({
     wx.switchTab({ url: '/pages/mytickets/mytickets' });
   },
 
+  goToPastEvents: function() {
+    wx.navigateTo({ url: '/pages/pastevents/pastevents' });
+  },
+
   logout: function() {
     wx.showModal({
       title: 'Log Out',
