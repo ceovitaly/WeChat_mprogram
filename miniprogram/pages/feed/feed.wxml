@@ -1,7 +1,7 @@
 <!--pages/feed/feed.wxml-->
 <view class="container">
   <!-- Fixed Header with Avatar and Tickets -->
-  <view class="header" style="padding-top: {{statusBarHeight}}px;">
+  <view class="header">
     <view class="header-icons">
       <view class="icon-btn avatar-btn" bindtap="goToProfile">
         <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" class="icon-img avatar" />
@@ -14,7 +14,7 @@
   </view>
   
   <!-- Main Scrollable Content -->
-  <scroll-view class="main-scroll" scroll-y enable-flex enhanced show-scrollbar="{{false}}" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
+  <scroll-view class="main-scroll" scroll-y enable-flex enhanced show-scrollbar="false" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
     <!-- Featured Events Slider -->
     <view class="featured-section">
       <view class="section-title">Highlights</view>

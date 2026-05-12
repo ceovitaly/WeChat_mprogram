@@ -12,7 +12,7 @@
   right: 0;
   z-index: 1000;
   background: transparent;
-  padding-top: var(--status-bar-height, 20px);
+  padding-top: env(safe-area-inset-top);
   pointer-events: none;
 }
 
@@ -265,7 +265,7 @@
 /* Main Scroll View */
 .main-scroll {
   height: 100vh;
-  padding-top: calc(var(--status-bar-height, 20px) + 120rpx);
+  padding-top: calc(env(safe-area-inset-top) + 120rpx);
   box-sizing: border-box;
 }
 

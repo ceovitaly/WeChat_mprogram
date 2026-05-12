@@ -2,7 +2,7 @@
 <view class="container">
 
 <!-- Header with Back Button -->
-<view class="header" style="padding-top: {{statusBarHeight}}px;">
+<view class="header">
   <view class="header-content">
     <view class="back-btn" bindtap="goBack">
       <text class="back-icon">‹</text>
@@ -13,57 +13,59 @@
   </view>
 </view>
 
-<view class="profile-section">
-  <block wx:if="{{hasUserInfo}}">
-    <view class="profile-card">
-      <block wx:if="{{userInfo.avatarUrl}}">
-        <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
-      </block>
-      <block wx:else>
-        <view class="avatar-placeholder">
-          <text class="avatar-letter">{{userInfo.nickName[0]}}</text>
+<scroll-view class="content-wrapper" scroll-y enhanced show-scrollbar="false">
+  <view class="profile-section" wx:if="{{hasUserInfo}}">
+    <block wx:if="{{hasUserInfo}}">
+      <view class="profile-card">
+        <block wx:if="{{userInfo.avatarUrl}}">
+          <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        </block>
+        <block wx:else>
+          <view class="avatar-placeholder">
+            <text class="avatar-letter">{{userInfo.nickName[0]}}</text>
+          </view>
+        </block>
+        <view class="user-info">
+          <text class="nickname">{{userInfo.nickName}}</text>
+          <text class="user-sub">{{applicationStatus === 'approved' ? 'Promoter Account' : 'Guest Account'}}</text>
         </view>
-      </block>
-      <view class="user-info">
-        <text class="nickname">{{userInfo.nickName}}</text>
-        <text class="user-sub">{{applicationStatus === 'approved' ? 'Promoter Account' : 'Guest Account'}}</text>
       </view>
-    </view>
-  </block>
-  <block wx:elif="{{showAuthButton}}">
+    </block>
+  </view>
+  <view class="profile-section" wx:elif="{{showAuthButton}}">
     <view class="auth-card">
       <text class="auth-title">Welcome to Yue 🎉</text>
       <text class="auth-sub">Sign in to access your profile and tickets</text>
       <button class="login-btn" bindtap="onLogin">Sign In with WeChat</button>
     </view>
-  </block>
-  <block wx:else>
+  </view>
+  <view class="profile-section" wx:else>
     <view class="loading-card">
       <text class="loading-text">Loading...</text>
     </view>
-  </block>
-</view>
+  </view>
 
-<view class="menu-list" wx:if="{{hasUserInfo}}">
-  <view class="menu-item" bindtap="goToTickets">
-    <text class="menu-text">My Tickets</text>
-    <text class="arrow">›</text>
+  <view class="menu-list" wx:if="{{hasUserInfo}}">
+    <view class="menu-item" bindtap="goToTickets">
+      <text class="menu-text">My Tickets</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="goToPastEvents">
+      <text class="menu-text">Past Events</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="logout">
+      <text class="menu-text logout-text">Log Out</text>
+      <text class="arrow">›</text>
+    </view>
   </view>
-  <view class="menu-item" bindtap="goToPastEvents">
-    <text class="menu-text">Past Events</text>
-    <text class="arrow">›</text>
-  </view>
-  <view class="menu-item" bindtap="logout">
-    <text class="menu-text logout-text">Log Out</text>
-    <text class="arrow">›</text>
-  </view>
-</view>
 
-<view class="menu-list" wx:if="{{hasUserInfo && userInfo.promoterId}}">
-  <view class="promo-code-section">
-    <text class="promo-code-title">Your Promoter</text>
-    <text class="promo-code-value">🌟 {{userInfo.promoterName}}</text>
+  <view class="menu-list" wx:if="{{hasUserInfo && userInfo.promoterId}}">
+    <view class="promo-code-section">
+      <text class="promo-code-title">Your Promoter</text>
+      <text class="promo-code-value">🌟 {{userInfo.promoterName}}</text>
+    </view>
   </view>
-</view>
+</scroll-view>
 
 </view>
