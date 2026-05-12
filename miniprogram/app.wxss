@@ -2,6 +2,8 @@ page {
   background: #F2F2F7;
   font-family: -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif;
   -webkit-font-smoothing: antialiased;
+  height: 100vh;
+  box-sizing: border-box;
 }
 
 /* ── Shared nav ── */
