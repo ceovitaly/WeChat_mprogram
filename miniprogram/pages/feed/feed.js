@@ -11,7 +11,15 @@ Page({
     userInfo: null,
     lastUpdateTime: null,
     hasLoadedOnce: false,
-    statusBarHeight: 0
+    statusBarHeight: 0,
+    // Filter states
+    selectedDate: '',
+    selectedLocation: '',
+    selectedPrice: '',
+    uniqueLocations: [],
+    showDateModal: false,
+    showLocationModal: false,
+    showPriceModal: false
   },
   
   onLoad: function() {
@@ -77,42 +85,118 @@ Page({
     const currentDate = dateList[0].dateStr;
     
     this.setData({ dateList, currentDate });
-    this.filterEventsByDate(currentDate);
   },
 
-  selectDate: function(e) {
-    const { date, fullDate } = e.currentTarget.dataset;
-    this.setData({ currentDate: date });
-    this.filterEventsByDate(date);
+  // Filter modal functions
+  showDateFilter: function() {
+    this.setData({ showDateModal: true });
   },
-
-  filterEventsByDate: function(dateStr) {
-    const allEvents = this.data.events;
+  
+  hideDateModal: function() {
+    this.setData({ showDateModal: false });
+  },
+  
+  showLocationFilter: function() {
+    this.setData({ showLocationModal: true });
+  },
+  
+  hideLocationModal: function() {
+    this.setData({ showLocationModal: false });
+  },
+  
+  showPriceFilter: function() {
+    this.setData({ showPriceModal: true });
+  },
+  
+  hidePriceModal: function() {
+    this.setData({ showPriceModal: false });
+  },
+  
+  stopPropagation: function() {
+    // Prevent modal from closing when tapping inside
+  },
+  
+  selectDateFilter: function(e) {
+    const date = e.currentTarget.dataset.date || '';
+    this.setData({ 
+      selectedDate: date,
+      showDateModal: false
+    });
+    this.applyFilters();
+  },
+  
+  selectLocationFilter: function(e) {
+    const location = e.currentTarget.dataset.location || '';
+    this.setData({ 
+      selectedLocation: location,
+      showLocationModal: false
+    });
+    this.applyFilters();
+  },
+  
+  selectPriceFilter: function(e) {
+    const price = e.currentTarget.dataset.price || '';
+    this.setData({ 
+      selectedPrice: price,
+      showPriceModal: false
+    });
+    this.applyFilters();
+  },
+  
+  clearFilters: function() {
+    this.setData({
+      selectedDate: '',
+      selectedLocation: '',
+      selectedPrice: ''
+    });
+    this.applyFilters();
+  },
+  
+  applyFilters: function() {
+    let filtered = [...this.data.events];
     
-    if (!dateStr) {
-      // Если дата не выбрана, показываем все события
-      this.setData({ 
-        filteredEvents: allEvents,
-        featuredEvents: allEvents.slice(0, 5) // Первые 5 как избранные
-      });
-      return;
+    // Filter by date
+    if (this.data.selectedDate) {
+      filtered = filtered.filter(event => event.date === this.data.selectedDate);
     }
     
-    // Фильтруем события по выбранной дате
-    const filtered = allEvents.filter(event => {
-      return event.date === dateStr;
-    });
+    // Filter by location
+    if (this.data.selectedLocation) {
+      filtered = filtered.filter(event => 
+        event.venue && event.venue.includes(this.data.selectedLocation)
+      );
+    }
     
-    // Сортируем по времени
+    // Filter by price
+    if (this.data.selectedPrice) {
+      filtered = filtered.filter(event => {
+        const price = parseFloat(event.price) || 0;
+        switch (this.data.selectedPrice) {
+          case 'free':
+            return price === 0;
+          case 'low':
+            return price > 0 && price < 20;
+          case 'medium':
+            return price >= 20 && price <= 50;
+          case 'high':
+            return price > 50;
+          default:
+            return true;
+        }
+      });
+    }
+    
+    // Sort by date and time
     filtered.sort((a, b) => {
-      const timeA = a.time || '00:00';
-      const timeB = b.time || '00:00';
-      return timeA.localeCompare(timeB);
+      const dateCompare = a.date.localeCompare(b.date);
+      if (dateCompare !== 0) return dateCompare;
+      return (a.time || '00:00').localeCompare(b.time || '00:00');
     });
     
     this.setData({ 
       filteredEvents: filtered,
-      featuredEvents: filtered.slice(0, 5) // Первые 5 как избранные для этой даты
+      featuredEvents: filtered.slice(0, 5),
+      hasActiveFilters: this.data.selectedDate || this.data.selectedLocation || this.data.selectedPrice
     });
   },
 
@@ -203,8 +287,12 @@ Page({
           
           this.setData(updateData);
           
-          // Применяем фильтрацию по текущей дате
-          this.filterEventsByDate(this.data.currentDate);
+          // Extract unique locations for filter
+          const uniqueLocations = [...new Set(events.map(e => e.venue).filter(v => v))];
+          this.setData({ uniqueLocations });
+          
+          // Apply filters on initial load
+          this.applyFilters();
           
           try {
             wx.setStorageSync('events_cache', JSON.stringify(events));
@@ -229,7 +317,12 @@ Page({
               if (cached) {
                 const events = JSON.parse(cached);
                 this.setData({ events });
-                this.filterEventsByDate(this.data.currentDate);
+                
+                // Extract unique locations for filter
+                const uniqueLocations = [...new Set(events.map(e => e.venue).filter(v => v))];
+                this.setData({ uniqueLocations });
+                
+                this.applyFilters();
               }
             } catch (e) {}
             

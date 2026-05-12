@@ -118,54 +118,56 @@
   padding: 50rpx;
 }
 
-/* Date Strip */
-.date-strip-section {
+/* Date Strip - REMOVED */
+
+/* Filter Section */
+.filter-section {
   background: #fff;
-  padding: 20rpx 0;
+  padding: 20rpx 30rpx;
   margin-bottom: 30rpx;
 }
 
-.date-strip {
-  white-space: nowrap;
-  padding: 0 30rpx;
+.filter-row {
+  display: flex;
+  gap: 20rpx;
 }
 
-.date-item {
-  display: inline-flex;
+.filter-item {
+  flex: 1;
+  display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 100rpx;
-  padding: 20rpx;
-  margin-right: 20rpx;
-  background: #f5f5f5;
-  border-radius: 16rpx;
-  transition: all 0.3s;
+  padding: 24rpx 20rpx;
+  background: #f8f9fa;
+  border-radius: 20rpx;
+  gap: 8rpx;
 }
 
-.date-item.active {
-  background: #07c160;
-  color: #fff;
+.filter-label {
+  font-size: 22rpx;
+  color: #8e8e93;
 }
 
-.day-name {
-  font-size: 24rpx;
-  color: #999;
-  margin-bottom: 8rpx;
+.filter-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1c1c1e;
 }
 
-.date-item.active .day-name {
-  color: rgba(255,255,255,0.9);
-}
-
-.day-num {
+.filter-arrow {
   font-size: 32rpx;
-  font-weight: 700;
-  color: #1a1a1a;
+  color: #c7c7cc;
+  align-self: flex-end;
 }
 
-.date-item.active .day-num {
-  color: #fff;
+.filter-clear {
+  margin-top: 20rpx;
+  text-align: center;
+}
+
+.clear-text {
+  font-size: 26rpx;
+  color: #ff3b30;
+  font-weight: 500;
 }
 
 /* Event List */
@@ -236,6 +238,12 @@
   font-weight: 600;
 }
 
+.event-price {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1c1c1e;
+}
+
 .empty-list {
   text-align: center;
   color: #999;
@@ -259,4 +267,92 @@
   height: 100vh;
   padding-top: calc(var(--status-bar-height, 20px) + 120rpx);
   box-sizing: border-box;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #fff;
+  width: 85%;
+  max-height: 70vh;
+  border-radius: 32rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40rpx 40rpx 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.modal-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1c1c1e;
+}
+
+.modal-close {
+  font-size: 40rpx;
+  color: #8e8e93;
+  padding: 10rpx;
+}
+
+.date-options,
+.location-options,
+.price-options {
+  padding: 20rpx 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.date-option,
+.location-option,
+.price-option {
+  padding: 30rpx 40rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.date-option:active,
+.location-option:active,
+.price-option:active {
+  background: #f8f9fa;
+}
+
+.date-option.active,
+.location-option.active,
+.price-option.active {
+  background: #eafff0;
+}
+
+.date-option.active text,
+.location-option.active text,
+.price-option.active text {
+  color: #34c759;
+  font-weight: 600;
+}
+
+.date-option text,
+.location-option text,
+.price-option text {
+  font-size: 30rpx;
+  color: #1c1c1e;
 }

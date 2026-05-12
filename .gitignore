@@ -1,54 +1,32 @@
 ```
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-*.o
-*.obj
-dist/
-build/
-*.class
-*.exe
-*.dll
-*.so
-*.a
-*.out
+# WeChat Mini Program specific ignores
+miniprogram/.npm/
+miniprogram/dist/
+miniprogram/node_modules/
 
 # Dependencies
-.venv/
-venv/
 node_modules/
-.julia/
-.zig-cache/
-target/
-.gradle/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Logs and temp files
-*.log
-*.tmp
-*.swp
-*.swo
-
-# Environment
+# Environment variables
 .env
 .env.local
 .env.*
+!.env.example
 
-# Editors
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
+*.tmp
 
-# System files
+# Logs
+*.log
+
+# OS generated files
 .DS_Store
 Thumbs.db
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# Cache
-.mypy_cache/
-.pytest_cache/
 ```

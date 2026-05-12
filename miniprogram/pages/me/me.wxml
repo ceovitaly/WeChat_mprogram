@@ -1,4 +1,17 @@
+<!--pages/me/me.wxml-->
 <view class="container">
+
+<!-- Header with Back Button -->
+<view class="header" style="padding-top: {{statusBarHeight}}px;">
+  <view class="header-content">
+    <view class="back-btn" bindtap="goBack">
+      <text class="back-icon">‹</text>
+      <text class="back-text">Back</text>
+    </view>
+    <text class="header-title">Profile</text>
+    <view class="placeholder"></view>
+  </view>
+</view>
 
 <view class="profile-section">
   <block wx:if="{{hasUserInfo}}">

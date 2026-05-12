@@ -6,10 +6,17 @@ Page({
     hasUserInfo: false,
     showAuthButton: false,
     tempAvatarUrl: '',
-    tempNickName: ''
+    tempNickName: '',
+    statusBarHeight: 0
   },
   
   onLoad: function() {
+    // Получаем высоту статусной строки для хедера
+    const systemInfo = wx.getSystemInfoSync();
+    this.setData({ 
+      statusBarHeight: systemInfo.statusBarHeight || 20
+    });
+    
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this.checkUserInDB();
@@ -20,6 +27,10 @@ Page({
     if (this.data.hasUserInfo) {
       this.checkUserInDB();
     }
+  },
+  
+  goBack: function() {
+    wx.navigateBack({ delta: 1 });
   },
   
   checkUserInDB: function() {

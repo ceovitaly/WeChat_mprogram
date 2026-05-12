@@ -5,8 +5,57 @@
   padding-bottom: 60rpx;
 }
 
+/* ===== HEADER ===== */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 30rpx;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 0;
+}
+
+.back-icon {
+  font-size: 48rpx;
+  color: #1c1c1e;
+  line-height: 1;
+}
+
+.back-text {
+  font-size: 30rpx;
+  color: #1c1c1e;
+  font-weight: 500;
+}
+
+.header-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1c1c1e;
+}
+
+.placeholder {
+  width: 100rpx;
+}
+
 .profile-section {
-  padding: 60rpx 30rpx 30rpx;
+  padding: 140rpx 30rpx 30rpx;
 }
 
 /* ===== LOADING ===== */
