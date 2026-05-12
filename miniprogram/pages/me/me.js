@@ -10,9 +10,6 @@ Page({
   },
   
   onLoad: function() {
-    // Обновляем активную вкладку таб-бара
-    this.updateTabBar(2);
-    
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this.checkUserInDB();
@@ -20,21 +17,11 @@ Page({
   },
 
   onShow: function() {
-    // Обновляем активную вкладку при возврате на страницу
-    this.updateTabBar(2);
-    
     if (this.data.hasUserInfo) {
       this.checkUserInDB();
     }
   },
   
-  updateTabBar: function(index) {
-    const tabBar = this.getTabBar();
-    if (tabBar && tabBar.updateActive) {
-      tabBar.updateActive(index);
-    }
-  },
-
   checkUserInDB: function() {
     const openid = app.globalData.openid;
     if (!openid) {
@@ -114,7 +101,7 @@ Page({
   },
 
   goToTickets: function() {
-    wx.switchTab({ url: '/pages/mytickets/mytickets' });
+    wx.navigateTo({ url: '/pages/mytickets/mytickets' });
   },
 
   goToPastEvents: function() {

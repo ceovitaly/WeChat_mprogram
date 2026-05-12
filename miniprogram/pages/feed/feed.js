@@ -3,14 +3,32 @@ const app = getApp();
 Page({
   data: {
     events: [],
+    featuredEvents: [],
+    filteredEvents: [],
+    dateList: [],
+    currentDate: '',
     loading: true,
+    userInfo: null,
     lastUpdateTime: null,
-    hasLoadedOnce: false // Флаг: данные уже загружены хотя бы раз
+    hasLoadedOnce: false,
+    statusBarHeight: 0
   },
   
   onLoad: function() {
-    // Обновляем активную вкладку таб-бара
-    this.updateTabBar(0);
+    // Получаем высоту статусной строки для кастомного хедера
+    const systemInfo = wx.getSystemInfoSync();
+    this.setData({ 
+      statusBarHeight: systemInfo.statusBarHeight || 20
+    });
+    
+    // Загружаем информацию о пользователе
+    const userInfo = wx.getStorageSync('userInfo');
+    if (userInfo) {
+      this.setData({ userInfo });
+    }
+    
+    // Генерируем список дат на 7 дней вперед
+    this.generateDateList();
     
     app.getCloud((cloud) => {
       this.cloud = cloud;
@@ -19,49 +37,101 @@ Page({
   },
 
   onShow: function() {
-    // Обновляем активную вкладку при возврате на страницу
-    this.updateTabBar(0);
-    
-    // УБРАЛИ автоматическую проверку и загрузку данных при каждом возврате!
-    // Это устраняет моргание и дергание интерфейса.
-    // Обновление теперь происходит ТОЛЬКО при свайпе вниз (onPullDownRefresh)
-    // или если данные вообще никогда не загружались (hasLoadedOnce === false)
+    // Обновляем информацию о пользователе при возврате на страницу
+    const userInfo = wx.getStorageSync('userInfo');
+    if (userInfo) {
+      this.setData({ userInfo });
+    }
     
     if (!this.data.hasLoadedOnce && !this.data.loading) {
-      // Если вдруг данные так и не загрузились в onLoad (редкий кейс), пробуем снова
       this.fetchEvents(true);
     }
   },
   
-  updateTabBar: function(index) {
-    const tabBar = this.getTabBar();
-    if (tabBar && tabBar.updateActive) {
-      tabBar.updateActive(index);
-    }
-  },
-  
   onPullDownRefresh: function() {
-    // Ручное обновление по свайпу вниз - единственный способ обновить данные
     this.fetchEvents(true);
   },
 
+  generateDateList: function() {
+    const today = new Date();
+    const dateList = [];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      
+      const dateStr = date.toISOString().split('T')[0];
+      const dayName = dayNames[date.getDay()];
+      const dayNum = date.getDate();
+      
+      dateList.push({
+        dateStr,
+        dayName,
+        dayNum,
+        fullDate: date
+      });
+    }
+    
+    // Устанавливаем текущую дату как сегодня
+    const currentDate = dateList[0].dateStr;
+    
+    this.setData({ dateList, currentDate });
+    this.filterEventsByDate(currentDate);
+  },
+
+  selectDate: function(e) {
+    const { date, fullDate } = e.currentTarget.dataset;
+    this.setData({ currentDate: date });
+    this.filterEventsByDate(date);
+  },
+
+  filterEventsByDate: function(dateStr) {
+    const allEvents = this.data.events;
+    
+    if (!dateStr) {
+      // Если дата не выбрана, показываем все события
+      this.setData({ 
+        filteredEvents: allEvents,
+        featuredEvents: allEvents.slice(0, 5) // Первые 5 как избранные
+      });
+      return;
+    }
+    
+    // Фильтруем события по выбранной дате
+    const filtered = allEvents.filter(event => {
+      return event.date === dateStr;
+    });
+    
+    // Сортируем по времени
+    filtered.sort((a, b) => {
+      const timeA = a.time || '00:00';
+      const timeB = b.time || '00:00';
+      return timeA.localeCompare(timeB);
+    });
+    
+    this.setData({ 
+      filteredEvents: filtered,
+      featuredEvents: filtered.slice(0, 5) // Первые 5 как избранные для этой даты
+    });
+  },
+
   loadEventsFromCacheOrFetch: function() {
-    // Пробуем загрузить из кэша для мгновенного отображения
     try {
       const cached = wx.getStorageSync('events_cache');
       const cacheTime = wx.getStorageSync('events_cache_time');
       
       if (cached && cacheTime) {
         const now = Date.now();
-        // Кэш действителен 10 минут
         if (now - cacheTime < 10 * 60 * 1000) {
+          const events = JSON.parse(cached);
           this.setData({ 
-            events: JSON.parse(cached), 
+            events,
             loading: false,
             lastUpdateTime: cacheTime,
             hasLoadedOnce: true
           });
-          // Тихое фоновое обновление (не блокирует UI)
+          this.filterEventsByDate(this.data.currentDate);
           this.fetchEvents(false);
           return;
         }
@@ -70,16 +140,13 @@ Page({
       console.warn('Cache read error:', e);
     }
     
-    // Если кэша нет или он устарел - загружаем из облака
     this.fetchEvents(true);
   },
 
   fetchEvents: function(showLoadingIndicator = true) {
     if (!this.cloud) return;
     
-    // Если показываем индикатор загрузки и данные уже есть - пропускаем, чтобы не моргало
     if (showLoadingIndicator && this.data.events.length > 0 && !this.data.loading) {
-       // Это фоновое обновление, просто делаем запрос без изменения UI
        this._doFetchEvents(false);
        return;
     }
@@ -103,7 +170,6 @@ Page({
       .get({
         success: async res => {
           const events = res.data;
-          // Собираем все cloud:// URL для конвертации
           const cloudUrls = events
             .map(e => e.promoImage)
             .filter(url => url && url.startsWith('cloud://'));
@@ -137,7 +203,9 @@ Page({
           
           this.setData(updateData);
           
-          // Сохраняем в кэш
+          // Применяем фильтрацию по текущей дате
+          this.filterEventsByDate(this.data.currentDate);
+          
           try {
             wx.setStorageSync('events_cache', JSON.stringify(events));
             wx.setStorageSync('events_cache_time', Date.now());
@@ -156,11 +224,12 @@ Page({
             this.setData({ loading: false });
             wx.stopPullDownRefresh();
             
-            // Пробуем показать кэш даже если он старый
             try {
               const cached = wx.getStorageSync('events_cache');
               if (cached) {
-                this.setData({ events: JSON.parse(cached) });
+                const events = JSON.parse(cached);
+                this.setData({ events });
+                this.filterEventsByDate(this.data.currentDate);
               }
             } catch (e) {}
             
@@ -174,5 +243,17 @@ Page({
     const id = e.currentTarget.dataset.id;
     if (!id) return;
     wx.navigateTo({ url: `/pages/event-detail/event-detail?id=${id}` });
+  },
+
+  goToTickets: function() {
+    wx.navigateTo({ url: '/pages/mytickets/mytickets' });
+  },
+
+  goToProfile: function() {
+    wx.navigateTo({ url: '/pages/me/me' });
+  },
+  
+  goToPastEvents: function() {
+    wx.navigateTo({ url: '/pages/pastevents/pastevents' });
   }
 });
