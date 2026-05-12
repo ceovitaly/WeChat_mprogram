@@ -29,30 +29,6 @@
   pointer-events: none;
 }
 
-/* ─── Спиннер ─── */
-.checking-wrap {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #050505;
-  z-index: 10;
-}
-
-.spinner {
-  width: 30px;
-  height: 30px;
-  border: 2.5px solid rgba(255, 255, 255, 0.12);
-  border-top-color: #FFFFFF;
-  border-radius: 50%;
-  animation: spin 0.75s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 /* ─── Логотип ─── */
 .logo-wrap {
   flex: 1;

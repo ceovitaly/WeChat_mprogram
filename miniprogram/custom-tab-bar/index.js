@@ -17,7 +17,23 @@ Component({
       const cur = pages[pages.length - 1]
       const path = cur ? '/' + cur.route : ''
       const idx = LIST.findIndex(i => i.pagePath === path)
-      this.setData({ selected: idx >= 0 ? idx : 0 })
+      // Обновляем selected только если путь изменился
+      if (this.data.selected !== idx && idx >= 0) {
+        this.setData({ selected: idx })
+      } else if (idx < 0) {
+        // Если текущая страница не в списке таббаров (например event-detail),
+        // пытаемся определить родительскую таб-страницу
+        const parentTabIdx = pages.slice(0, -1).reverse().findIndex(p => {
+          return LIST.some(i => i.pagePath === '/' + p.route)
+        })
+        if (parentTabIdx >= 0) {
+          const parentRoute = pages[pages.length - 2 - parentTabIdx].route
+          const parentIdx = LIST.findIndex(i => i.pagePath === '/' + parentRoute)
+          if (parentIdx >= 0) {
+            this.setData({ selected: parentIdx })
+          }
+        }
+      }
     },
 
     switchTab(e) {

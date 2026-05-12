@@ -4,33 +4,17 @@ Page({
   data: {
     showPrivacy: false,
     privacyAgreed: false,
-    checking: true,
+    checking: false, // Больше не проверяем сессию при загрузке
   },
 
   onLoad() {
-    this._checkSession();
-  },
-
-  async _checkSession() {
+    // Проверяем, авторизован ли пользователь
     const app = getApp();
-    app.getCloud(async (cloud) => {
-      try {
-        const res = await cloud.callFunction({
-          name: 'clientAuth',
-          data: { action: 'getMe' },
-        });
-        const { result } = res;
-        if (result.success && result.user) {
-          app.globalData.userInfo = result.user;
-          wx.switchTab({ url: '/pages/feed/index' });
-        } else {
-          this.setData({ checking: false });
-        }
-      } catch (err) {
-        console.error('[checkSession]', err);
-        this.setData({ checking: false });
-      }
-    });
+    if (app.globalData.openid) {
+      // Если уже авторизован - сразу переходим на ленту
+      wx.switchTab({ url: '/pages/feed/index' });
+    }
+    // Иначе остаемся на странице регистрации
   },
 
   // Нажали "Войти через WeChat"

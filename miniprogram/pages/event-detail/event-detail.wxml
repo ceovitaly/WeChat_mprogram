@@ -61,6 +61,21 @@
   </block>
 </view>
 
+<!-- Модалка авторизации -->
+<view wx:if="{{requireAuth}}" class="ticket-mask">
+  <view class="ticket-modal">
+    <view class="modal-handle"></view>
+    <text class="modal-title">Login Required</text>
+    <text class="modal-sub">Please log in to register for events</text>
+    <view class="auth-actions">
+      <button class="login-btn" bindtap="goToLogin">Log In</button>
+      <view class="modal-cancel" bindtap="closeAuthModal">
+        <text>Cancel</text>
+      </view>
+    </view>
+  </view>
+</view>
+
 </view>
 
 <!-- Модал вне container -->

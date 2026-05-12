@@ -4,54 +4,44 @@
 <!-- Фоновый градиент -->
 <view class="bg-gradient" />
 
-<!-- ─── Спиннер при проверке сессии ─── -->
-<view wx:if="{{checking}}" class="checking-wrap">
-  <view class="spinner" />
+<!-- Логотип -->
+<view class="logo-wrap">
+  <view class="logo-box">
+    <text class="logo-main">Yue!</text>
+    <text class="logo-sub">悦 · Живи ярче</text>
+  </view>
 </view>
 
-<!-- ─── Основной экран ─── -->
-<block wx:else>
+<!-- Карточка входа -->
+<view class="card">
+  <text class="card-title">Добро пожаловать</text>
+  <text class="card-desc">Войдите чтобы получить доступ к событиям и билетам</text>
 
-  <!-- Логотип -->
-  <view class="logo-wrap">
-    <view class="logo-box">
-      <text class="logo-main">Yue!</text>
-      <text class="logo-sub">悦 · Живи ярче</text>
-    </view>
+  <!-- Обычная кнопка — показывает Privacy -->
+  <view
+    wx:if="{{!privacyAgreed}}"
+    class="btn-login"
+    bind:tap="onLoginTap"
+  >
+    <text class="btn-login-text">Войти через WeChat</text>
   </view>
 
-  <!-- Карточка входа -->
-  <view class="card">
-    <text class="card-title">Добро пожаловать</text>
-    <text class="card-desc">Войдите чтобы получить доступ к событиям и билетам</text>
+  <!-- После agree — кнопка с open-type для получения телефона -->
+  <button
+    wx:else
+    class="btn-login btn-login--phone"
+    open-type="getPhoneNumber"
+    bind:getphonenumber="onGetPhoneNumber"
+  >
+    <text class="btn-login-text">Разрешить доступ к номеру</text>
+  </button>
 
-    <!-- Обычная кнопка — показывает Privacy -->
-    <view
-      wx:if="{{!privacyAgreed}}"
-      class="btn-login"
-      bind:tap="onLoginTap"
-    >
-      <text class="btn-login-text">Войти через WeChat</text>
-    </view>
+</view>
 
-    <!-- После agree — кнопка с open-type для получения телефона -->
-    <button
-      wx:else
-      class="btn-login btn-login--phone"
-      open-type="getPhoneNumber"
-      bind:getphonenumber="onGetPhoneNumber"
-    >
-      <text class="btn-login-text">Разрешить доступ к номеру</text>
-    </button>
-
-  </view>
-
-  <!-- Слоган -->
-  <view class="footer">
-    <text class="footer-text">Yue! · 悦 · 2026</text>
-  </view>
-
-</block>
+<!-- Слоган -->
+<view class="footer">
+  <text class="footer-text">Yue! · 悦 · 2026</text>
+</view>
 
 <!-- ═══════════════════════════════════════ -->
 <!-- ─── Модалка Privacy Notice ─── -->

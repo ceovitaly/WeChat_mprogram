@@ -10,7 +10,8 @@ Page({
     promoCodeError: '',
     verifiedPromoterName: '',
     verifiedPromoterId: '',
-    selectedTicketType: ''
+    selectedTicketType: '',
+    requireAuth: false
   },
 
   onLoad: function(options) {
@@ -88,7 +89,21 @@ Page({
   },
 
   openTicketModal: function() {
+    // Проверяем авторизацию перед открытием модалки
+    if (!app.globalData.openid) {
+      this.setData({ requireAuth: true });
+      return;
+    }
     this.setData({ showTicketModal: true });
+  },
+
+  closeAuthModal: function() {
+    this.setData({ requireAuth: false });
+  },
+
+  goToLogin: function() {
+    this.setData({ requireAuth: false });
+    wx.navigateTo({ url: '/pages/register/register' });
   },
 
   selectTicketType: function(e) {
