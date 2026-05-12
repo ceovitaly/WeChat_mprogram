@@ -7,13 +7,14 @@
 }
 
 /* ===== HEADER ===== */
-.common-header {
-  position: relative;
+.header {
   height: calc(88rpx + env(safe-area-inset-top));
   padding-top: env(safe-area-inset-top);
   background-color: var(--page-bg);
-  z-index: 100;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .header-title {
@@ -21,14 +22,12 @@
   font-weight: 600;
   color: var(--text-primary);
   text-align: center;
-  line-height: 88rpx;
-  height: 88rpx;
 }
 
 .back-btn {
   position: absolute;
   left: 32rpx;
-  bottom: 32rpx;
+  top: calc(44rpx + env(safe-area-inset-top));
   display: flex;
   align-items: center;
   justify-content: center;
