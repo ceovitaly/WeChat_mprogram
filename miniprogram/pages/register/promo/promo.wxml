@@ -1,0 +1,48 @@
+<!-- pages/register/promo/promo.wxml -->
+<view class="page">
+
+<!-- Фоновый градиент -->
+<view class="bg-gradient" />
+
+<!-- Логотип -->
+<view class="logo-wrap">
+  <view class="logo-box">
+    <text class="logo-main">Yue!</text>
+    <text class="logo-sub">Введите промокод</text>
+  </view>
+</view>
+
+<!-- Карточка ввода промокода -->
+<view class="card">
+  <text class="card-title">Промокод</text>
+  <text class="card-desc">Введите промокод от приглашения для продолжения регистрации</text>
+
+  <view class="promo-input-wrap {{promoValid ? 'input-valid' : ''}}">
+    <input
+      class="promo-input"
+      placeholder="Введите код"
+      value="{{promoInput}}"
+      bindinput="onPromoInput"
+      maxlength="20"
+      auto-capitalize="characters"
+    />
+  </view>
+
+  <text wx:if="{{promoError}}" class="error-text">{{promoError}}</text>
+  <text wx:if="{{promoValid}}" class="success-text">✓ Промокод действителен</text>
+
+  <button
+    class="btn-submit"
+    bindtap="onSubmit"
+    disabled="{{!promoValid || submitting}}"
+  >
+    {{submitting ? 'Проверка...' : 'Продолжить'}}
+  </button>
+</view>
+
+<!-- Слоган -->
+<view class="footer">
+  <text class="footer-text">Yue! · 悦 · 2026</text>
+</view>
+
+</view>

@@ -5,7 +5,6 @@ Page({
     event: null,
     isRegistered: false,
     showTicketModal: false,
-    scenePromoter: null,
     promoCodeInput: '',
     promoCodeValid: false,
     promoCodeError: '',
@@ -18,27 +17,11 @@ Page({
     app.getCloud((cloud) => {
       this.cloud = cloud;
 
-      if (options.scene) {
-        const scene = decodeURIComponent(options.scene);
-        const parts = scene.split(':');
-        if (parts.length === 2) {
-          const eventId = parts[0];
-          const promoterId = parts[1];
-          this.setData({ scenePromoter: { promoterId } });
-          this.getEventDetails(eventId);
-        }
-        return;
-      }
-
       if (options.id) {
         this.getEventDetails(options.id);
       }
 
       if (options.eventId) {
-        const promoterId = options.promoterId || null;
-        if (promoterId) {
-          this.setData({ scenePromoter: { promoterId } });
-        }
         this.getEventDetails(options.eventId);
       }
     });
@@ -187,10 +170,19 @@ Page({
       return;
     }
 
+    // Проверяем, что промокод верифицирован (обязательное условие)
+    if (!this.data.promoCodeValid) {
+      wx.showToast({ 
+        title: 'Введите и проверьте промокод', 
+        icon: 'none' 
+      });
+      this.setData({ showTicketModal: true });
+      return;
+    }
+
     wx.showLoading({ title: 'Registering...' });
     const db = this.cloud.database();
     const eventId = this.data.event._id;
-    const scenePromoter = this.data.scenePromoter;
     const verifiedPromoterId = this.data.verifiedPromoterId;
     const verifiedPromoterName = this.data.verifiedPromoterName;
 
@@ -240,21 +232,8 @@ Page({
         };
 
         const registerUser = (user) => {
-          if (verifiedPromoterId) {
-            // Промокод верифицирован
-            addRegistration(user, verifiedPromoterId, verifiedPromoterName);
-          } else if (scenePromoter && scenePromoter.promoterId) {
-            // Пришли через QR
-            db.collection('promoters').doc(scenePromoter.promoterId).get({
-              success: promoRes => {
-                const promoterName = promoRes.data ? promoRes.data.name : '';
-                addRegistration(user, scenePromoter.promoterId, promoterName);
-              },
-              fail: () => addRegistration(user, scenePromoter.promoterId, '')
-            });
-          } else {
-            addRegistration(user, '', '');
-          }
+          // Только с верифицированным промокодом
+          addRegistration(user, verifiedPromoterId, verifiedPromoterName);
         };
 
         const addRegistration = (user, promoterId, promoterName) => {
@@ -306,10 +285,9 @@ Page({
 
   onShareAppMessage: function() {
     const event = this.data.event;
-    const scenePromoter = this.data.scenePromoter;
     return {
       title: event.title,
-      path: `/pages/event-detail/event-detail?id=${event._id}${scenePromoter ? '&promoterId=' + scenePromoter.promoterId : ''}`,
+      path: `/pages/event-detail/event-detail?id=${event._id}`,
       imageUrl: event.promoImage || ''
     };
   },

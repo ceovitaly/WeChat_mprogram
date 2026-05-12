@@ -73,8 +73,9 @@ Page({
         wx.hideLoading();
         const { result } = res;
         if (result.success && result.phone) {
+          // Перенаправляем на страницу ввода промокода
           wx.navigateTo({
-            url: `/pages/register/promo?phone=${encodeURIComponent(result.phone)}`,
+            url: `/pages/register/promo/promo?phone=${encodeURIComponent(result.phone)}`,
           });
         } else {
           wx.showToast({ title: 'Не удалось получить номер', icon: 'none' });
