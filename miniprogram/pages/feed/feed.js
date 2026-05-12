@@ -4,7 +4,8 @@ Page({
   data: {
     events: [],
     loading: true,
-    lastUpdateTime: null
+    lastUpdateTime: null,
+    hasLoadedOnce: false // Флаг: данные уже загружены хотя бы раз
   },
   
   onLoad: function() {
@@ -21,13 +22,14 @@ Page({
     // Обновляем активную вкладку при возврате на страницу
     this.updateTabBar(0);
     
-    // Проверяем наличие новых данных при возврате на страницу
-    if (!this.data.loading && this.data.lastUpdateTime) {
-      const now = Date.now();
-      // Если прошло больше 5 минут, обновляем данные
-      if (now - this.data.lastUpdateTime > 5 * 60 * 1000) {
-        this.fetchEvents();
-      }
+    // УБРАЛИ автоматическую проверку и загрузку данных при каждом возврате!
+    // Это устраняет моргание и дергание интерфейса.
+    // Обновление теперь происходит ТОЛЬКО при свайпе вниз (onPullDownRefresh)
+    // или если данные вообще никогда не загружались (hasLoadedOnce === false)
+    
+    if (!this.data.hasLoadedOnce && !this.data.loading) {
+      // Если вдруг данные так и не загрузились в onLoad (редкий кейс), пробуем снова
+      this.fetchEvents(true);
     }
   },
   
@@ -39,11 +41,12 @@ Page({
   },
   
   onPullDownRefresh: function() {
+    // Ручное обновление по свайпу вниз - единственный способ обновить данные
     this.fetchEvents(true);
   },
 
   loadEventsFromCacheOrFetch: function() {
-    // Пробуем загрузить из кэша
+    // Пробуем загрузить из кэша для мгновенного отображения
     try {
       const cached = wx.getStorageSync('events_cache');
       const cacheTime = wx.getStorageSync('events_cache_time');
@@ -55,10 +58,11 @@ Page({
           this.setData({ 
             events: JSON.parse(cached), 
             loading: false,
-            lastUpdateTime: cacheTime
+            lastUpdateTime: cacheTime,
+            hasLoadedOnce: true
           });
-          // Всё равно делаем фоновое обновление
-          this.fetchEvents();
+          // Тихое фоновое обновление (не блокирует UI)
+          this.fetchEvents(false);
           return;
         }
       }
@@ -67,15 +71,27 @@ Page({
     }
     
     // Если кэша нет или он устарел - загружаем из облака
-    this.fetchEvents();
+    this.fetchEvents(true);
   },
 
-  fetchEvents: function(force = false) {
+  fetchEvents: function(showLoadingIndicator = true) {
     if (!this.cloud) return;
     
-    if (!force && !this.data.loading) return; // Не загружаем если уже есть данные
+    // Если показываем индикатор загрузки и данные уже есть - пропускаем, чтобы не моргало
+    if (showLoadingIndicator && this.data.events.length > 0 && !this.data.loading) {
+       // Это фоновое обновление, просто делаем запрос без изменения UI
+       this._doFetchEvents(false);
+       return;
+    }
     
-    this.setData({ loading: true });
+    if (showLoadingIndicator) {
+      this.setData({ loading: true });
+    }
+    
+    this._doFetchEvents(showLoadingIndicator);
+  },
+  
+  _doFetchEvents: function(showLoadingIndicator) {
     const db = this.cloud.database();
     const _ = db.command;
     const today = new Date().toISOString().split('T')[0];
@@ -109,11 +125,17 @@ Page({
             }
           }
 
-          this.setData({ 
+          const updateData = { 
             events, 
-            loading: false,
-            lastUpdateTime: Date.now()
-          });
+            lastUpdateTime: Date.now(),
+            hasLoadedOnce: true
+          };
+          
+          if (showLoadingIndicator) {
+            updateData.loading = false;
+          }
+          
+          this.setData(updateData);
           
           // Сохраняем в кэш
           try {
@@ -123,21 +145,27 @@ Page({
             console.warn('Cache write error:', e);
           }
           
-          wx.stopPullDownRefresh();
+          if (showLoadingIndicator) {
+            wx.stopPullDownRefresh();
+          }
         },
         fail: err => {
           console.error("Load events error:", err);
-          this.setData({ loading: false });
           
-          // Пробуем показать кэш даже если он старый
-          try {
-            const cached = wx.getStorageSync('events_cache');
-            if (cached) {
-              this.setData({ events: JSON.parse(cached), loading: false });
-            }
-          } catch (e) {}
-          
-          wx.showToast({ title: 'Error loading data', icon: 'none' });
+          if (showLoadingIndicator) {
+            this.setData({ loading: false });
+            wx.stopPullDownRefresh();
+            
+            // Пробуем показать кэш даже если он старый
+            try {
+              const cached = wx.getStorageSync('events_cache');
+              if (cached) {
+                this.setData({ events: JSON.parse(cached) });
+              }
+            } catch (e) {}
+            
+            wx.showToast({ title: 'Error loading data', icon: 'none' });
+          }
         }
       });
   },
