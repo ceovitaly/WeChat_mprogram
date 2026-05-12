@@ -115,6 +115,10 @@
   padding: 0 32rpx 32rpx;
 }
 
+.btn-danger {
+  background: #fa5151 !important;
+}
+
 /* ===== MODAL ===== */
 .auth-modal {
   position: fixed;

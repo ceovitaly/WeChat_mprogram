@@ -22,12 +22,12 @@
   padding: 24rpx;
 }
 
-/* Section Title */
+/* Section Title - Moved higher */
 .section-title {
   font-size: 32rpx;
   font-weight: 700;
   color: #1c1c1e;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
   padding-left: 4rpx;
 }
 
@@ -87,7 +87,7 @@
 }
 
 .calendar-trigger {
-  flex: 0 0 45%;
+  flex: 0 0 calc(50% - 8rpx);
 }
 
 .filter-trigger {
