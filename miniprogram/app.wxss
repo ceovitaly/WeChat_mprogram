@@ -61,16 +61,16 @@ page {
   justify-content: center;
   padding: 0 var(--spacing-page);
   box-sizing: border-box;
-  background-color: var(--header-bg);
-  backdrop-filter: blur(20rpx);
-  -webkit-backdrop-filter: blur(20rpx);
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   z-index: 100;
 }
 
 .header-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #000;
+  color: var(--text-primary);
   text-align: center;
   line-height: 1.2;
 }
@@ -92,7 +92,7 @@ page {
 .back-icon {
   width: 48rpx;
   height: 48rpx;
-  fill: #007AFF;
+  fill: var(--text-primary);
 }
 
 /* ── Scrollable Content ── */
