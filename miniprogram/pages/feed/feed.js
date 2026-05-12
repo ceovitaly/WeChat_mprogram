@@ -12,11 +12,9 @@ Page({
       this.cloud = cloud;
       this.loadEventsFromCacheOrFetch();
     });
-    this.updateTabBar(0);
   },
 
   onShow: function() {
-    this.updateTabBar(0);
     // Проверяем наличие новых данных при возврате на страницу
     if (!this.data.loading && this.data.lastUpdateTime) {
       const now = Date.now();
@@ -24,15 +22,6 @@ Page({
       if (now - this.data.lastUpdateTime > 5 * 60 * 1000) {
         this.fetchEvents();
       }
-    }
-  },
-
-  updateTabBar(index) {
-    const tabBar = this.getTabBar();
-    if (tabBar && typeof tabBar.updateActive === 'function') {
-      tabBar.updateActive(index);
-    } else if (tabBar && tabBar.data.selected !== index) {
-      tabBar.setData({ selected: index });
     }
   },
   
