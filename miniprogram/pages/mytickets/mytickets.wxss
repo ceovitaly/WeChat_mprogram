@@ -1,29 +1,83 @@
 .container {
-  display: block;
-  padding: 30rpx;
-  padding-bottom: 60rpx;
   background: #f8f9fa;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
   box-sizing: border-box;
 }
 
+/* ===== HEADER ===== */
 .header {
-  margin-bottom: 40rpx;
-  padding: 20rpx 10rpx;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(88rpx + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  border-bottom: 1rpx solid #f0f0f0;
+  box-sizing: border-box;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 32rpx;
+  box-sizing: border-box;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 16rpx;
+  min-width: 88rpx;
+  min-height: 88rpx;
+  border-radius: 44rpx;
+  box-sizing: border-box;
+}
+
+.back-icon {
+  font-size: 48rpx;
+  color: #1c1c1e;
+  line-height: 1;
+}
+
+.back-text {
+  font-size: 30rpx;
+  color: #1c1c1e;
+  font-weight: 500;
 }
 
 .header-title {
-  font-size: 56rpx;
-  font-weight: bold;
+  font-size: 34rpx;
+  font-weight: 600;
   color: #1c1c1e;
-  display: block;
 }
 
-.header-sub {
-  font-size: 26rpx;
-  color: #8e8e93;
-  margin-top: 6rpx;
-  display: block;
+.placeholder {
+  width: 88rpx;
+}
+
+.content-wrapper {
+  flex: 1;
+  padding-top: calc(88rpx + env(safe-area-inset-top) + 32rpx);
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bottom-spacer {
+  height: calc(32rpx + env(safe-area-inset-bottom));
+  flex-shrink: 0;
 }
 
 .loading {
@@ -61,6 +115,7 @@
   display: flex;
   flex-direction: column;
   gap: 24rpx;
+  padding-bottom: 32rpx;
 }
 
 .ticket-card {
@@ -80,7 +135,7 @@
 }
 
 .ticket-title {
-  font-size: 38rpx;
+  font-size: 32rpx;
   font-weight: 600;
   color: #1d1d1f;
   display: block;

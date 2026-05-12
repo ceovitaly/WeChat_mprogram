@@ -16,6 +16,10 @@ Page({
     });
   },
 
+  goBack: function() {
+    wx.navigateBack({ delta: 1 });
+  },
+
   fetchTickets: async function() {
     const openid = app.globalData.openid;
     if (!openid) return;

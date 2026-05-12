@@ -1,40 +1,51 @@
 <view class="container">
 
+<!-- Header with Back Button -->
 <view class="header">
-  <text class="header-title">My Tickets</text>
-  <text class="header-sub">{{tickets.length}} tickets</text>
-</view>
-
-<view wx:if="{{isLoading}}" class="loading">
-  <text>Loading...</text>
-</view>
-
-<view wx:elif="{{tickets.length === 0}}" class="empty-state">
-  <text class="empty-icon">🎫</text>
-  <text class="empty-text">No tickets yet</text>
-  <text class="empty-sub">Register for an event to see your tickets here</text>
-</view>
-
-<view wx:else class="tickets-list">
-  <view
-    wx:for="{{tickets}}"
-    wx:key="_id"
-    class="ticket-card"
-  >
-    <view class="ticket-info">
-      <text class="ticket-title">{{item.eventTitle}}</text>
-      <view class="ticket-meta">
-        <view class="dot"></view>
-        <text class="ticket-venue">{{item.eventDate}}</text>
-        <text class="ticket-time">{{item.ticketType === 'free' ? 'Free' : 'Paid'}}</text>
-      </view>
+  <view class="header-content">
+    <view class="back-btn" bindtap="goBack">
+      <text class="back-icon">‹</text>
+      <text class="back-text">Back</text>
     </view>
-    <view class="ticket-actions">
-      <view class="status-badge {{item.arrivedAt ? 'badge-arrived' : 'badge-confirmed'}}">
-        <text>{{item.arrivedAt ? '✓' : '•'}}</text>
+    <text class="header-title">My Tickets</text>
+    <view class="placeholder"></view>
+  </view>
+</view>
+
+<scroll-view class="content-wrapper" scroll-y enhanced show-scrollbar="false">
+  <view wx:if="{{isLoading}}" class="loading">
+    <text>Loading...</text>
+  </view>
+  
+  <view wx:elif="{{tickets.length === 0}}" class="empty-state">
+    <text class="empty-icon">🎫</text>
+    <text class="empty-text">No tickets yet</text>
+    <text class="empty-sub">Register for an event to see your tickets here</text>
+  </view>
+  
+  <view wx:else class="tickets-list">
+    <view
+      wx:for="{{tickets}}"
+      wx:key="_id"
+      class="ticket-card"
+    >
+      <view class="ticket-info">
+        <text class="ticket-title">{{item.eventTitle}}</text>
+        <view class="ticket-meta">
+          <view class="dot"></view>
+          <text class="ticket-venue">{{item.eventDate}}</text>
+          <text class="ticket-time">{{item.ticketType === 'free' ? 'Free' : 'Paid'}}</text>
+        </view>
+      </view>
+      <view class="ticket-actions">
+        <view class="status-badge {{item.arrivedAt ? 'badge-arrived' : 'badge-confirmed'}}">
+          <text>{{item.arrivedAt ? '✓' : '•'}}</text>
+        </view>
       </view>
     </view>
   </view>
-</view>
+  
+  <view class="bottom-spacer"></view>
+</scroll-view>
 
 </view>

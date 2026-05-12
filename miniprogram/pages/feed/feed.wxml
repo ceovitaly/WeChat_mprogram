@@ -4,7 +4,7 @@
   <scroll-view class="main-scroll" scroll-y enable-flex enhanced show-scrollbar="false" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
     <!-- Featured Events Slider -->
     <view class="featured-section">
-      <view class="section-title">Highlights</view>
+      <view class="section-title">Hot Offers</view>
       <swiper class="featured-swiper" indicator-dots autoplay circular interval="3000">
         <swiper-item wx:for="{{featuredEvents}}" wx:key="_id">
           <view class="slide-card" bindtap="goToDetail" data-id="{{item._id}}">
@@ -112,18 +112,16 @@
 
   <!-- Bottom Navigation Bar -->
   <view class="bottom-nav">
+    <view class="nav-item" bindtap="goToTickets">
+      <view class="nav-icon-circle">
+        <image src="/images/ticket-icon.svg" mode="aspectFit" class="nav-ticket-icon" />
+      </view>
+    </view>
     <view class="nav-item" bindtap="goToProfile">
       <view class="nav-icon-circle">
         <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" class="nav-avatar" />
         <text wx:else class="nav-icon-placeholder">?</text>
       </view>
-      <text class="nav-label">Profile</text>
-    </view>
-    <view class="nav-item" bindtap="goToTickets">
-      <view class="nav-icon-circle">
-        <image src="/images/ticket-icon.svg" mode="aspectFit" class="nav-ticket-icon" />
-      </view>
-      <text class="nav-label">Tickets</text>
     </view>
   </view>
 </view>

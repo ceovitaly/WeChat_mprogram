@@ -12,7 +12,7 @@
   font-size: 36rpx;
   font-weight: 700;
   color: #1a1a1a;
-  padding: 24rpx 32rpx 16rpx;
+  padding: 16rpx 32rpx 12rpx;
 }
 
 /* Featured Slider */
@@ -270,7 +270,7 @@
 /* Main Scroll View */
 .main-scroll {
   flex: 1;
-  padding-top: calc(env(safe-area-inset-top) + 32rpx);
+  padding-top: calc(env(safe-area-inset-top) + 16rpx);
   padding-bottom: 0;
   box-sizing: border-box;
   overflow-y: auto;
@@ -291,11 +291,11 @@
   right: 0;
   height: calc(100rpx + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: #fff;
+  background: transparent;
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
-  box-shadow: 0 -2rpx 10rpx rgba(0,0,0,0.05);
+  gap: 48rpx;
   z-index: 1000;
   box-sizing: border-box;
 }
@@ -304,20 +304,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
-  flex: 1;
+  gap: 0;
 }
 
 .nav-icon-circle {
-  width: 88rpx;
-  height: 88rpx;
+  width: 96rpx;
+  height: 96rpx;
   border-radius: 50%;
-  background: #f8f9fa;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.15);
 }
 
 .nav-avatar {
@@ -326,19 +325,13 @@
 }
 
 .nav-icon-placeholder {
-  font-size: 32rpx;
+  font-size: 36rpx;
   color: #999;
 }
 
 .nav-ticket-icon {
-  width: 44rpx;
-  height: 44rpx;
-}
-
-.nav-label {
-  font-size: 22rpx;
-  color: #8e8e93;
-  font-weight: 500;
+  width: 48rpx;
+  height: 48rpx;
 }
 
 /* Modal Styles */
