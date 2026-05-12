@@ -1,5 +1,16 @@
 page {
-  background: #F2F2F7;
+  /* Light mode (default) */
+  --page-bg: #F2F2F7;
+  --text-primary: #1a1a1a;
+  --text-secondary: #8E8E93;
+  --card-bg: #ffffff;
+  --card-gradient-start: #f8f9fa;
+  --card-gradient-end: #e9ecef;
+  --header-bg: rgba(242, 242, 247, 0.85);
+  --border-color: #C6C6C8;
+  --input-bg: #ffffff;
+  --shadow-color: rgba(0, 0, 0, 0.06);
+  
   font-family: -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif;
   -webkit-font-smoothing: antialiased;
   height: 100vh;
@@ -9,12 +20,27 @@ page {
   --safe-bottom: env(safe-area-inset-bottom);
   --primary-color: #07c160;
   --danger-color: #fa5151;
-  --text-main: #1a1a1a;
-  --text-sub: #888;
-  --card-bg: #ffffff;
+  --text-main: var(--text-primary);
+  --text-sub: var(--text-secondary);
   --radius-lg: 24rpx;
   --radius-md: 16rpx;
   --spacing-page: 32rpx;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  page {
+    --page-bg: #000000;
+    --text-primary: #ffffff;
+    --text-secondary: #98989D;
+    --card-bg: #1C1C1E;
+    --card-gradient-start: #2C2C2E;
+    --card-gradient-end: #1C1C1E;
+    --header-bg: rgba(28, 28, 30, 0.85);
+    --border-color: #38383A;
+    --input-bg: #2C2C2E;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+  }
 }
 
 /* ── Unified Header System ── */
@@ -24,6 +50,7 @@ page {
   min-height: 100vh;
   padding-top: var(--safe-top);
   box-sizing: border-box;
+  background-color: var(--page-bg);
 }
 
 .common-header {
@@ -34,7 +61,9 @@ page {
   justify-content: center;
   padding: 0 var(--spacing-page);
   box-sizing: border-box;
-  background-color: #F2F2F7;
+  background-color: var(--header-bg);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
   z-index: 100;
 }
 

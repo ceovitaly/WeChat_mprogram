@@ -1,82 +1,69 @@
 <!--pages/feed/feed.wxml-->
 <view class="page-container">
-  <!-- Unified Header -->
-  <view class="common-header">
-    <text class="header-title">Hot Offers</text>
+  <!-- Fixed Header with Calendar and Search -->
+  <view class="common-header feed-header">
+    <view class="header-left">
+      <view class="calendar-btn" bindtap="toggleCalendar">
+        <text class="calendar-icon">📅</text>
+      </view>
+    </view>
+    <view class="header-right">
+      <view class="search-bar">
+        <text class="search-icon-inner">🔍</text>
+        <input 
+          class="search-input-header" 
+          placeholder="Search events..." 
+          placeholder-class="search-placeholder" 
+          value="{{searchKeyword}}" 
+          bindinput="onSearchInput" 
+          confirm-type="search" 
+          bindconfirm="onSearchConfirm" 
+        />
+      </view>
+    </view>
   </view>
-
+  
+  <!-- Calendar Dropdown Panel -->
+  <view class="calendar-dropdown {{showCalendar ? 'active' : ''}}">
+    <view class="calendar-grid">
+      <view wx:for="{{dateList}}" wx:key="dateStr" class="calendar-day {{selectedDate === item.dateStr ? 'selected' : ''}}" bindtap="selectDate" data-date="{{item.dateStr}}">
+        <text class="calendar-day-num">{{item.dayNum}}</text>
+        <text class="calendar-day-name">{{item.dayName}}</text>
+      </view>
+    </view>
+  </view>
+  
   <!-- Main Scrollable Content -->
-  <scroll-view class="scroll-content" scroll-y enable-flex enhanced show-scrollbar="false" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
-    <!-- Featured Events Slider with Background Card -->
-    <view class="section-card featured-card">
-      <view class="section-title">Hot Offers</view>
-      <swiper class="featured-swiper" indicator-dots autoplay circular interval="3000">
-        <swiper-item wx:for="{{featuredEvents}}" wx:key="_id">
-          <view class="slide-card" bindtap="goToDetail" data-id="{{item._id}}">
-            <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="slide-image" />
-            <view class="slide-overlay">
-              <text class="slide-title">{{item.title}}</text>
-              <text class="slide-date">{{item.date}}</text>
-            </view>
-          </view>
-        </swiper-item>
-      </swiper>
-      <view wx:if="{{featuredEvents.length === 0 && !loading}}" class="empty-state">No featured events</view>
-    </view>
-  
-    <!-- Compact Filter Section with Background Card -->
-    <view class="section-card filter-card">
-      <view class="filter-row">
-        <view class="filter-trigger calendar-trigger" bindtap="toggleFilter" data-type="date">
-          <text class="filter-text">{{selectedDate || 'Select Date'}}</text>
-          <text class="filter-arrow">{{filterOpen === 'date' ? '▲' : '▼'}}</text>
-        </view>
-        <view class="search-input-wrapper">
-          <input class="search-input" placeholder="Search events..." placeholder-class="search-placeholder" value="{{searchKeyword}}" bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearchConfirm" />
-          <text class="search-icon">🔍</text>
+  <scroll-view class="scroll-content feed-scroll" scroll-y enable-flex enhanced show-scrollbar="false" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
+    <!-- Event List -->
+    <view class="event-list-container">
+      <view 
+        wx:for="{{filteredEvents}}" 
+        wx:key="_id" 
+        class="event-card"
+        bindtap="goToDetail"
+        data-id="{{item._id}}"
+      >
+        <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="event-img" />
+        <view class="event-info">
+          <text class="event-club-name">{{item.venue || 'CLUB NAME'}}</text>
+          <text class="event-title">{{item.title}}</text>
+          <text class="event-date-time">{{item.date}} • {{item.time}}</text>
+          <button class="get-ticket-btn" bindtap="goToDetail" data-id="{{item._id}}">Get Ticket</button>
         </view>
       </view>
-
-      <!-- Expandable Calendar Panel -->
-      <view class="filter-panel {{filterOpen === 'date' ? 'active' : ''}}">
-        <view class="option-item {{selectedDate === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="date" data-value="">Any Date</view>
-        <view wx:for="{{dateList}}" wx:key="dateStr" class="option-item {{selectedDate === item.dateStr ? 'selected' : ''}}" bindtap="selectFilter" data-type="date" data-value="{{item.dateStr}}">
-          {{item.dayName}}, {{item.dayNum}}
-        </view>
+      
+      <!-- Empty State -->
+      <view wx:if="{{filteredEvents.length === 0 && !loading}}" class="empty-state-feed">
+        <text class="empty-icon">🎫</text>
+        <text class="empty-title">No events found</text>
+        <text class="empty-sub">Try adjusting your search or date filter</text>
       </view>
-    </view>
-  
-    <!-- Event List with Background Card -->
-    <view class="section-card events-card">
-      <view class="section-title">Upcoming Events</view>
-      <view class="event-list">
-        <view 
-          wx:for="{{filteredEvents}}" 
-          wx:key="_id" 
-          class="event-card"
-          bindtap="goToDetail"
-          data-id="{{item._id}}"
-        >
-          <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="event-img" />
-          <view class="event-info">
-            <text class="event-title">{{item.title}}</text>
-            <view class="event-meta">
-              <text class="event-date">📅 {{item.date}} | {{item.time}}</text>
-              <text class="event-location">📍 {{item.venue || 'No location'}}</text>
-            </view>
-            <view class="event-footer">
-              <text class="event-price">💰 {{item.price || 'TBA'}}</text>
-              <text class="buy-btn">Buy Ticket</text>
-            </view>
-          </view>
-        </view>
+      
+      <!-- Loading -->
+      <view wx:if="{{loading && events.length === 0}}" class="loading-feed">
+        <text>Loading events...</text>
       </view>
-      <view wx:if="{{filteredEvents.length === 0 && !loading}}" class="empty-list">No events match your filters</view>
-    </view>
-    
-    <!-- Loading -->
-    <view wx:if="{{loading && events.length === 0}}" class="loading-mask">
-      <text>Loading...</text>
     </view>
   </scroll-view>
 

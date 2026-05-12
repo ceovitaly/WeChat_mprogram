@@ -3,7 +3,6 @@ const app = getApp();
 Page({
   data: {
     events: [],
-    featuredEvents: [],
     filteredEvents: [],
     dateList: [],
     currentDate: '',
@@ -11,23 +10,17 @@ Page({
     userInfo: null,
     lastUpdateTime: null,
     hasLoadedOnce: false,
-    // Filter states
     selectedDate: '',
-    uniqueLocations: [],
-    filterOpen: '',
-    searchKeyword: ''
+    searchKeyword: '',
+    showCalendar: false
   },
 
   onLoad: function() {
-    // Загружаем информацию о пользователе
     const userInfo = wx.getStorageSync('userInfo');
     if (userInfo) {
       this.setData({ userInfo });
     }
-
-    // Генерируем список дат на 7 дней вперед
     this.generateDateList();
-
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this.loadEventsFromCacheOrFetch();
@@ -35,12 +28,10 @@ Page({
   },
 
   onShow: function() {
-    // Обновляем информацию о пользователе при возврате на страницу
     const userInfo = wx.getStorageSync('userInfo');
     if (userInfo) {
       this.setData({ userInfo });
     }
-
     if (!this.data.hasLoadedOnce && !this.data.loading) {
       this.fetchEvents(true);
     }
@@ -58,59 +49,29 @@ Page({
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
-
       const dateStr = date.toISOString().split('T')[0];
       const dayName = dayNames[date.getDay()];
       const dayNum = date.getDate();
-
-      dateList.push({
-        dateStr,
-        dayName,
-        dayNum,
-        fullDate: date
-      });
+      dateList.push({ dateStr, dayName, dayNum, fullDate: date });
     }
-
-    // Устанавливаем текущую дату как сегодня
-    const currentDate = dateList[0].dateStr;
-
-    this.setData({ dateList, currentDate });
+    this.setData({ dateList, currentDate: dateList[0].dateStr });
   },
 
-  // Compact filter toggle functions
-  toggleFilter: function(e) {
-    const type = e.currentTarget.dataset.type;
-    const currentOpen = this.data.filterOpen;
-    
-    // Close if same filter is tapped again, otherwise open the new one
-    this.setData({
-      filterOpen: currentOpen === type ? '' : type
-    });
+  toggleCalendar: function() {
+    this.setData({ showCalendar: !this.data.showCalendar });
   },
 
-  selectFilter: function(e) {
-    const type = e.currentTarget.dataset.type;
-    const value = e.currentTarget.dataset.value || '';
-    
-    const updateData = {};
-    if (type === 'date') {
-      updateData.selectedDate = value;
-    }
-    
-    updateData.filterOpen = '';
-    this.setData(updateData);
+  selectDate: function(e) {
+    const date = e.currentTarget.dataset.date;
+    this.setData({ selectedDate: date, showCalendar: false });
     this.applyFilters();
   },
 
   applyFilters: function() {
     let filtered = [...this.data.events];
-
-    // Filter by date
     if (this.data.selectedDate) {
       filtered = filtered.filter(event => event.date === this.data.selectedDate);
     }
-
-    // Filter by search keyword
     if (this.data.searchKeyword) {
       const keyword = this.data.searchKeyword.toLowerCase();
       filtered = filtered.filter(event => 
@@ -119,31 +80,21 @@ Page({
         (event.description && event.description.toLowerCase().includes(keyword))
       );
     }
-
-    // Sort by date and time
     filtered.sort((a, b) => {
       const dateCompare = a.date.localeCompare(b.date);
       if (dateCompare !== 0) return dateCompare;
       return (a.time || '00:00').localeCompare(b.time || '00:00');
     });
-
-    this.setData({
-      filteredEvents: filtered,
-      featuredEvents: filtered.slice(0, 5)
-    });
+    this.setData({ filteredEvents: filtered });
   },
 
   onSearchInput: function(e) {
-    this.setData({
-      searchKeyword: e.detail.value
-    });
+    this.setData({ searchKeyword: e.detail.value });
     this.applyFilters();
   },
 
   onSearchConfirm: function(e) {
-    this.setData({
-      searchKeyword: e.detail.value
-    });
+    this.setData({ searchKeyword: e.detail.value });
     this.applyFilters();
   },
 
@@ -151,18 +102,12 @@ Page({
     try {
       const cached = wx.getStorageSync('events_cache');
       const cacheTime = wx.getStorageSync('events_cache_time');
-
       if (cached && cacheTime) {
         const now = Date.now();
         if (now - cacheTime < 10 * 60 * 1000) {
           const events = JSON.parse(cached);
-          this.setData({
-            events,
-            loading: false,
-            lastUpdateTime: cacheTime,
-            hasLoadedOnce: true
-          });
-          this.filterEventsByDate(this.data.currentDate);
+          this.setData({ events, loading: false, lastUpdateTime: cacheTime, hasLoadedOnce: true });
+          this.applyFilters();
           this.fetchEvents(false);
           return;
         }
@@ -170,22 +115,18 @@ Page({
     } catch (e) {
       console.warn('Cache read error:', e);
     }
-
     this.fetchEvents(true);
   },
 
   fetchEvents: function(showLoadingIndicator = true) {
     if (!this.cloud) return;
-
     if (showLoadingIndicator && this.data.events.length > 0 && !this.data.loading) {
        this._doFetchEvents(false);
        return;
     }
-
     if (showLoadingIndicator) {
       this.setData({ loading: true });
     }
-
     this._doFetchEvents(showLoadingIndicator);
   },
 
@@ -201,17 +142,13 @@ Page({
       .get({
         success: async res => {
           const events = res.data;
-          const cloudUrls = events
-            .map(e => e.promoImage)
-            .filter(url => url && url.startsWith('cloud://'));
+          const cloudUrls = events.map(e => e.promoImage).filter(url => url && url.startsWith('cloud://'));
 
           if (cloudUrls.length > 0) {
             try {
               const tempRes = await this.cloud.getTempFileURL({ fileList: cloudUrls });
               const urlMap = {};
-              tempRes.fileList.forEach(f => {
-                urlMap[f.fileID] = f.tempFileURL;
-              });
+              tempRes.fileList.forEach(f => { urlMap[f.fileID] = f.tempFileURL; });
               events.forEach(e => {
                 if (e.promoImage && urlMap[e.promoImage]) {
                   e.promoImage = urlMap[e.promoImage];
@@ -222,23 +159,11 @@ Page({
             }
           }
 
-          const updateData = {
-            events,
-            lastUpdateTime: Date.now(),
-            hasLoadedOnce: true
-          };
-
+          const updateData = { events, lastUpdateTime: Date.now(), hasLoadedOnce: true };
           if (showLoadingIndicator) {
             updateData.loading = false;
           }
-
           this.setData(updateData);
-
-          // Extract unique locations for filter
-          const uniqueLocations = [...new Set(events.map(e => e.venue).filter(v => v))];
-          this.setData({ uniqueLocations });
-
-          // Apply filters on initial load
           this.applyFilters();
 
           try {
@@ -254,25 +179,17 @@ Page({
         },
         fail: err => {
           console.error("Load events error:", err);
-
           if (showLoadingIndicator) {
             this.setData({ loading: false });
             wx.stopPullDownRefresh();
-
             try {
               const cached = wx.getStorageSync('events_cache');
               if (cached) {
                 const events = JSON.parse(cached);
                 this.setData({ events });
-
-                // Extract unique locations for filter
-                const uniqueLocations = [...new Set(events.map(e => e.venue).filter(v => v))];
-                this.setData({ uniqueLocations });
-
                 this.applyFilters();
               }
             } catch (e) {}
-
             wx.showToast({ title: 'Error loading data', icon: 'none' });
           }
         }
