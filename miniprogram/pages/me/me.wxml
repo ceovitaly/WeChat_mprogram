@@ -1,22 +1,19 @@
 <!--pages/me/me.wxml-->
-<view class="container">
-
-<!-- Header with Back Button -->
-<view class="header">
-  <view class="header-content">
+<view class="page-container">
+  <!-- Unified Header -->
+  <view class="common-header">
     <view class="back-btn" bindtap="goBack">
-      <text class="back-icon">‹</text>
-      <text class="back-text">Back</text>
+      <svg class="back-icon" viewBox="0 0 48 48">
+        <path d="M28 16L16 24l12 8V16z"/>
+      </svg>
     </view>
     <text class="header-title">Profile</text>
-    <view class="placeholder"></view>
   </view>
-</view>
 
-<scroll-view class="content-wrapper" scroll-y enhanced show-scrollbar="false">
-  <view class="profile-section" wx:if="{{hasUserInfo}}">
-    <block wx:if="{{hasUserInfo}}">
-      <view class="profile-card">
+  <scroll-view class="scroll-content" scroll-y enhanced show-scrollbar="false">
+    <view class="section">
+      <!-- Profile Section -->
+      <view class="card profile-card" wx:if="{{hasUserInfo}}">
         <block wx:if="{{userInfo.avatarUrl}}">
           <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
         </block>
@@ -30,34 +27,41 @@
           <text class="user-sub">{{applicationStatus === 'approved' ? 'Promoter Account' : 'Guest Account'}}</text>
         </view>
       </view>
-    </block>
-  </view>
-  <view class="profile-section" wx:elif="{{showAuthButton}}">
-    <view class="auth-card">
-      <text class="auth-title">Welcome to Yue 🎉</text>
-      <text class="auth-sub">Sign in to access your profile and tickets</text>
-      <button class="login-btn" bindtap="onLogin">Sign In with WeChat</button>
-    </view>
-  </view>
-  <view class="profile-section" wx:else>
-    <view class="loading-card">
-      <text class="loading-text">Loading...</text>
-    </view>
-  </view>
 
-  <view class="menu-list" wx:if="{{hasUserInfo}}">
-    <view class="menu-item" bindtap="logout">
-      <text class="menu-text logout-text">Log Out</text>
-      <text class="arrow">›</text>
-    </view>
-  </view>
+      <!-- Auth Card -->
+      <view class="card auth-card" wx:elif="{{showAuthButton}}">
+        <text class="auth-title">Welcome to Yue 🎉</text>
+        <text class="auth-sub">Sign in to access your profile and tickets</text>
+        <button class="btn-full btn-primary" bindtap="onLogin">Sign In with WeChat</button>
+      </view>
 
-  <view class="menu-list" wx:if="{{hasUserInfo && userInfo.promoterId}}">
-    <view class="promo-code-section">
-      <text class="promo-code-title">Your Promoter</text>
-      <text class="promo-code-value">🌟 {{userInfo.promoterName}}</text>
+      <!-- Loading State -->
+      <view class="card loading-card" wx:else>
+        <text class="loading-text">Loading...</text>
+      </view>
     </view>
-  </view>
-</scroll-view>
 
+    <!-- Promoter Info -->
+    <view class="section" wx:if="{{hasUserInfo && userInfo.promoterId}}">
+      <view class="card promo-display-card">
+        <text class="promo-code-title">Your Promoter</text>
+        <text class="promo-code-value">🌟 {{userInfo.promoterName}}</text>
+      </view>
+    </view>
+
+    <!-- Menu List -->
+    <view class="section" wx:if="{{hasUserInfo}}">
+      <view class="card menu-list">
+        <view class="menu-item" bindtap="logout">
+          <text class="menu-text logout-text">Log Out</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Logout Button at Bottom -->
+    <view class="section" wx:if="{{hasUserInfo}}">
+      <button class="btn-full btn-danger" bindtap="logout">Log Out</button>
+    </view>
+  </scroll-view>
 </view>

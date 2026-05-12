@@ -1,10 +1,14 @@
 <!--pages/feed/feed.wxml-->
-<view class="container">
+<view class="page-container">
+  <!-- Unified Header -->
+  <view class="common-header">
+    <text class="header-title">Hot Offers</text>
+  </view>
+
   <!-- Main Scrollable Content -->
-  <scroll-view class="main-scroll" scroll-y enable-flex enhanced show-scrollbar="false" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
+  <scroll-view class="scroll-content" scroll-y enable-flex enhanced show-scrollbar="false" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
     <!-- Featured Events Slider -->
-    <view class="featured-section">
-      <view class="section-title">Hot Offers</view>
+    <view class="section">
       <swiper class="featured-swiper" indicator-dots autoplay circular interval="3000">
         <swiper-item wx:for="{{featuredEvents}}" wx:key="_id">
           <view class="slide-card" bindtap="goToDetail" data-id="{{item._id}}">
@@ -20,20 +24,17 @@
     </view>
   
     <!-- Compact Filter Section -->
-    <view class="filter-section">
+    <view class="section">
       <view class="filter-row">
         <view class="filter-trigger" bindtap="toggleFilter" data-type="date">
-          <text class="filter-icon">📅</text>
           <text class="filter-text">{{selectedDate || 'Date'}}</text>
           <text class="filter-arrow">{{filterOpen === 'date' ? '▲' : '▼'}}</text>
         </view>
         <view class="filter-trigger" bindtap="toggleFilter" data-type="location">
-          <text class="filter-icon">📍</text>
           <text class="filter-text">{{selectedLocation || 'Location'}}</text>
           <text class="filter-arrow">{{filterOpen === 'location' ? '▲' : '▼'}}</text>
         </view>
         <view class="filter-trigger" bindtap="toggleFilter" data-type="price">
-          <text class="filter-icon">💰</text>
           <text class="filter-text">{{selectedPrice || 'Price'}}</text>
           <text class="filter-arrow">{{filterOpen === 'price' ? '▲' : '▼'}}</text>
         </view>
@@ -41,31 +42,25 @@
 
       <!-- Expandable Filter Panels -->
       <view class="filter-panel {{filterOpen === 'date' ? 'active' : ''}}">
-        <view class="filter-options">
-          <view class="filter-option {{selectedDate === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="date" data-value="">Any Date</view>
-          <view wx:for="{{dateList}}" wx:key="dateStr" class="filter-option {{selectedDate === item.dateStr ? 'selected' : ''}}" bindtap="selectFilter" data-type="date" data-value="{{item.dateStr}}">
-            {{item.dayName}}, {{item.dayNum}}
-          </view>
+        <view class="option-item {{selectedDate === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="date" data-value="">Any Date</view>
+        <view wx:for="{{dateList}}" wx:key="dateStr" class="option-item {{selectedDate === item.dateStr ? 'selected' : ''}}" bindtap="selectFilter" data-type="date" data-value="{{item.dateStr}}">
+          {{item.dayName}}, {{item.dayNum}}
         </view>
       </view>
 
       <view class="filter-panel {{filterOpen === 'location' ? 'active' : ''}}">
-        <view class="filter-options">
-          <view class="filter-option {{selectedLocation === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="location" data-value="">Any Location</view>
-          <view wx:for="{{uniqueLocations}}" wx:key="*this" class="filter-option {{selectedLocation === item ? 'selected' : ''}}" bindtap="selectFilter" data-type="location" data-value="{{item}}">
-            {{item}}
-          </view>
+        <view class="option-item {{selectedLocation === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="location" data-value="">Any Location</view>
+        <view wx:for="{{uniqueLocations}}" wx:key="*this" class="option-item {{selectedLocation === item ? 'selected' : ''}}" bindtap="selectFilter" data-type="location" data-value="{{item}}">
+          {{item}}
         </view>
       </view>
 
       <view class="filter-panel {{filterOpen === 'price' ? 'active' : ''}}">
-        <view class="filter-options">
-          <view class="filter-option {{selectedPrice === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="">Any Price</view>
-          <view class="filter-option {{selectedPrice === 'free' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="free">Free</view>
-          <view class="filter-option {{selectedPrice === 'low' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="low">Under $20</view>
-          <view class="filter-option {{selectedPrice === 'medium' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="medium">$20 - $50</view>
-          <view class="filter-option {{selectedPrice === 'high' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="high">Over $50</view>
-        </view>
+        <view class="option-item {{selectedPrice === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="">Any Price</view>
+        <view class="option-item {{selectedPrice === 'free' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="free">Free</view>
+        <view class="option-item {{selectedPrice === 'low' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="low">Under $20</view>
+        <view class="option-item {{selectedPrice === 'medium' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="medium">$20 - $50</view>
+        <view class="option-item {{selectedPrice === 'high' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="high">Over $50</view>
       </view>
 
       <view class="filter-actions {{filterOpen ? 'visible' : ''}}">
@@ -74,7 +69,7 @@
     </view>
   
     <!-- Event List -->
-    <view class="event-list-section">
+    <view class="section">
       <view class="section-title">Upcoming Events</view>
       <view class="event-list">
         <view 
@@ -105,23 +100,16 @@
     <view wx:if="{{loading && events.length === 0}}" class="loading-mask">
       <text>Loading...</text>
     </view>
-
-    <!-- Bottom Spacer for Navigation Bar -->
-    <view class="bottom-spacer"></view>
   </scroll-view>
 
-  <!-- Bottom Navigation Bar -->
-  <view class="bottom-nav">
-    <view class="nav-item" bindtap="goToTickets">
-      <view class="nav-icon-circle">
-        <image src="/images/ticket-icon.svg" mode="aspectFit" class="nav-ticket-icon" />
-      </view>
+  <!-- Floating Bottom Navigation -->
+  <view class="floating-nav">
+    <view class="nav-circle" bindtap="goToTickets">
+      <image src="/images/ticket-icon.svg" mode="aspectFit" class="nav-icon" />
     </view>
-    <view class="nav-item" bindtap="goToProfile">
-      <view class="nav-icon-circle">
-        <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" class="nav-avatar" />
-        <text wx:else class="nav-icon-placeholder">?</text>
-      </view>
+    <view class="nav-circle" bindtap="goToProfile">
+      <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" class="nav-icon" style="border-radius: 50%;" />
+      <text wx:else class="nav-icon-placeholder">?</text>
     </view>
   </view>
 </view>
