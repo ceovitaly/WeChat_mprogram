@@ -11,7 +11,7 @@
   
   <scroll-view class="scroll-content" scroll-y enhanced show-scrollbar="false">
     <!-- Past Events Section -->
-    <view class="section" style="margin-top: 24rpx;">
+    <view class="section" style="margin-top: 40rpx;">
       <view class="card past-events-card" bindtap="goToPastEvents">
         <view class="past-events-header">
           <text class="past-events-title">Past Events</text>
