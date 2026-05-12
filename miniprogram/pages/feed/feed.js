@@ -11,7 +11,10 @@ Page({
     userInfo: null,
     lastUpdateTime: null,
     hasLoadedOnce: false,
-    statusBarHeight: 0
+    statusBarHeight: 0,
+    showCalendar: false,
+    currentMonth: new Date().getMonth(),
+    months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
   },
   
   onLoad: function() {
@@ -255,5 +258,52 @@ Page({
   
   goToPastEvents: function() {
     wx.navigateTo({ url: '/pages/pastevents/pastevents' });
-  }
+  },
+  
+  // Calendar functions
+  openCalendar: function() {
+    this.setData({ showCalendar: true });
+  },
+  
+  closeCalendar: function() {
+    this.setData({ showCalendar: false });
+  },
+  
+  selectMonth: function(e) {
+    const month = e.currentTarget.dataset.month;
+    this.setData({ currentMonth: month, showCalendar: false });
+    
+    // Фильтрация событий по выбранному месяцу
+    this.filterEventsByMonth(month);
+    
+    wx.showToast({
+      title: `Selected: ${this.data.months[month]}`,
+      icon: 'success',
+      duration: 1500
+    });
+  },
+  
+  filterEventsByMonth: function(month) {
+    const allEvents = this.data.events;
+    const today = new Date();
+    const year = today.getFullYear();
+    
+    // Фильтруем события по выбранному месяцу
+    const filtered = allEvents.filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate.getMonth() === month && eventDate.getFullYear() >= year;
+    });
+    
+    // Сортируем по дате
+    filtered.sort((a, b) => {
+      return new Date(a.date) - new Date(b.date);
+    });
+    
+    this.setData({ 
+      filteredEvents: filtered,
+      featuredEvents: filtered.slice(0, 5)
+    });
+  },
+  
+  noop: function() {}
 });

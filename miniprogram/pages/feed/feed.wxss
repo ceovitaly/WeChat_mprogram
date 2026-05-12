@@ -23,6 +23,7 @@
 .header-left, .header-right {
   display: flex;
   align-items: center;
+  gap: 20rpx;
 }
 
 .icon-btn {
@@ -33,6 +34,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.calendar-btn {
+  background: #fff;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
 }
 
 .icon-img {
@@ -257,4 +263,98 @@
 .main-scroll {
   height: calc(100vh - 120rpx);
   margin-top: calc(var(--status-bar-height, 20px) + 100rpx);
+}
+
+/* Calendar Modal */
+.calendar-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.calendar-content {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx;
+  width: 85%;
+  max-width: 600rpx;
+  transform: scale(0.9);
+  transition: all 0.3s ease;
+}
+
+.calendar-modal.show .calendar-content {
+  transform: scale(1);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.calendar-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.calendar-close {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-close text {
+  font-size: 32rpx;
+  color: #666;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+}
+
+.month-item {
+  background: #f5f5f5;
+  border-radius: 16rpx;
+  padding: 30rpx 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.month-item.active {
+  background: #07c160;
+}
+
+.month-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.month-item.active .month-name {
+  color: #fff;
 }

@@ -3,6 +3,9 @@
   <!-- Custom Header with Avatar and Tickets -->
   <view class="header" style="padding-top: {{statusBarHeight}}px;">
     <view class="header-left">
+      <view class="icon-btn calendar-btn" bindtap="openCalendar">
+        <image src="/images/calendar-icon.svg" mode="aspectFit" class="icon-img" />
+      </view>
       <view class="icon-btn ticket-btn" bindtap="goToTickets">
         <image src="/images/ticket-icon.svg" mode="aspectFit" class="icon-img" />
       </view>
@@ -11,6 +14,29 @@
       <view class="avatar-wrapper" bindtap="goToProfile">
         <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" class="avatar" />
         <view wx:else class="avatar-placeholder">?</view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- Calendar Modal -->
+  <view class="calendar-modal {{showCalendar ? 'show' : ''}}" bindtap="closeCalendar">
+    <view class="calendar-content" catchtap="noop">
+      <view class="calendar-header">
+        <text class="calendar-title">Select Month</text>
+        <view class="calendar-close" bindtap="closeCalendar">
+          <text>✕</text>
+        </view>
+      </view>
+      <view class="calendar-grid">
+        <view 
+          wx:for="{{months}}" 
+          wx:key="index"
+          class="month-item {{currentMonth === index ? 'active' : ''}}"
+          bindtap="selectMonth"
+          data-month="{{index}}"
+        >
+          <text class="month-name">{{item}}</text>
+        </view>
       </view>
     </view>
   </view>
