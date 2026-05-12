@@ -8,6 +8,9 @@ Page({
   },
   
   onLoad: function() {
+    // Обновляем активную вкладку таб-бара
+    this.updateTabBar(0);
+    
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this.loadEventsFromCacheOrFetch();
@@ -15,6 +18,9 @@ Page({
   },
 
   onShow: function() {
+    // Обновляем активную вкладку при возврате на страницу
+    this.updateTabBar(0);
+    
     // Проверяем наличие новых данных при возврате на страницу
     if (!this.data.loading && this.data.lastUpdateTime) {
       const now = Date.now();
@@ -22,6 +28,13 @@ Page({
       if (now - this.data.lastUpdateTime > 5 * 60 * 1000) {
         this.fetchEvents();
       }
+    }
+  },
+  
+  updateTabBar: function(index) {
+    const tabBar = this.getTabBar();
+    if (tabBar && tabBar.updateActive) {
+      tabBar.updateActive(index);
     }
   },
   

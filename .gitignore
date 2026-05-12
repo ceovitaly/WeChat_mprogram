@@ -1,17 +1,12 @@
 ```
 # WeChat Mini Program specific ignores
-miniprogram/.npm/
+miniprogram/.swan/
 miniprogram/dist/
 miniprogram/build/
 miniprogram/node_modules/
 
 # Dependencies
 node_modules/
-.npm/
-.yarn/
-
-# Logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -20,16 +15,22 @@ yarn-error.log*
 .env
 .env.local
 .env.*
+!.env.example
 
-# IDE files
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS generated files
+*~
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Build outputs
 dist/

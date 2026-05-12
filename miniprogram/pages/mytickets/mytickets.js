@@ -7,13 +7,25 @@ Page({
   },
   
   onLoad() {
+    // Обновляем активную вкладку таб-бара
+    this.updateTabBar(1);
   },
 
   onShow() {
+    // Обновляем активную вкладку при возврате на страницу
+    this.updateTabBar(1);
+    
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this.fetchTickets();
     });
+  },
+
+  updateTabBar: function(index) {
+    const tabBar = this.getTabBar();
+    if (tabBar && tabBar.updateActive) {
+      tabBar.updateActive(index);
+    }
   },
 
   fetchTickets: async function() {

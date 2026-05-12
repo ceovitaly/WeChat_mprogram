@@ -10,10 +10,17 @@ Component({
   methods: {
     switchTab(e) {
       const { path, index } = e.currentTarget.dataset
-      // Сначала обновляем визуальное состояние
+      // СРАЗУ обновляем визуальное состояние для мгновенного отклика
       this.setData({ selected: index })
-      // Затем выполняем переход
+      // Выполняем переход
       wx.switchTab({ url: path })
+    },
+    
+    updateActive(index) {
+      // Обновляем только если индекс изменился
+      if (this.data.selected !== index) {
+        this.setData({ selected: index })
+      }
     }
   }
 })
