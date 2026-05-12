@@ -8,18 +8,24 @@
   width: 100%;
   background-color: var(--page-bg);
   overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 /* Scrollable Content Area */
 .feed-scroll {
   flex: 1;
-  padding-top: 24rpx;
+  padding-top: calc(24rpx + var(--safe-top));
   padding-bottom: calc(160rpx + var(--safe-bottom));
   padding-left: 32rpx;
   padding-right: 32rpx;
   box-sizing: border-box;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  height: 100%;
 }
 
 /* Event List Container */

@@ -1,7 +1,16 @@
 <!--pages/feed/feed.wxml-->
 <view class="page-container">
   <!-- Main Scrollable Content -->
-  <scroll-view class="scroll-content feed-scroll" scroll-y enable-flex enhanced show-scrollbar="false" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
+  <scroll-view 
+    class="scroll-content feed-scroll" 
+    scroll-y 
+    enable-flex 
+    enhanced 
+    show-scrollbar="false" 
+    bindrefresherrefresh="onPullDownRefresh" 
+    refresher-triggered="{{loading}}"
+    bounces="false"
+  >
     <!-- Event List -->
     <view class="event-list-container">
       <view 
