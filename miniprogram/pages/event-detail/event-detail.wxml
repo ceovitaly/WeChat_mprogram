@@ -70,7 +70,7 @@
   <text class="modal-title">Sign Up</text>
 
   <view class="promo-input-row">
-    <text class="promo-input-label">Have a promo code?</text>
+    <text class="promo-input-label">Promo code (required)</text>
     <view class="promo-input-wrap {{promoCodeValid ? 'input-valid' : ''}}">
       <input
         class="promo-input"
@@ -121,8 +121,9 @@
     class="register-btn"
     bindtap="handleJoin"
     data-type="{{selectedTicketType}}"
+    disabled="{{!promoCodeValid}}"
   >
-    Register
+    {{promoCodeValid ? 'Register' : 'Enter Promo Code First'}}
   </button>
 
   <view class="modal-cancel" bindtap="closeTicketModal">
