@@ -1,18 +1,5 @@
 <!--pages/feed/feed.wxml-->
 <view class="container">
-  <!-- Fixed Header with Avatar and Tickets -->
-  <view class="header">
-    <view class="header-icons">
-      <view class="icon-btn avatar-btn" bindtap="goToProfile">
-        <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" class="icon-img avatar" />
-        <view wx:else class="avatar-placeholder">?</view>
-      </view>
-      <view class="icon-btn ticket-btn" bindtap="goToTickets">
-        <image src="/images/ticket-icon.svg" mode="aspectFit" class="icon-img" />
-      </view>
-    </view>
-  </view>
-  
   <!-- Main Scrollable Content -->
   <scroll-view class="main-scroll" scroll-y enable-flex enhanced show-scrollbar="false" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
     <!-- Featured Events Slider -->
@@ -32,27 +19,57 @@
       <view wx:if="{{featuredEvents.length === 0 && !loading}}" class="empty-state">No featured events</view>
     </view>
   
-    <!-- Filter Section -->
+    <!-- Compact Filter Section -->
     <view class="filter-section">
       <view class="filter-row">
-        <view class="filter-item" bindtap="showDateFilter">
-          <text class="filter-label">Date</text>
-          <text class="filter-value">{{selectedDate || 'Any'}}</text>
-          <text class="filter-arrow">›</text>
+        <view class="filter-trigger" bindtap="toggleFilter" data-type="date">
+          <text class="filter-icon">📅</text>
+          <text class="filter-text">{{selectedDate || 'Date'}}</text>
+          <text class="filter-arrow">{{filterOpen === 'date' ? '▲' : '▼'}}</text>
         </view>
-        <view class="filter-item" bindtap="showLocationFilter">
-          <text class="filter-label">Location</text>
-          <text class="filter-value">{{selectedLocation || 'Any'}}</text>
-          <text class="filter-arrow">›</text>
+        <view class="filter-trigger" bindtap="toggleFilter" data-type="location">
+          <text class="filter-icon">📍</text>
+          <text class="filter-text">{{selectedLocation || 'Location'}}</text>
+          <text class="filter-arrow">{{filterOpen === 'location' ? '▲' : '▼'}}</text>
         </view>
-        <view class="filter-item" bindtap="showPriceFilter">
-          <text class="filter-label">Price</text>
-          <text class="filter-value">{{selectedPrice || 'Any'}}</text>
-          <text class="filter-arrow">›</text>
+        <view class="filter-trigger" bindtap="toggleFilter" data-type="price">
+          <text class="filter-icon">💰</text>
+          <text class="filter-text">{{selectedPrice || 'Price'}}</text>
+          <text class="filter-arrow">{{filterOpen === 'price' ? '▲' : '▼'}}</text>
         </view>
       </view>
-      <view class="filter-clear" bindtap="clearFilters" wx:if="{{hasActiveFilters}}">
-        <text class="clear-text">Clear Filters</text>
+
+      <!-- Expandable Filter Panels -->
+      <view class="filter-panel {{filterOpen === 'date' ? 'active' : ''}}">
+        <view class="filter-options">
+          <view class="filter-option {{selectedDate === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="date" data-value="">Any Date</view>
+          <view wx:for="{{dateList}}" wx:key="dateStr" class="filter-option {{selectedDate === item.dateStr ? 'selected' : ''}}" bindtap="selectFilter" data-type="date" data-value="{{item.dateStr}}">
+            {{item.dayName}}, {{item.dayNum}}
+          </view>
+        </view>
+      </view>
+
+      <view class="filter-panel {{filterOpen === 'location' ? 'active' : ''}}">
+        <view class="filter-options">
+          <view class="filter-option {{selectedLocation === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="location" data-value="">Any Location</view>
+          <view wx:for="{{uniqueLocations}}" wx:key="*this" class="filter-option {{selectedLocation === item ? 'selected' : ''}}" bindtap="selectFilter" data-type="location" data-value="{{item}}">
+            {{item}}
+          </view>
+        </view>
+      </view>
+
+      <view class="filter-panel {{filterOpen === 'price' ? 'active' : ''}}">
+        <view class="filter-options">
+          <view class="filter-option {{selectedPrice === '' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="">Any Price</view>
+          <view class="filter-option {{selectedPrice === 'free' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="free">Free</view>
+          <view class="filter-option {{selectedPrice === 'low' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="low">Under $20</view>
+          <view class="filter-option {{selectedPrice === 'medium' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="medium">$20 - $50</view>
+          <view class="filter-option {{selectedPrice === 'high' ? 'selected' : ''}}" bindtap="selectFilter" data-type="price" data-value="high">Over $50</view>
+        </view>
+      </view>
+
+      <view class="filter-actions {{filterOpen ? 'visible' : ''}}">
+        <view class="filter-clear-btn" bindtap="clearFilters">Clear Filters</view>
       </view>
     </view>
   
@@ -88,68 +105,25 @@
     <view wx:if="{{loading && events.length === 0}}" class="loading-mask">
       <text>Loading...</text>
     </view>
+
+    <!-- Bottom Spacer for Navigation Bar -->
+    <view class="bottom-spacer"></view>
   </scroll-view>
-</view>
 
-<!-- Date Picker Modal -->
-<view class="modal-overlay" wx:if="{{showDateModal}}" bindtap="hideDateModal">
-  <view class="modal-content" catchtap="stopPropagation">
-    <view class="modal-header">
-      <text class="modal-title">Select Date</text>
-      <text class="modal-close" bindtap="hideDateModal">✕</text>
+  <!-- Bottom Navigation Bar -->
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goToProfile">
+      <view class="nav-icon-circle">
+        <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" class="nav-avatar" />
+        <text wx:else class="nav-icon-placeholder">?</text>
+      </view>
+      <text class="nav-label">Profile</text>
     </view>
-    <view class="date-options">
-      <view class="date-option {{selectedDate === '' ? 'active' : ''}}" bindtap="selectDateFilter" data-date="">
-        <text>Any Date</text>
+    <view class="nav-item" bindtap="goToTickets">
+      <view class="nav-icon-circle">
+        <image src="/images/ticket-icon.svg" mode="aspectFit" class="nav-ticket-icon" />
       </view>
-      <view wx:for="{{dateList}}" wx:key="dateStr" class="date-option {{selectedDate === item.dateStr ? 'active' : ''}}" bindtap="selectDateFilter" data-date="{{item.dateStr}}">
-        <text>{{item.dayName}}, {{item.dayNum}}</text>
-      </view>
-    </view>
-  </view>
-</view>
-
-<!-- Location Picker Modal -->
-<view class="modal-overlay" wx:if="{{showLocationModal}}" bindtap="hideLocationModal">
-  <view class="modal-content" catchtap="stopPropagation">
-    <view class="modal-header">
-      <text class="modal-title">Select Location</text>
-      <text class="modal-close" bindtap="hideLocationModal">✕</text>
-    </view>
-    <view class="location-options">
-      <view class="location-option {{selectedLocation === '' ? 'active' : ''}}" bindtap="selectLocationFilter" data-location="">
-        <text>Any Location</text>
-      </view>
-      <view wx:for="{{uniqueLocations}}" wx:key="*this" class="location-option {{selectedLocation === item ? 'active' : ''}}" bindtap="selectLocationFilter" data-location="{{item}}">
-        <text>{{item}}</text>
-      </view>
-    </view>
-  </view>
-</view>
-
-<!-- Price Picker Modal -->
-<view class="modal-overlay" wx:if="{{showPriceModal}}" bindtap="hidePriceModal">
-  <view class="modal-content" catchtap="stopPropagation">
-    <view class="modal-header">
-      <text class="modal-title">Select Price Range</text>
-      <text class="modal-close" bindtap="hidePriceModal">✕</text>
-    </view>
-    <view class="price-options">
-      <view class="price-option {{selectedPrice === '' ? 'active' : ''}}" bindtap="selectPriceFilter" data-price="">
-        <text>Any Price</text>
-      </view>
-      <view class="price-option {{selectedPrice === 'free' ? 'active' : ''}}" bindtap="selectPriceFilter" data-price="free">
-        <text>Free</text>
-      </view>
-      <view class="price-option {{selectedPrice === 'low' ? 'active' : ''}}" bindtap="selectPriceFilter" data-price="low">
-        <text>Under $20</text>
-      </view>
-      <view class="price-option {{selectedPrice === 'medium' ? 'active' : ''}}" bindtap="selectPriceFilter" data-price="medium">
-        <text>$20 - $50</text>
-      </view>
-      <view class="price-option {{selectedPrice === 'high' ? 'active' : ''}}" bindtap="selectPriceFilter" data-price="high">
-        <text>Over $50</text>
-      </view>
+      <text class="nav-label">Tickets</text>
     </view>
   </view>
 </view>

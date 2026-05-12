@@ -16,9 +16,7 @@ Page({
     selectedLocation: '',
     selectedPrice: '',
     uniqueLocations: [],
-    showDateModal: false,
-    showLocationModal: false,
-    showPriceModal: false
+    filterOpen: ''
   },
 
   onLoad: function() {
@@ -80,59 +78,32 @@ Page({
     this.setData({ dateList, currentDate });
   },
 
-  // Filter modal functions
-  showDateFilter: function() {
-    this.setData({ showDateModal: true });
-  },
-
-  hideDateModal: function() {
-    this.setData({ showDateModal: false });
-  },
-
-  showLocationFilter: function() {
-    this.setData({ showLocationModal: true });
-  },
-
-  hideLocationModal: function() {
-    this.setData({ showLocationModal: false });
-  },
-
-  showPriceFilter: function() {
-    this.setData({ showPriceModal: true });
-  },
-
-  hidePriceModal: function() {
-    this.setData({ showPriceModal: false });
-  },
-
-  stopPropagation: function() {
-    // Prevent modal from closing when tapping inside
-  },
-
-  selectDateFilter: function(e) {
-    const date = e.currentTarget.dataset.date || '';
+  // Compact filter toggle functions
+  toggleFilter: function(e) {
+    const type = e.currentTarget.dataset.type;
+    const currentOpen = this.data.filterOpen;
+    
+    // Close if same filter is tapped again, otherwise open the new one
     this.setData({
-      selectedDate: date,
-      showDateModal: false
+      filterOpen: currentOpen === type ? '' : type
     });
-    this.applyFilters();
   },
 
-  selectLocationFilter: function(e) {
-    const location = e.currentTarget.dataset.location || '';
-    this.setData({
-      selectedLocation: location,
-      showLocationModal: false
-    });
-    this.applyFilters();
-  },
-
-  selectPriceFilter: function(e) {
-    const price = e.currentTarget.dataset.price || '';
-    this.setData({
-      selectedPrice: price,
-      showPriceModal: false
-    });
+  selectFilter: function(e) {
+    const type = e.currentTarget.dataset.type;
+    const value = e.currentTarget.dataset.value || '';
+    
+    const updateData = {};
+    if (type === 'date') {
+      updateData.selectedDate = value;
+    } else if (type === 'location') {
+      updateData.selectedLocation = value;
+    } else if (type === 'price') {
+      updateData.selectedPrice = value;
+    }
+    
+    updateData.filterOpen = '';
+    this.setData(updateData);
     this.applyFilters();
   },
 
@@ -140,7 +111,8 @@ Page({
     this.setData({
       selectedDate: '',
       selectedLocation: '',
-      selectedPrice: ''
+      selectedPrice: '',
+      filterOpen: ''
     });
     this.applyFilters();
   },
@@ -188,8 +160,7 @@ Page({
 
     this.setData({
       filteredEvents: filtered,
-      featuredEvents: filtered.slice(0, 5),
-      hasActiveFilters: this.data.selectedDate || this.data.selectedLocation || this.data.selectedPrice
+      featuredEvents: filtered.slice(0, 5)
     });
   },
 
