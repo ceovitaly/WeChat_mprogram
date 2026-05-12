@@ -17,6 +17,13 @@
       </view>
     </view>
   </block>
+  <block wx:elif="{{showAuthButton}}">
+    <view class="auth-card">
+      <text class="auth-title">Welcome to Yue 🎉</text>
+      <text class="auth-sub">Sign in to access your profile and tickets</text>
+      <button class="login-btn" bindtap="onLogin">Sign In with WeChat</button>
+    </view>
+  </block>
   <block wx:else>
     <view class="loading-card">
       <text class="loading-text">Loading...</text>
@@ -39,21 +46,6 @@
   <view class="promo-code-section">
     <text class="promo-code-title">Your Promoter</text>
     <text class="promo-code-value">🌟 {{userInfo.promoterName}}</text>
-  </view>
-</view>
-
-<view class="auth-modal" wx:if="{{showModal}}">
-  <view class="modal-content">
-    <text class="modal-title">Welcome to Yue 🎉</text>
-    <text class="modal-sub">Tell us your name to get started</text>
-    <button class="avatar-wrapper" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-      <image class="modal-avatar" src="{{tempAvatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
-      <text class="edit-hint">Change photo</text>
-    </button>
-    <form bindsubmit="saveProfile">
-      <input type="nickname" name="nickName" class="nick-input" placeholder="Your name *" />
-      <button form-type="submit" class="confirm-btn">Let's Go →</button>
-    </form>
   </view>
 </view>
 

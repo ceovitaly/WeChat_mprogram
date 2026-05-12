@@ -4,8 +4,9 @@ Page({
   data: {
     userInfo: null,
     hasUserInfo: false,
-    showModal: false,
-    tempAvatarUrl: ''
+    showAuthButton: false,
+    tempAvatarUrl: '',
+    tempNickName: ''
   },
 
   onLoad: function() {
@@ -31,43 +32,35 @@ Page({
     db.collection('guests').where({ _openid: openid }).get({
       success: res => {
         if (res.data.length > 0) {
-          this.setData({ userInfo: res.data[0], hasUserInfo: true });
+          this.setData({ userInfo: res.data[0], hasUserInfo: true, showAuthButton: false });
         } else {
-          this.setData({ showModal: true });
+          this.setData({ showAuthButton: true });
         }
       },
       fail: err => console.error("Check user error:", err)
     });
   },
 
-  onChooseAvatar: function(e) {
-    this.setData({ tempAvatarUrl: e.detail.avatarUrl });
-  },
-
-  saveProfile: function(e) {
-    const nickName = e.detail.value.nickName;
-    if (!nickName || !nickName.trim()) {
-      wx.showToast({ title: 'Enter name', icon: 'none' });
-      return;
-    }
-    wx.showLoading({ title: 'Saving...' });
-    const avatarToUpload = this.data.tempAvatarUrl;
-    if (avatarToUpload && !avatarToUpload.startsWith('http')) {
-      this.cloud.uploadFile({
-        cloudPath: `avatars/${Date.now()}.png`,
-        filePath: avatarToUpload,
-        success: res => { this.saveToDatabase(nickName.trim(), res.fileID); },
-        fail: () => {
-          wx.hideLoading();
-          wx.showToast({ title: 'Upload failed', icon: 'none' });
-        }
-      });
-    } else {
-      this.saveToDatabase(nickName.trim(), avatarToUpload || '');
-    }
+  onLogin: function() {
+    wx.getUserProfile({
+      desc: 'Complete your profile',
+      success: (res) => {
+        const userProfile = res.userInfo;
+        this.setData({ 
+          tempAvatarUrl: userProfile.avatarUrl,
+          tempNickName: userProfile.nickName
+        });
+        this.saveToDatabase(userProfile.nickName, userProfile.avatarUrl);
+      },
+      fail: (err) => {
+        console.error("Get user profile failed:", err);
+        wx.showToast({ title: 'Authorization required', icon: 'none' });
+      }
+    });
   },
 
   saveToDatabase: function(nickName, avatarUrl) {
+    wx.showLoading({ title: 'Saving...' });
     const db = this.cloud.database();
     const openid = app.globalData.openid;
     db.collection('guests').where({ _openid: openid }).get({
@@ -77,7 +70,7 @@ Page({
             data: { nickName, avatarUrl },
             success: () => {
               wx.hideLoading();
-              this.setData({ showModal: false });
+              this.setData({ showAuthButton: false });
               this.checkUserInDB();
             },
             fail: err => {
@@ -90,7 +83,7 @@ Page({
             data: { nickName, avatarUrl, createdAt: db.serverDate() },
             success: () => {
               wx.hideLoading();
-              this.setData({ showModal: false });
+              this.setData({ showAuthButton: false });
               this.checkUserInDB();
             },
             fail: err => {
@@ -121,8 +114,9 @@ Page({
           this.setData({
             userInfo: null,
             hasUserInfo: false,
-            showModal: true,
-            tempAvatarUrl: ''
+            showAuthButton: true,
+            tempAvatarUrl: '',
+            tempNickName: ''
           });
         }
       }

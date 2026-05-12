@@ -294,3 +294,39 @@
   padding: 0 45rpx;
   border-radius: 24rpx;
 }
+
+/* ===== AUTH CARD ===== */
+.auth-card {
+  background: #fff;
+  border-radius: 40rpx;
+  padding: 60rpx 40rpx;
+  text-align: center;
+  box-shadow: 0 10rpx 40rpx rgba(0,0,0,0.05);
+}
+
+.auth-title {
+  font-size: 42rpx;
+  font-weight: bold;
+  color: #1c1c1e;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.auth-sub {
+  font-size: 26rpx;
+  color: #8e8e93;
+  display: block;
+  margin-bottom: 40rpx;
+}
+
+.login-btn {
+  background: #34c759;
+  color: #fff;
+  width: 100% !important;
+  height: 100rpx;
+  line-height: 100rpx;
+  border-radius: 50rpx;
+  font-size: 34rpx;
+  font-weight: bold;
+  border: none;
+}
