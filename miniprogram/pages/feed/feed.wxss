@@ -1,70 +1,59 @@
 /* Page-specific styles for feed */
 
-/* Fixed Header with Calendar and Search */
-.feed-header {
+/* WeChat Style Header */
+.wechat-header {
   position: fixed;
   top: var(--safe-top);
   left: 0;
   right: 0;
-  height: calc(88rpx + var(--safe-top));
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32rpx;
-  box-sizing: border-box;
   background-color: var(--header-bg);
   backdrop-filter: blur(20rpx);
   -webkit-backdrop-filter: blur(20rpx);
   z-index: 100;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-}
-
-.calendar-btn {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 50%;
-  background: var(--input-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4rpx 16rpx var(--shadow-color);
-  transition: transform 0.2s;
-}
-
-.calendar-btn:active {
-  transform: scale(0.95);
-}
-
-.calendar-icon {
-  font-size: 40rpx;
-}
-
-.header-right {
-  flex: 1;
-  margin-left: 24rpx;
-  display: flex;
-  align-items: center;
-}
-
-.search-bar {
-  flex: 1;
-  height: 88rpx;
-  background: var(--input-bg);
-  border-radius: 44rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 32rpx;
   box-sizing: border-box;
-  box-shadow: 0 4rpx 16rpx var(--shadow-color);
+}
+
+/* Title Bar - Similar to WeChat */
+.header-title-bar {
+  height: calc(88rpx + var(--safe-top));
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 16rpx;
+  box-sizing: border-box;
+}
+
+.app-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+/* Search Bar with Calendar Icon */
+.header-search-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32rpx 24rpx;
+  box-sizing: border-box;
+}
+
+.search-input-wrapper {
+  flex: 1;
+  height: 72rpx;
+  background: var(--input-bg);
+  border-radius: 36rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  margin-right: 20rpx;
 }
 
 .search-icon-inner {
-  font-size: 36rpx;
-  margin-right: 16rpx;
+  font-size: 32rpx;
+  margin-right: 12rpx;
   color: var(--text-secondary);
 }
 
@@ -73,7 +62,7 @@
   height: 100%;
   background: transparent;
   border: none;
-  font-size: 30rpx;
+  font-size: 28rpx;
   color: var(--text-primary);
 }
 
@@ -81,10 +70,32 @@
   color: var(--text-secondary);
 }
 
+/* Small Calendar Button */
+.calendar-btn-small {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: var(--input-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2rpx 8rpx var(--shadow-color);
+  transition: transform 0.2s;
+}
+
+.calendar-btn-small:active {
+  transform: scale(0.95);
+}
+
+.calendar-icon-small {
+  font-size: 36rpx;
+}
+
 /* Calendar Dropdown */
 .calendar-dropdown {
   position: fixed;
-  top: calc(88rpx + var(--safe-top) + 16rpx);
+  top: calc(88rpx + var(--safe-top) + 16rpx + 72rpx + 24rpx);
   left: 32rpx;
   right: 32rpx;
   background: var(--card-bg);
@@ -143,7 +154,7 @@
 /* Scrollable Content Area */
 .feed-scroll {
   flex: 1;
-  padding-top: calc(88rpx + var(--safe-top) + 32rpx);
+  padding-top: calc(88rpx + var(--safe-top) + 16rpx + 72rpx + 24rpx + 32rpx);
   padding-bottom: calc(160rpx + var(--safe-bottom));
   box-sizing: border-box;
   overflow: hidden;

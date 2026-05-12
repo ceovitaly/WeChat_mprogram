@@ -1,14 +1,15 @@
 <!--pages/feed/feed.wxml-->
 <view class="page-container">
-  <!-- Fixed Header with Calendar and Search -->
-  <view class="common-header feed-header">
-    <view class="header-left">
-      <view class="calendar-btn" bindtap="toggleCalendar">
-        <text class="calendar-icon">📅</text>
-      </view>
+  <!-- WeChat Style Header -->
+  <view class="wechat-header">
+    <!-- Title Bar -->
+    <view class="header-title-bar">
+      <text class="app-title">Event App</text>
     </view>
-    <view class="header-right">
-      <view class="search-bar">
+    
+    <!-- Search Bar with Calendar -->
+    <view class="header-search-bar">
+      <view class="search-input-wrapper">
         <text class="search-icon-inner">🔍</text>
         <input 
           class="search-input-header" 
@@ -20,15 +21,18 @@
           bindconfirm="onSearchConfirm" 
         />
       </view>
+      <view class="calendar-btn-small" bindtap="toggleCalendar">
+        <text class="calendar-icon-small">📅</text>
+      </view>
     </view>
-  </view>
-  
-  <!-- Calendar Dropdown Panel -->
-  <view class="calendar-dropdown {{showCalendar ? 'active' : ''}}">
-    <view class="calendar-grid">
-      <view wx:for="{{dateList}}" wx:key="dateStr" class="calendar-day {{selectedDate === item.dateStr ? 'selected' : ''}}" bindtap="selectDate" data-date="{{item.dateStr}}">
-        <text class="calendar-day-num">{{item.dayNum}}</text>
-        <text class="calendar-day-name">{{item.dayName}}</text>
+
+    <!-- Calendar Dropdown Panel -->
+    <view class="calendar-dropdown {{showCalendar ? 'active' : ''}}">
+      <view class="calendar-grid">
+        <view wx:for="{{dateList}}" wx:key="dateStr" class="calendar-day {{selectedDate === item.dateStr ? 'selected' : ''}}" bindtap="selectDate" data-date="{{item.dateStr}}">
+          <text class="calendar-day-num">{{item.dayNum}}</text>
+          <text class="calendar-day-name">{{item.dayName}}</text>
+        </view>
       </view>
     </view>
   </view>
