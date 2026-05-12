@@ -131,12 +131,7 @@ Page({
     this.setData({ filteredEvents: filtered });
   },
 
-  onSearchInput: function(e) {
-    this.setData({ searchKeyword: e.detail.value });
-    this.applyFilters();
-  },
-
-  onSearchConfirm: function(e) {
+  onSearch: function(e) {
     this.setData({ searchKeyword: e.detail.value });
     this.applyFilters();
   },

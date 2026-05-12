@@ -1,9 +1,13 @@
 <!--pages/feed/feed.wxml-->
 <view class="page-container">
-  <!-- Calendar Button -->
-  <view class="calendar-btn-wrapper">
+  <!-- Header Controls: Calendar Button + Search Bar -->
+  <view class="header-controls">
     <view class="calendar-btn" bindtap="toggleCalendar">
       <text class="calendar-icon">📅</text>
+    </view>
+    <view class="search-bar">
+      <text class="search-icon">🔍</text>
+      <input class="search-input" placeholder="Search events..." confirm-type="search" bindconfirm="onSearch" />
     </view>
   </view>
 
