@@ -107,43 +107,6 @@ Page({
     });
   },
 
-  scanQR: function() {
-    wx.scanCode({
-      onlyFromCamera: true,
-      success: (res) => {
-        const data = res.result;
-        if (data.startsWith('promoter_invite:')) {
-          const token = data.replace('promoter_invite:', '');
-          this.applyPromoterRole(token);
-        } else {
-          wx.showToast({ title: 'Invalid QR', icon: 'none' });
-        }
-      },
-      fail: () => {}
-    });
-  },
-
-  applyPromoterRole: function(token) {
-    wx.showLoading({ title: 'Applying...', mask: true });
-    const openid = app.globalData.openid;
-    this.cloud.callFunction({
-      name: 'assignPromoter',
-      data: { token, openid }
-    }).then(res => {
-      wx.hideLoading();
-      if (res.result && res.result.success) {
-        wx.vibrateShort();
-        wx.showToast({ title: 'You are now a Promoter!', icon: 'success' });
-        this.checkUserInDB();
-      } else {
-        wx.showToast({ title: res.result.message || 'Error', icon: 'none' });
-      }
-    }).catch(() => {
-      wx.hideLoading();
-      wx.showToast({ title: 'Error', icon: 'none' });
-    });
-  },
-
   goToTickets: function() {
     wx.switchTab({ url: '/pages/mytickets/mytickets' });
   },

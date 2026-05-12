@@ -29,10 +29,6 @@
     <text class="menu-text">My Tickets</text>
     <text class="arrow">›</text>
   </view>
-  <view class="menu-item" bindtap="scanQR">
-    <text class="menu-text">Scan QR</text>
-    <text class="arrow">›</text>
-  </view>
   <view class="menu-item" bindtap="logout">
     <text class="menu-text logout-text">Log Out</text>
     <text class="arrow">›</text>
