@@ -1,39 +1,39 @@
 <!--pages/feed/feed.wxml-->
 <view class="container">
-  <!-- Custom Header with Avatar and Tickets -->
+  <!-- Fixed Header with Avatar and Tickets -->
   <view class="header" style="padding-top: {{statusBarHeight}}px;">
-    <view class="header-left">
+    <view class="header-icons">
+      <view class="icon-btn avatar-btn" bindtap="goToProfile">
+        <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" class="icon-img avatar" />
+        <view wx:else class="avatar-placeholder">?</view>
+      </view>
       <view class="icon-btn ticket-btn" bindtap="goToTickets">
         <image src="/images/ticket-icon.svg" mode="aspectFit" class="icon-img" />
-      </view>
-    </view>
-    <view class="header-right">
-      <view class="avatar-wrapper" bindtap="goToProfile">
-        <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" class="avatar" />
-        <view wx:else class="avatar-placeholder">?</view>
       </view>
     </view>
   </view>
   
   <!-- Main Scrollable Content -->
-  <scroll-view class="main-scroll" scroll-y enable-flex enhanced show-scrollbar="{{false}}">
+  <scroll-view class="main-scroll" scroll-y enable-flex enhanced show-scrollbar="{{false}}" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
     <!-- Featured Events Slider -->
-    <view class="section-title">Highlights</view>
-    <swiper class="featured-swiper" indicator-dots autoplay circular interval="3000">
-      <swiper-item wx:for="{{featuredEvents}}" wx:key="_id">
-        <view class="slide-card" bindtap="goToDetail" data-id="{{item._id}}">
-          <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="slide-image" />
-          <view class="slide-overlay">
-            <text class="slide-title">{{item.title}}</text>
-            <text class="slide-date">{{item.date}}</text>
+    <view class="featured-section">
+      <view class="section-title">Highlights</view>
+      <swiper class="featured-swiper" indicator-dots autoplay circular interval="3000">
+        <swiper-item wx:for="{{featuredEvents}}" wx:key="_id">
+          <view class="slide-card" bindtap="goToDetail" data-id="{{item._id}}">
+            <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="slide-image" />
+            <view class="slide-overlay">
+              <text class="slide-title">{{item.title}}</text>
+              <text class="slide-date">{{item.date}}</text>
+            </view>
           </view>
-        </view>
-      </swiper-item>
-    </swiper>
-    <view wx:if="{{featuredEvents.length === 0 && !loading}}" class="empty-state">No featured events</view>
+        </swiper-item>
+      </swiper>
+      <view wx:if="{{featuredEvents.length === 0 && !loading}}" class="empty-state">No featured events</view>
+    </view>
   
     <!-- Date Picker Strip -->
-    <view class="date-strip-container">
+    <view class="date-strip-section">
       <scroll-view scroll-x class="date-strip" enable-flex>
         <view 
           wx:for="{{dateList}}" 
@@ -50,32 +50,34 @@
     </view>
   
     <!-- Event List -->
-    <view class="section-title">Upcoming Events</view>
-    <view class="event-list">
-      <view 
-        wx:for="{{filteredEvents}}" 
-        wx:key="_id" 
-        class="event-card"
-        bindtap="goToDetail"
-        data-id="{{item._id}}"
-      >
-        <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="event-img" />
-        <view class="event-info">
-          <text class="event-title">{{item.title}}</text>
-          <view class="event-meta">
-            <text class="event-date">📅 {{item.date}} | {{item.time}}</text>
-            <text class="event-location">📍 {{item.venue || 'No location'}}</text>
-          </view>
-          <view class="event-footer">
-            <text class="buy-btn">Buy Ticket</text>
+    <view class="event-list-section">
+      <view class="section-title">Upcoming Events</view>
+      <view class="event-list">
+        <view 
+          wx:for="{{filteredEvents}}" 
+          wx:key="_id" 
+          class="event-card"
+          bindtap="goToDetail"
+          data-id="{{item._id}}"
+        >
+          <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="event-img" />
+          <view class="event-info">
+            <text class="event-title">{{item.title}}</text>
+            <view class="event-meta">
+              <text class="event-date">📅 {{item.date}} | {{item.time}}</text>
+              <text class="event-location">📍 {{item.venue || 'No location'}}</text>
+            </view>
+            <view class="event-footer">
+              <text class="buy-btn">Buy Ticket</text>
+            </view>
           </view>
         </view>
       </view>
+      <view wx:if="{{filteredEvents.length === 0 && !loading}}" class="empty-list">No events for this date</view>
     </view>
-    <view wx:if="{{filteredEvents.length === 0 && !loading}}" class="empty-list">No events for this date</view>
     
     <!-- Loading -->
-    <view wx:if="{{loading}}" class="loading-mask">
+    <view wx:if="{{loading && events.length === 0}}" class="loading-mask">
       <text>Loading...</text>
     </view>
   </scroll-view>

@@ -6,19 +6,27 @@ __pycache__/
 *.obj
 dist/
 build/
-*.wxss
-*.wxml
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
 
 # Dependencies
+.venv/
+venv/
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+.julia/
+.zig-cache/
+target/
+.gradle/
 
 # Logs and temp files
 *.log
 *.tmp
 *.swp
+*.swo
 
 # Environment
 .env
@@ -31,12 +39,16 @@ yarn-error.log*
 *.swp
 *.swo
 
-# OS generated files
+# System files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Cache
+.mypy_cache/
+.pytest_cache/
 ```
