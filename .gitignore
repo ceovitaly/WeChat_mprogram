@@ -25,40 +25,24 @@ venv/
 .vscode/
 .idea/
 
-# OS generated files
+# OS specific
 .DS_Store
 Thumbs.db
 
-# Coverage reports
+# Coverage
 coverage/
 htmlcov/
 .coverage
 
 # Python specific
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
 .Python
-*.egg-info/
-.eggs/
+*.so
 
-# JavaScript/Node specific
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-node_modules/
-jspm_packages/
-
-# IDE specific
-*.swp
-*.swo
-
-# Testing
-.pytest_cache/
-.mypy_cache/
-.tox/
-
-# Compression
+# Compressed files
 *.zip
 *.gz
 *.tar
@@ -68,17 +52,4 @@ jspm_packages/
 *.7z
 *.rar
 *.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
 ```

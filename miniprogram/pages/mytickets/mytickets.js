@@ -5,12 +5,26 @@ Page({
     tickets: [],
     isLoading: false
   },
+  
+  onLoad() {
+    this.updateTabBar(1);
+  },
 
   onShow() {
+    this.updateTabBar(1);
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this.fetchTickets();
     });
+  },
+
+  updateTabBar(index) {
+    const tabBar = this.getTabBar();
+    if (tabBar && typeof tabBar.updateActive === 'function') {
+      tabBar.updateActive(index);
+    } else if (tabBar && tabBar.data.selected !== index) {
+      tabBar.setData({ selected: index });
+    }
   },
 
   fetchTickets: async function() {

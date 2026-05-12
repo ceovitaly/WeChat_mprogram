@@ -5,32 +5,33 @@ const LIST = [
 ]
 
 Component({
-  data: { selected: 0, list: LIST },
-
+  data: { selected: -1, list: LIST },
+  
   pageLifetimes: {
     show() { this._sync() }
   },
-
+  
   methods: {
     _sync() {
       const pages = getCurrentPages()
       const cur = pages[pages.length - 1]
       const path = cur ? '/' + cur.route : ''
       const idx = LIST.findIndex(i => i.pagePath === path)
-      // Обновляем selected только если путь изменился
-      if (this.data.selected !== idx && idx >= 0) {
+      
+      // Всегда обновляем selected при совпадении пути
+      if (idx >= 0 && this.data.selected !== idx) {
         this.setData({ selected: idx })
       } else if (idx < 0) {
         // Если текущая страница не в списке таббаров (например event-detail),
-        // пытаемся определить родительскую таб-страницу
-        const parentTabIdx = pages.slice(0, -1).reverse().findIndex(p => {
-          return LIST.some(i => i.pagePath === '/' + p.route)
-        })
-        if (parentTabIdx >= 0) {
-          const parentRoute = pages[pages.length - 2 - parentTabIdx].route
-          const parentIdx = LIST.findIndex(i => i.pagePath === '/' + parentRoute)
-          if (parentIdx >= 0) {
-            this.setData({ selected: parentIdx })
+        // ищем последнюю таб-страницу в стеке
+        for (let i = pages.length - 1; i >= 0; i--) {
+          const route = '/' + pages[i].route
+          const tabIdx = LIST.findIndex(t => t.pagePath === route)
+          if (tabIdx >= 0) {
+            if (this.data.selected !== tabIdx) {
+              this.setData({ selected: tabIdx })
+            }
+            break
           }
         }
       }
@@ -38,8 +39,9 @@ Component({
 
     switchTab(e) {
       const { path, index } = e.currentTarget.dataset
-      if (this.data.selected === index) return
+      // Сначала обновляем визуальное состояние
       this.setData({ selected: index })
+      // Затем выполняем переход
       wx.switchTab({ url: path })
     }
   }

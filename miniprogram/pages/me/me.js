@@ -8,8 +8,9 @@ Page({
     tempAvatarUrl: '',
     tempNickName: ''
   },
-
+  
   onLoad: function() {
+    this.updateTabBar(2);
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this.checkUserInDB();
@@ -17,8 +18,18 @@ Page({
   },
 
   onShow: function() {
+    this.updateTabBar(2);
     if (this.data.hasUserInfo) {
       this.checkUserInDB();
+    }
+  },
+
+  updateTabBar(index) {
+    const tabBar = this.getTabBar();
+    if (tabBar && typeof tabBar.updateActive === 'function') {
+      tabBar.updateActive(index);
+    } else if (tabBar && tabBar.data.selected !== index) {
+      tabBar.setData({ selected: index });
     }
   },
 

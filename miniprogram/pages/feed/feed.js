@@ -6,19 +6,17 @@ Page({
     loading: true,
     lastUpdateTime: null
   },
-
+  
   onLoad: function() {
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this.loadEventsFromCacheOrFetch();
     });
-  },
-
-  onPullDownRefresh: function() {
-    this.fetchEvents(true);
+    this.updateTabBar(0);
   },
 
   onShow: function() {
+    this.updateTabBar(0);
     // Проверяем наличие новых данных при возврате на страницу
     if (!this.data.loading && this.data.lastUpdateTime) {
       const now = Date.now();
@@ -27,6 +25,19 @@ Page({
         this.fetchEvents();
       }
     }
+  },
+
+  updateTabBar(index) {
+    const tabBar = this.getTabBar();
+    if (tabBar && typeof tabBar.updateActive === 'function') {
+      tabBar.updateActive(index);
+    } else if (tabBar && tabBar.data.selected !== index) {
+      tabBar.setData({ selected: index });
+    }
+  },
+  
+  onPullDownRefresh: function() {
+    this.fetchEvents(true);
   },
 
   loadEventsFromCacheOrFetch: function() {
