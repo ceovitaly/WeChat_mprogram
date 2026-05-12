@@ -7,12 +7,11 @@
 /* Fixed Header with Avatar and Tickets */
 .header {
   position: fixed;
-  top: 0;
+  top: env(safe-area-inset-top);
   left: 0;
   right: 0;
   z-index: 1000;
   background: transparent;
-  padding-top: env(safe-area-inset-top);
   pointer-events: none;
 }
 
@@ -20,13 +19,13 @@
   display: flex;
   align-items: center;
   gap: 20rpx;
-  padding: 20rpx 30rpx;
+  padding: 24rpx 32rpx;
   pointer-events: auto;
 }
 
 .icon-btn {
-  width: 80rpx;
-  height: 80rpx;
+  width: 88rpx;
+  height: 88rpx;
   border-radius: 50%;
   background: #fff;
   display: flex;
@@ -34,6 +33,7 @@
   justify-content: center;
   box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .icon-img {
@@ -265,7 +265,7 @@
 /* Main Scroll View */
 .main-scroll {
   height: 100vh;
-  padding-top: calc(env(safe-area-inset-top) + 120rpx);
+  padding-top: calc(env(safe-area-inset-top) + 140rpx);
   box-sizing: border-box;
 }
 
