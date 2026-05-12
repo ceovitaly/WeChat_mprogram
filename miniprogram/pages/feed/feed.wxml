@@ -14,66 +14,69 @@
       </view>
     </view>
   </view>
-
-  <!-- Featured Events Slider -->
-  <view class="section-title">Highlights</view>
-  <swiper class="featured-swiper" indicator-dots autoplay circular interval="3000">
-    <swiper-item wx:for="{{featuredEvents}}" wx:key="_id">
-      <view class="slide-card" bindtap="goToDetail" data-id="{{item._id}}">
-        <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="slide-image" />
-        <view class="slide-overlay">
-          <text class="slide-title">{{item.title}}</text>
-          <text class="slide-date">{{item.date}}</text>
+  
+  <!-- Main Scrollable Content -->
+  <scroll-view class="main-scroll" scroll-y enable-flex enhanced show-scrollbar="{{false}}">
+    <!-- Featured Events Slider -->
+    <view class="section-title">Highlights</view>
+    <swiper class="featured-swiper" indicator-dots autoplay circular interval="3000">
+      <swiper-item wx:for="{{featuredEvents}}" wx:key="_id">
+        <view class="slide-card" bindtap="goToDetail" data-id="{{item._id}}">
+          <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="slide-image" />
+          <view class="slide-overlay">
+            <text class="slide-title">{{item.title}}</text>
+            <text class="slide-date">{{item.date}}</text>
+          </view>
         </view>
-      </view>
-    </swiper-item>
-  </swiper>
-  <view wx:if="{{featuredEvents.length === 0 && !loading}}" class="empty-state">No featured events</view>
-
-  <!-- Date Picker Strip -->
-  <view class="date-strip-container">
-    <scroll-view scroll-x class="date-strip" enable-flex>
+      </swiper-item>
+    </swiper>
+    <view wx:if="{{featuredEvents.length === 0 && !loading}}" class="empty-state">No featured events</view>
+  
+    <!-- Date Picker Strip -->
+    <view class="date-strip-container">
+      <scroll-view scroll-x class="date-strip" enable-flex>
+        <view 
+          wx:for="{{dateList}}" 
+          wx:key="dateStr" 
+          class="date-item {{currentDate === item.dateStr ? 'active' : ''}}"
+          bindtap="selectDate"
+          data-date="{{item.dateStr}}"
+          data-full-date="{{item.fullDate}}"
+        >
+          <text class="day-name">{{item.dayName}}</text>
+          <text class="day-num">{{item.dayNum}}</text>
+        </view>
+      </scroll-view>
+    </view>
+  
+    <!-- Event List -->
+    <view class="section-title">Upcoming Events</view>
+    <view class="event-list">
       <view 
-        wx:for="{{dateList}}" 
-        wx:key="dateStr" 
-        class="date-item {{currentDate === item.dateStr ? 'active' : ''}}"
-        bindtap="selectDate"
-        data-date="{{item.dateStr}}"
-        data-full-date="{{item.fullDate}}"
+        wx:for="{{filteredEvents}}" 
+        wx:key="_id" 
+        class="event-card"
+        bindtap="goToDetail"
+        data-id="{{item._id}}"
       >
-        <text class="day-name">{{item.dayName}}</text>
-        <text class="day-num">{{item.dayNum}}</text>
-      </view>
-    </scroll-view>
-  </view>
-
-  <!-- Event List -->
-  <view class="section-title">Upcoming Events</view>
-  <view class="event-list">
-    <view 
-      wx:for="{{filteredEvents}}" 
-      wx:key="_id" 
-      class="event-card"
-      bindtap="goToDetail"
-      data-id="{{item._id}}"
-    >
-      <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="event-img" />
-      <view class="event-info">
-        <text class="event-title">{{item.title}}</text>
-        <view class="event-meta">
-          <text class="event-date">📅 {{item.date}} | {{item.time}}</text>
-          <text class="event-location">📍 {{item.venue || 'No location'}}</text>
-        </view>
-        <view class="event-footer">
-          <text class="buy-btn">Buy Ticket</text>
+        <image src="{{item.promoImage || '/images/placeholder.png'}}" mode="aspectFill" class="event-img" />
+        <view class="event-info">
+          <text class="event-title">{{item.title}}</text>
+          <view class="event-meta">
+            <text class="event-date">📅 {{item.date}} | {{item.time}}</text>
+            <text class="event-location">📍 {{item.venue || 'No location'}}</text>
+          </view>
+          <view class="event-footer">
+            <text class="buy-btn">Buy Ticket</text>
+          </view>
         </view>
       </view>
     </view>
-  </view>
-  <view wx:if="{{filteredEvents.length === 0 && !loading}}" class="empty-list">No events for this date</view>
-
-  <!-- Loading -->
-  <view wx:if="{{loading}}" class="loading-mask">
-    <text>Loading...</text>
-  </view>
+    <view wx:if="{{filteredEvents.length === 0 && !loading}}" class="empty-list">No events for this date</view>
+    
+    <!-- Loading -->
+    <view wx:if="{{loading}}" class="loading-mask">
+      <text>Loading...</text>
+    </view>
+  </scroll-view>
 </view>
