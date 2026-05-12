@@ -1,7 +1,8 @@
 {
   "usingComponents": {},
-  "navigationStyle": "custom",
-  "navigationBarTitleText": "",
+  "navigationBarTitleText": "Event App",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black",
   "enablePullDownRefresh": true,
   "backgroundTextStyle": "dark"
 }

@@ -1,42 +1,5 @@
 <!--pages/feed/feed.wxml-->
 <view class="page-container">
-  <!-- WeChat Style Header -->
-  <view class="wechat-header">
-    <!-- Title Bar -->
-    <view class="header-title-bar">
-      <text class="app-title">Event App</text>
-    </view>
-    
-    <!-- Search Bar with Calendar -->
-    <view class="header-search-bar">
-      <view class="search-input-wrapper">
-        <text class="search-icon-inner">🔍</text>
-        <input 
-          class="search-input-header" 
-          placeholder="Search events..." 
-          placeholder-class="search-placeholder" 
-          value="{{searchKeyword}}" 
-          bindinput="onSearchInput" 
-          confirm-type="search" 
-          bindconfirm="onSearchConfirm" 
-        />
-      </view>
-      <view class="calendar-btn-small" bindtap="toggleCalendar">
-        <text class="calendar-icon-small">📅</text>
-      </view>
-    </view>
-
-    <!-- Calendar Dropdown Panel -->
-    <view class="calendar-dropdown {{showCalendar ? 'active' : ''}}">
-      <view class="calendar-grid">
-        <view wx:for="{{dateList}}" wx:key="dateStr" class="calendar-day {{selectedDate === item.dateStr ? 'selected' : ''}}" bindtap="selectDate" data-date="{{item.dateStr}}">
-          <text class="calendar-day-num">{{item.dayNum}}</text>
-          <text class="calendar-day-name">{{item.dayName}}</text>
-        </view>
-      </view>
-    </view>
-  </view>
-  
   <!-- Main Scrollable Content -->
   <scroll-view class="scroll-content feed-scroll" scroll-y enable-flex enhanced show-scrollbar="false" bindrefresherrefresh="onPullDownRefresh" refresher-triggered="{{loading}}">
     <!-- Event List -->

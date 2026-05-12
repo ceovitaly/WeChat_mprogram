@@ -1,80 +1,51 @@
 ```gitignore
-# Mini-program specific
-miniprogram/.npm/
-miniprogram/dist/
-miniprogram/node_modules/
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+dist/
+build/
+target/
 
 # Dependencies
 node_modules/
-.mini/
-.npm/
-
-# Logs
-*.log
-
-# Environment
+venv/
+.venv/
 .env
 .env.local
 .env.*
 
-# IDE
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Editors
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Build outputs
-dist/
-build/
-target/
+# Coverage reports
 coverage/
 htmlcov/
-.mypy_cache/
-.pytest_cache/
-.gradle/
-.cargo/
-zig-cache/
-zig-out/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.so
-*.egg-info/
-.Python
-pip-log.txt
-.tox/
 .coverage
 
-# JavaScript/Node
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# MyPy cache
+.mypy_cache/
 
-# Java
-*.class
-*.jar
-*.war
-*.ear
-hs_err_pid*
+# Pytest cache
+.pytest_cache/
 
-# C/C++
-*.o
-*.obj
-*.a
-*.lib
-*.so
-*.dylib
-*.dll
-*.exe
+# Gradle
+.gradle/
 
-# Compressed
+# Julia
+julia-*/
+
+# Zig
+zig*/
+
+# Compression artifacts
 *.zip
 *.gz
 *.tar
