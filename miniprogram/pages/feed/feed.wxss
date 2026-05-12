@@ -1,11 +1,11 @@
 /* Page-specific styles for feed */
 
-/* Section Title */
+/* Section Title - Moved up closer to header */
 .section-title {
   font-size: 32rpx;
   font-weight: 600;
   color: #000;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
   padding-left: 4rpx;
 }
 

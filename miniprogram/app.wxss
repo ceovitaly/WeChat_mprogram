@@ -106,7 +106,7 @@ page {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 48rpx;
+  gap: 32rpx;
   z-index: 1000;
   pointer-events: none;
 }
@@ -122,7 +122,7 @@ page {
   justify-content: center;
   pointer-events: auto;
   transition: transform 0.2s;
-  border: 4rpx solid #F2F2F7;
+  border: none;
 }
 
 .nav-circle:active {
@@ -133,6 +133,12 @@ page {
   width: 56rpx;
   height: 56rpx;
   fill: #333;
+}
+
+.nav-icon-placeholder {
+  font-size: 48rpx;
+  color: #ccc;
+  font-weight: bold;
 }
 
 /* ── Common Buttons ── */

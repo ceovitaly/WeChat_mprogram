@@ -86,6 +86,38 @@
   color: #999;
 }
 
+/* ===== PAST EVENTS CARD ===== */
+.past-events-card {
+  padding: 32rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.past-events-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.past-events-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.past-events-arrow {
+  font-size: 40rpx;
+  color: rgba(255,255,255,0.8);
+}
+
+.past-events-sub {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.8);
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;

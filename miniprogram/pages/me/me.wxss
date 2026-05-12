@@ -14,11 +14,33 @@
   font-size: 28rpx;
 }
 
+/* ===== AUTH CARD ===== */
+.auth-card {
+  text-align: center;
+  padding: 48rpx 32rpx;
+}
+
+.auth-title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #1c1c1e;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.auth-sub {
+  font-size: 26rpx;
+  color: #8e8e93;
+  display: block;
+  margin-bottom: 32rpx;
+}
+
 /* ===== PROFILE CARD ===== */
 .profile-card {
   display: flex;
   align-items: center;
   gap: 24rpx;
+  padding: 32rpx;
 }
 
 .avatar {
@@ -63,36 +85,17 @@
   color: #8e8e93;
 }
 
-/* ===== AUTH CARD ===== */
-.auth-card {
-  text-align: center;
-}
-
-.auth-title {
-  font-size: 40rpx;
-  font-weight: bold;
-  color: #1c1c1e;
-  display: block;
-  margin-bottom: 16rpx;
-}
-
-.auth-sub {
-  font-size: 26rpx;
-  color: #8e8e93;
-  display: block;
-  margin-bottom: 32rpx;
-}
-
 /* ===== PROMO DISPLAY CARD ===== */
 .promo-display-card {
   padding: 32rpx;
+  margin-top: 24rpx;
 }
 
 .promo-code-title {
   font-size: 26rpx;
   color: #8e8e93;
   display: block;
-  margin-bottom: 20rpx;
+  margin-bottom: 12rpx;
 }
 
 .promo-code-value {
@@ -101,39 +104,15 @@
   color: #1c1c1e;
 }
 
-/* ===== MENU LIST ===== */
-.menu-list {
-  overflow: hidden;
+/* ===== BOTTOM SPACER ===== */
+.bottom-spacer {
+  flex: 1;
+  min-height: 200rpx;
 }
 
-.menu-item {
-  padding: 32rpx;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1rpx solid #f5f5f5;
-  background: #fff;
-  min-height: 88rpx;
-  box-sizing: border-box;
-}
-
-.menu-item:active {
-  background: #f9f9f9;
-}
-
-.menu-text {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #1c1c1e;
-}
-
-.logout-text {
-  color: #ff3b30;
-}
-
-.arrow {
-  font-size: 40rpx;
-  color: #c7c7cc;
+/* ===== LOGOUT SECTION ===== */
+.logout-section {
+  padding: 0 32rpx 32rpx;
 }
 
 /* ===== MODAL ===== */

@@ -10,6 +10,17 @@
   </view>
   
   <scroll-view class="scroll-content" scroll-y enhanced show-scrollbar="false">
+    <!-- Past Events Section -->
+    <view class="section">
+      <view class="card past-events-card" bindtap="goToPastEvents">
+        <view class="past-events-header">
+          <text class="past-events-title">Past Events</text>
+          <text class="past-events-arrow">›</text>
+        </view>
+        <text class="past-events-sub">View your event history</text>
+      </view>
+    </view>
+
     <view wx:if="{{isLoading}}" class="loading">
       <text>Loading...</text>
     </view>

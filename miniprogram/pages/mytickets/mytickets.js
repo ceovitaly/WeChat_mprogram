@@ -20,6 +20,10 @@ Page({
     wx.navigateBack({ delta: 1 });
   },
 
+  goToPastEvents: function() {
+    wx.navigateTo({ url: '/pages/pastevents/pastevents' });
+  },
+
   fetchTickets: async function() {
     const openid = app.globalData.openid;
     if (!openid) return;

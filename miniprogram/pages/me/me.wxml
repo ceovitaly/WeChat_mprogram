@@ -28,6 +28,12 @@
         </view>
       </view>
 
+      <!-- Promoter Info Card -->
+      <view class="card promo-display-card" wx:if="{{hasUserInfo && userInfo.promoterId}}">
+        <text class="promo-code-title">Your Promoter</text>
+        <text class="promo-code-value">🌟 {{userInfo.promoterName}}</text>
+      </view>
+
       <!-- Auth Card -->
       <view class="card auth-card" wx:elif="{{showAuthButton}}">
         <text class="auth-title">Welcome to Yue 🎉</text>
@@ -41,26 +47,11 @@
       </view>
     </view>
 
-    <!-- Promoter Info -->
-    <view class="section" wx:if="{{hasUserInfo && userInfo.promoterId}}">
-      <view class="card promo-display-card">
-        <text class="promo-code-title">Your Promoter</text>
-        <text class="promo-code-value">🌟 {{userInfo.promoterName}}</text>
-      </view>
-    </view>
-
-    <!-- Menu List -->
-    <view class="section" wx:if="{{hasUserInfo}}">
-      <view class="card menu-list">
-        <view class="menu-item" bindtap="logout">
-          <text class="menu-text logout-text">Log Out</text>
-          <text class="arrow">›</text>
-        </view>
-      </view>
-    </view>
+    <!-- Spacer to push logout button to bottom -->
+    <view class="bottom-spacer"></view>
 
     <!-- Logout Button at Bottom -->
-    <view class="section" wx:if="{{hasUserInfo}}">
+    <view class="section logout-section" wx:if="{{hasUserInfo}}">
       <button class="btn-full btn-danger" bindtap="logout">Log Out</button>
     </view>
   </scroll-view>
