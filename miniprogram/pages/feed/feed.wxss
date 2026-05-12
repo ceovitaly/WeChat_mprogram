@@ -15,10 +15,36 @@
   bottom: 0;
 }
 
+/* Calendar Button Wrapper */
+.calendar-btn-wrapper {
+  position: fixed;
+  top: calc(44rpx + var(--safe-top));
+  left: 32rpx;
+  z-index: 100;
+}
+
+/* Calendar Button */
+.calendar-btn {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background-color: var(--card-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx var(--shadow-color);
+  border: 1rpx solid var(--border-color);
+}
+
+.calendar-icon {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
 /* Scrollable Content Area */
 .feed-scroll {
   flex: 1;
-  padding-top: calc(24rpx + var(--safe-top));
+  padding-top: calc(140rpx + var(--safe-top));
   padding-bottom: calc(160rpx + var(--safe-bottom));
   padding-left: 32rpx;
   padding-right: 32rpx;
@@ -136,4 +162,107 @@
   padding: 80rpx;
   color: var(--text-secondary);
   font-size: 28rpx;
+}
+
+/* Calendar Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Calendar Modal */
+.calendar-modal {
+  width: 600rpx;
+  background-color: var(--card-bg);
+  border-radius: 32rpx;
+  padding: 40rpx 32rpx;
+  box-shadow: 0 16rpx 48rpx var(--shadow-color);
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Calendar Header */
+.calendar-header {
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.calendar-month {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Calendar Grid */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12rpx;
+}
+
+/* Calendar Weekday */
+.calendar-weekday {
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 16rpx 0;
+}
+
+/* Calendar Day */
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: var(--text-primary);
+  border-radius: 16rpx;
+  background-color: transparent;
+  transition: all 0.2s;
+}
+
+.calendar-day:not(.empty):active {
+  transform: scale(0.9);
+}
+
+.calendar-day.today {
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: 700;
+}
+
+.calendar-day.selected:not(.today) {
+  background-color: var(--secondary-color);
+  color: #fff;
+}
+
+.calendar-day.empty {
+  visibility: hidden;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(40rpx);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

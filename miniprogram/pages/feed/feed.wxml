@@ -1,5 +1,12 @@
 <!--pages/feed/feed.wxml-->
 <view class="page-container">
+  <!-- Calendar Button -->
+  <view class="calendar-btn-wrapper">
+    <view class="calendar-btn" bindtap="toggleCalendar">
+      <text class="calendar-icon">📅</text>
+    </view>
+  </view>
+
   <!-- Main Scrollable Content -->
   <scroll-view 
     class="scroll-content feed-scroll" 
@@ -51,6 +58,33 @@
     <view class="nav-circle" bindtap="goToProfile">
       <image wx:if="{{userInfo && userInfo.avatarUrl}}" src="{{userInfo.avatarUrl}}" mode="aspectFill" class="nav-icon" style="border-radius: 50%;" />
       <text wx:else class="nav-icon-placeholder">?</text>
+    </view>
+  </view>
+
+  <!-- Calendar Modal -->
+  <view wx:if="{{showCalendar}}" class="modal-overlay" bindtap="toggleCalendar">
+    <view class="calendar-modal" catchtap="stopPropagation">
+      <view class="calendar-header">
+        <text class="calendar-month">{{currentMonth}}</text>
+      </view>
+      <view class="calendar-grid">
+        <view class="calendar-weekday">Sun</view>
+        <view class="calendar-weekday">Mon</view>
+        <view class="calendar-weekday">Tue</view>
+        <view class="calendar-weekday">Wed</view>
+        <view class="calendar-weekday">Thu</view>
+        <view class="calendar-weekday">Fri</view>
+        <view class="calendar-weekday">Sat</view>
+        <view 
+          wx:for="{{calendarDays}}" 
+          wx:key="date"
+          class="calendar-day {{item.isToday ? 'today' : ''}} {{selectedDate === item.date ? 'selected' : ''}} {{item.isEmpty ? 'empty' : ''}}"
+          bindtap="selectDate"
+          data-date="{{item.date}}"
+        >
+          {{item.day}}
+        </view>
+      </view>
     </view>
   </view>
 </view>

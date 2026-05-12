@@ -1,72 +1,49 @@
 ```
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-*.o
-*.obj
-dist/
-build/
-*.class
-*.exe
-*.dll
-*.so
-*.a
-*.out
+# WeChat Mini Program specific ignores
+miniprogram/.swan/
+miniprogram/dist/
+miniprogram/build/
+miniprogram/node_modules/
 
 # Dependencies
-.venv/
-venv/
 node_modules/
-.mypy_cache/
-.pytest_cache/
-target/
-.gradle/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Logs and temp files
+# Logs
 *.log
-*.tmp
+
+# Runtime data
+.pid
+.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output/
+
+# Temporary folders
+tmp/
+temp/
+
+# Environment variables
+.env
+.env.local
+.env.*
+!.env.example
+
+# IDE files
+.vscode/
+.idea/
 *.swp
 *.swo
 
-# Environment
-.env
-.env.local
-*.env.*
-
-# Editors
-.vscode/
-.idea/
-
-# System files
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
 ```

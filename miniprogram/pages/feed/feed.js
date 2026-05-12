@@ -12,7 +12,9 @@ Page({
     hasLoadedOnce: false,
     selectedDate: '',
     searchKeyword: '',
-    showCalendar: false
+    showCalendar: false,
+    currentMonth: '',
+    calendarDays: []
   },
 
   onLoad: function() {
@@ -21,6 +23,7 @@ Page({
       this.setData({ userInfo });
     }
     this.generateDateList();
+    this.initCalendar();
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this.loadEventsFromCacheOrFetch();
@@ -57,12 +60,52 @@ Page({
     this.setData({ dateList, currentDate: dateList[0].dateStr });
   },
 
+  initCalendar: function() {
+    const now = new Date();
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const currentMonth = monthNames[now.getMonth()] + ' ' + now.getFullYear();
+    
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startingDay = firstDay.getDay();
+    const totalDays = lastDay.getDate();
+    const today = new Date();
+    
+    const calendarDays = [];
+    
+    // Empty cells for days before the first day of the month
+    for (let i = 0; i < startingDay; i++) {
+      calendarDays.push({ day: '', isEmpty: true, date: '' });
+    }
+    
+    // Days of the month
+    for (let day = 1; day <= totalDays; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+      calendarDays.push({
+        day: day,
+        date: dateStr,
+        isToday: isToday,
+        isEmpty: false
+      });
+    }
+    
+    this.setData({ currentMonth, calendarDays });
+  },
+
   toggleCalendar: function() {
     this.setData({ showCalendar: !this.data.showCalendar });
   },
 
+  stopPropagation: function() {
+    // Prevent closing when clicking inside the modal
+  },
+
   selectDate: function(e) {
     const date = e.currentTarget.dataset.date;
+    if (!date) return;
     this.setData({ selectedDate: date, showCalendar: false });
     this.applyFilters();
   },
