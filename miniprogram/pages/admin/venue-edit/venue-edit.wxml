@@ -1,0 +1,155 @@
+<view class="page">
+
+<view class="nav-bar">
+  <text class="nav-title">{{isEdit ? 'Edit Venue' : 'New Venue'}}</text>
+  <view class="nav-btn" bindtap="onSave">
+    <text class="nav-btn-text {{isProcessing ? 'nav-btn-text--dim' : ''}}">Save</text>
+  </view>
+</view>
+
+<view class="tab-bar">
+  <view class="tab {{activeTab === 0 ? 'tab--active' : ''}}" bindtap="switchTab" data-index="{{0}}">
+    <text>General</text>
+  </view>
+  <view class="tab {{activeTab === 1 ? 'tab--active' : ''}}" bindtap="switchTab" data-index="{{1}}">
+    <text>Details</text>
+  </view>
+</view>
+
+<view wx:if="{{activeTab === 0}}" class="tab-content">
+
+  <view class="section">
+    <view class="logo-row">
+      <view class="logo-wrap" bindtap="uploadLogo">
+        <image wx:if="{{logo}}" class="logo-img" src="{{logo}}" mode="aspectFill"/>
+        <view wx:else class="logo-placeholder">
+          <text class="logo-plus">+</text>
+        </view>
+      </view>
+      <view class="logo-info">
+        <text class="logo-hint">Venue logo</text>
+        <view class="logo-btn" bindtap="uploadLogo">
+          <text class="logo-btn-text">{{logo ? 'Change photo' : 'Upload photo'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">Basic info</text>
+    <view class="card">
+      <view class="field-row">
+        <text class="field-label">Name</text>
+        <input class="field-input" placeholder="Venue name" placeholder-class="field-placeholder" value="{{name}}" bindinput="onNameInput"/>
+      </view>
+      <view class="field-row">
+        <text class="field-label">Type</text>
+        <picker range="{{typeOptions}}" value="{{typeIndex}}" bindchange="onTypeChange">
+          <text class="field-picker">{{typeOptions[typeIndex]}}</text>
+        </picker>
+      </view>
+      <view class="field-row">
+        <text class="field-label">Counter password</text>
+        <input class="field-input" placeholder="Set password" placeholder-class="field-placeholder" value="{{password}}" bindinput="onPasswordInput" password/>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">Contacts</text>
+    <view class="card">
+      <view class="field-row">
+        <text class="field-label">Phone</text>
+        <input class="field-input" placeholder="+66 88 000 0000" placeholder-class="field-placeholder" value="{{phone}}" bindinput="onPhoneInput" type="tel"/>
+      </view>
+      <view class="field-row">
+        <text class="field-label">Instagram</text>
+        <input class="field-input" placeholder="@handle" placeholder-class="field-placeholder" value="{{instagram}}" bindinput="onInstagramInput"/>
+      </view>
+      <view class="field-row">
+        <text class="field-label">WeChat</text>
+        <input class="field-input" placeholder="WeChat ID" placeholder-class="field-placeholder" value="{{wechat}}" bindinput="onWechatInput"/>
+      </view>
+      <view class="field-row">
+        <text class="field-label">Facebook</text>
+        <input class="field-input" placeholder="Page name" placeholder-class="field-placeholder" value="{{facebook}}" bindinput="onFacebookInput"/>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="next-btn" bindtap="switchTab" data-index="{{1}}">
+      <text class="next-btn-text">Next: Details →</text>
+    </view>
+  </view>
+
+</view>
+
+<view wx:if="{{activeTab === 1}}" class="tab-content">
+
+  <view class="section">
+    <text class="section-title">Location</text>
+    <view class="card">
+      <view class="field-row">
+        <text class="field-label">Address</text>
+        <input class="field-input" placeholder="Street address" placeholder-class="field-placeholder" value="{{address}}" bindinput="onAddressInput"/>
+      </view>
+      <view class="field-row" bindtap="chooseLocation">
+        <text class="field-label">Pin on map</text>
+        <text class="field-picker">{{coordinates ? '📍 Set' : 'Tap to pin'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">Working hours</text>
+    <view class="card">
+      <view class="field-row">
+        <text class="field-label">Days</text>
+        <input class="field-input" placeholder="Thu — Sun" placeholder-class="field-placeholder" value="{{workDays}}" bindinput="onWorkDaysInput"/>
+      </view>
+      <view class="field-row">
+        <text class="field-label">Opens</text>
+        <picker mode="time" value="{{openTime}}" bindchange="onOpenTimeChange">
+          <text class="field-picker">{{openTime}}</text>
+        </picker>
+      </view>
+      <view class="field-row">
+        <text class="field-label">Closes</text>
+        <picker mode="time" value="{{closeTime}}" bindchange="onCloseTimeChange">
+          <text class="field-picker">{{closeTime}}</text>
+        </picker>
+      </view>
+      <view class="field-row">
+        <text class="field-label">Capacity</text>
+        <input class="field-input" placeholder="300" placeholder-class="field-placeholder" type="number" value="{{capacity}}" bindinput="onCapacityInput"/>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">Gallery</text>
+    <view class="gallery-grid">
+      <view wx:for="{{gallery}}" wx:key="*this" class="gallery-item">
+        <image class="gallery-img" src="{{item}}" mode="aspectFill" bindtap="previewPhoto" data-url="{{item}}"/>
+        <view class="gallery-remove" bindtap="removeGalleryPhoto" data-index="{{index}}">
+          <text class="gallery-remove-text">✕</text>
+        </view>
+      </view>
+      <view wx:if="{{gallery.length < 9}}" class="gallery-add" bindtap="uploadGallery">
+        <text class="gallery-add-icon">+</text>
+        <text class="gallery-add-text">Add</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="save-btn" bindtap="onSave">
+      <text class="save-btn-text">{{isProcessing ? 'Saving...' : 'Save Venue'}}</text>
+    </view>
+  </view>
+
+</view>
+
+<view class="safe-area-bottom" />
+</view>

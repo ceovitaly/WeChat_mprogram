@@ -1,0 +1,71 @@
+<view class="page">
+
+<view class="nav-bar">
+  <text class="nav-title">Team</text>
+</view>
+
+<view class="section">
+  <text class="section-title">Manage</text>
+  <view class="card">
+
+    <view
+      class="card-row"
+      bindtap="goTo"
+      data-url="/pages/admin/venue-list/venue-list"
+    >
+      <view class="row-left">
+        <view class="row-icon" style="background:#E8F0FB">
+          <text class="row-icon-emoji">🏛</text>
+        </view>
+        <view class="row-text">
+          <text class="row-label">Venues</text>
+          <text class="row-sub">{{venueCount}} location{{venueCount !== 1 ? 's' : ''}}</text>
+        </view>
+      </view>
+      <text class="chevron">›</text>
+    </view>
+
+    <view
+      class="card-row"
+      bindtap="goTo"
+      data-url="/pages/admin/staff/staff"
+    >
+      <view class="row-left">
+        <view class="row-icon" style="background:#E8F8F0">
+          <text class="row-icon-emoji">👤</text>
+        </view>
+        <view class="row-text">
+          <text class="row-label">Counters</text>
+          <text class="row-sub">{{staffCount}} staff</text>
+        </view>
+      </view>
+      <text class="chevron">›</text>
+    </view>
+
+    <view
+  class="card-row"
+  bindtap="goTo"
+  data-url="/pages/admin/promoters/promoters"
+>
+  <view class="row-left">
+    <view class="row-icon" style="background:#FFF3E0">
+      <text class="row-icon-emoji">⭐</text>
+    </view>
+    <view class="row-text">
+      <text class="row-label">Promoters</text>
+      <text class="row-sub">{{promoterCount}} active{{pendingCount > 0 ? ' · ' + pendingCount + ' pending' : ''}}</text>
+    </view>
+  </view>
+  <view class="row-right">
+    <view wx:if="{{pendingCount > 0}}" class="pending-badge">
+      <text class="pending-badge-text">{{pendingCount}}</text>
+    </view>
+    <text class="chevron">›</text>
+  </view>
+</view>
+
+  </view>
+</view>
+
+<view class="tab-bar-spacer" />
+</view>

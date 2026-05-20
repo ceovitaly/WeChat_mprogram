@@ -1,0 +1,147 @@
+<view class="page">
+
+  <view class="nav-bar">
+  <text class="nav-title">Counters</text>
+  <view class="nav-btn" bindtap="openCreateModal">
+    <text class="nav-btn-text">+ Add</text>
+  </view>
+</view>
+
+<!-- Loading -->
+<view wx:if="{{loading}}" class="empty-state">
+  <text class="empty-text">Loading...</text>
+</view>
+
+<!-- Empty -->
+<view wx:elif="{{staffList.length === 0}}" class="empty-state">
+  <text class="empty-icon">👤</text>
+  <text class="empty-text">No staff yet</text>
+  <view class="empty-btn" bindtap="openCreateModal">
+    <text class="empty-btn-text">Add first counter</text>
+  </view>
+</view>
+
+<!-- List -->
+<view wx:else class="list">
+  <view class="section-title">{{staffList.length}} staff members</view>
+  <view class="card">
+    <view
+      wx:for="{{staffList}}"
+      wx:key="_id"
+      class="staff-row"
+    >
+      <view class="staff-avatar {{item.role === 'admin' ? 'avatar--admin' : 'avatar--counter'}}">
+        <text class="staff-avatar-text">{{item.name[0]}}</text>
+      </view>
+
+      <view class="staff-info">
+        <view class="staff-top">
+          <text class="staff-name">{{item.name}}</text>
+          <view class="role-badge {{item.role === 'admin' ? 'badge-admin' : 'badge-counter'}}">
+            <text class="role-badge-text">{{item.role || 'counter'}}</text>
+          </view>
+        </view>
+        <text class="staff-pass">Pass: {{item.password || '—'}}</text>
+      </view>
+
+      <view class="staff-actions">
+        <view
+          class="action-btn action-btn--copy"
+          bindtap="copyCredentials"
+          data-item="{{item}}"
+        >
+          <text>Copy</text>
+        </view>
+        <view
+          class="action-btn action-btn--edit"
+          bindtap="openEditModal"
+          data-item="{{item}}"
+        >
+          <text>Edit</text>
+        </view>
+        <view
+          class="action-btn action-btn--delete"
+          bindtap="confirmDelete"
+          data-id="{{item._id}}"
+          data-name="{{item.name}}"
+        >
+          <text>✕</text>
+        </view>
+      </view>
+
+    </view>
+  </view>
+</view>
+
+<view class="safe-area-bottom" />
+
+<!-- Modal -->
+<view wx:if="{{showModal}}" class="modal-overlay" catchtap="closeModal">
+  <view class="modal" catchtap="stopPropagation">
+
+    <view class="modal-header">
+      <text class="modal-title">{{editingId ? 'Edit Staff' : 'New Staff'}}</text>
+      <view bindtap="closeModal">
+        <text class="modal-close">✕</text>
+      </view>
+    </view>
+
+    <view class="modal-body">
+      <view class="field-row">
+        <text class="field-label">Name</text>
+        <input
+          class="field-input"
+          placeholder="Full name"
+          placeholder-class="field-placeholder"
+          value="{{tempName}}"
+          bindinput="onInputName"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Password</text>
+        <input
+          class="field-input"
+          placeholder="Set password"
+          placeholder-class="field-placeholder"
+          value="{{tempPassword}}"
+          bindinput="onInputPassword"
+        />
+      </view>
+    </view>
+
+    <!-- Role selector -->
+    <view class="role-section">
+      <text class="role-section-title">Role</text>
+      <view class="role-options">
+        <view
+          class="role-option {{tempRole === 'counter' ? 'role-option--active' : ''}}"
+          bindtap="selectRole"
+          data-role="counter"
+        >
+          <text class="role-option-text">Counter</text>
+          <text class="role-option-sub">Door check-in</text>
+        </view>
+        <view
+          class="role-option {{tempRole === 'admin' ? 'role-option--active' : ''}}"
+          bindtap="selectRole"
+          data-role="admin"
+        >
+          <text class="role-option-text">Admin</text>
+          <text class="role-option-sub">Full access</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="modal-footer">
+      <view class="modal-cancel" bindtap="closeModal">
+        <text>Cancel</text>
+      </view>
+      <view class="modal-save" bindtap="confirmSave">
+        <text>Save</text>
+      </view>
+    </view>
+
+  </view>
+</view>
+
+</view>

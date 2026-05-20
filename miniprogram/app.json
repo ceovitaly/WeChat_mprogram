@@ -1,0 +1,38 @@
+{
+  "pages": [
+    "pages/register/register",
+    "pages/admin/calendar/calendar",
+    "pages/admin/team/team",
+    "pages/admin/stats/stats",
+    "pages/admin/venue-list/venue-list",
+    "pages/admin/venue-edit/venue-edit",
+    "pages/admin/event-edit/event-edit",
+    "pages/admin/staff/staff",
+    "pages/admin/promoters/promoters",
+    "pages/admin/guests/guests",
+    "pages/counter/work/work",
+    "pages/counter/stats/stats"
+  ],
+  "tabBar": {
+    "custom": true,
+    "color": "#8E8E93",
+    "selectedColor": "#007AFF",
+    "backgroundColor": "#ffffff",
+    "list": [
+      { "pagePath": "pages/admin/calendar/calendar", "text": "Schedule" },
+      { "pagePath": "pages/admin/team/team", "text": "Team" },
+      { "pagePath": "pages/admin/stats/stats", "text": "Stats" },
+      { "pagePath": "pages/counter/work/work", "text": "Work" },
+      { "pagePath": "pages/counter/stats/stats", "text": "Stats" }
+    ]
+  },
+  "window": {
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "YUE! ADMIN",
+    "backgroundColor": "#F2F2F7",
+    "enablePullDownRefresh": false
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

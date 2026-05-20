@@ -1,0 +1,144 @@
+const { callFunction } = require('../../../utils/request')
+
+Page({
+  data: {
+    staffList: [],
+    loading: false,
+    showModal: false,
+    tempName: '',
+    tempPassword: '',
+    tempRole: 'counter',
+    editingId: null
+  },
+
+  onShow() {
+    this._fetchStaff()
+  },
+
+  goBack() {
+    wx.navigateBack()
+  },
+
+  async _fetchStaff() {
+    this.setData({ loading: true })
+    try {
+      const res = await callFunction('manageStaff', { action: 'getAll' })
+      if (res.success) {
+        this.setData({ staffList: res.data })
+      }
+    } catch (err) {
+      console.error('[Staff] fetch error:', err)
+      wx.showToast({ title: 'Load failed', icon: 'none' })
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
+  openCreateModal() {
+    this.setData({
+      showModal: true,
+      tempName: '',
+      tempPassword: '',
+      tempRole: 'counter',
+      editingId: null
+    })
+  },
+
+  openEditModal(e) {
+    const { item } = e.currentTarget.dataset
+    this.setData({
+      showModal: true,
+      tempName: item.name,
+      tempPassword: item.password || '',
+      tempRole: item.role || 'counter',
+      editingId: item._id
+    })
+  },
+
+  closeModal() {
+    this.setData({ showModal: false })
+  },
+
+  stopPropagation() {},
+
+  onInputName(e) { this.setData({ tempName: e.detail.value }) },
+  onInputPassword(e) { this.setData({ tempPassword: e.detail.value }) },
+
+  selectRole(e) {
+    this.setData({ tempRole: e.currentTarget.dataset.role })
+  },
+
+  async confirmSave() {
+    const { tempName, tempPassword, tempRole, editingId } = this.data
+
+    if (!tempName.trim()) {
+      wx.showToast({ title: 'Enter name', icon: 'none' })
+      return
+    }
+
+    wx.showLoading({ title: 'Saving...', mask: true })
+
+    try {
+      if (editingId) {
+        await callFunction('manageStaff', {
+          action: 'update',
+          id: editingId,
+          name: tempName.trim(),
+          password: tempPassword,
+          role: tempRole
+        })
+      } else {
+        await callFunction('manageStaff', {
+          action: 'add',
+          name: tempName.trim(),
+          password: tempPassword,
+          role: tempRole
+        })
+      }
+
+      wx.vibrateShort({ type: 'medium' })
+      wx.showToast({ title: 'Saved!', icon: 'success' })
+      this.closeModal()
+      await this._fetchStaff()
+
+    } catch (err) {
+      console.error('[Staff] save error:', err)
+      wx.showToast({ title: 'Save failed', icon: 'none' })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
+  copyCredentials(e) {
+    const { item } = e.currentTarget.dataset
+    wx.setClipboardData({
+      data: `Login: ${item.name}\nPassword: ${item.password}`,
+      success: () => wx.showToast({ title: 'Copied!', icon: 'none' })
+    })
+  },
+
+  confirmDelete(e) {
+    const { id, name } = e.currentTarget.dataset
+    wx.showModal({
+      title: 'Remove staff?',
+      content: `Remove access for ${name}?`,
+      confirmColor: '#FF3B30',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      success: async ({ confirm }) => {
+        if (!confirm) return
+        wx.showLoading({ title: 'Deleting...' })
+        try {
+          await callFunction('manageStaff', { action: 'delete', id })
+          wx.vibrateShort({ type: 'medium' })
+          wx.showToast({ title: 'Deleted', icon: 'success' })
+          await this._fetchStaff()
+        } catch (err) {
+          wx.showToast({ title: 'Error', icon: 'none' })
+        } finally {
+          wx.hideLoading()
+        }
+      }
+    })
+  }
+})

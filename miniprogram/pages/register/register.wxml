@@ -1,0 +1,51 @@
+<view class="container">
+
+<view class="header">
+  <view class="logo-wrap">
+    <text class="logo-text">YUE!</text>
+  </view>
+  <text class="title">Staff Login</text>
+  <text class="subtitle">Enter credentials provided by your administrator</text>
+</view>
+
+<view class="form">
+  <view class="input-group">
+    <text class="input-label">LOGIN</text>
+    <input
+      class="ios-input"
+      placeholder="Username"
+      placeholder-class="placeholder"
+      bindinput="onInputUser"
+      value="{{username}}"
+      confirm-type="next"
+    />
+  </view>
+
+  <view class="input-group">
+    <text class="input-label">PASSWORD</text>
+    <input
+      class="ios-input"
+      placeholder="Password"
+      placeholder-class="placeholder"
+      password
+      bindinput="onInputPass"
+      value="{{password}}"
+      confirm-type="done"
+      bindconfirm="handleLogin"
+    />
+  </view>
+
+  <button
+    class="login-btn {{loading ? 'login-btn--loading' : ''}}"
+    bindtap="handleLogin"
+    disabled="{{loading}}"
+  >{{loading ? 'Connecting...' : 'Login'}}</button>
+</view>
+
+<view class="footer">
+  <text class="version">YUE! Admin v2.0</text>
+</view>
+
+<view class="safe-area-bottom" />
+
+</view>

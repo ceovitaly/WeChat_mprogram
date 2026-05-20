@@ -1,0 +1,75 @@
+<view class="page">
+
+  <view class="nav-bar">
+  <text class="nav-title">Venues</text>
+  <view class="nav-btn" bindtap="goCreate">
+    <text class="nav-btn-text">+ Add</text>
+  </view>
+</view>
+
+<view wx:if="{{loading}}" class="empty-state">
+  <text class="empty-text">Loading...</text>
+</view>
+
+<view wx:elif="{{venues.length === 0}}" class="empty-state">
+  <text class="empty-icon">🏛</text>
+  <text class="empty-text">No venues yet</text>
+  <view class="empty-btn" bindtap="goCreate">
+    <text class="empty-btn-text">Add first venue</text>
+  </view>
+</view>
+
+<view wx:else class="list">
+  <view
+    wx:for="{{venues}}"
+    wx:key="_id"
+    class="venue-card"
+  >
+    <view class="venue-card-body" bindtap="goEdit" data-id="{{item._id}}">
+      <view class="venue-logo-wrap">
+        <image
+          wx:if="{{item.logo}}"
+          class="venue-logo"
+          src="{{item.logo}}"
+          mode="aspectFill"
+        />
+        <view wx:else class="venue-logo-placeholder">
+          <text class="venue-logo-letter">{{item.name[0]}}</text>
+        </view>
+      </view>
+      <view class="venue-info">
+        <view class="venue-top">
+          <text class="venue-name">{{item.name}}</text>
+          <view class="venue-type-badge">
+            <text class="venue-type-text">{{item.type || 'club'}}</text>
+          </view>
+        </view>
+        <text class="venue-address">{{item.address || 'No address'}}</text>
+        <text class="venue-hours">{{item.hours || 'Hours not set'}}</text>
+      </view>
+      <text class="chevron">›</text>
+    </view>
+
+    <view class="venue-card-footer">
+      <view
+        class="footer-btn footer-btn--edit"
+        bindtap="goEdit"
+        data-id="{{item._id}}"
+      >
+        <text>Edit</text>
+      </view>
+      <view
+        class="footer-btn footer-btn--delete"
+        bindtap="confirmDelete"
+        data-id="{{item._id}}"
+        data-name="{{item.name}}"
+      >
+        <text>Delete</text>
+      </view>
+    </view>
+
+  </view>
+</view>
+
+<view class="safe-area-bottom" />
+</view>

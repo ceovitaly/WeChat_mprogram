@@ -1,0 +1,67 @@
+.page {
+  min-height: 100vh;
+  background: #F2F2F7;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-bar {
+  background: #FFFFFF;
+  padding: 16rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 0.5px solid #C6C6C8;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #000000;
+}
+
+.coming-soon {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 60rpx;
+  gap: 24rpx;
+}
+
+.cs-icon-wrap {
+  width: 160rpx;
+  height: 160rpx;
+  background: #FFFFFF;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.cs-icon {
+  font-size: 80rpx;
+}
+
+.cs-title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: -0.5rpx;
+}
+
+.cs-subtitle {
+  font-size: 28rpx;
+  color: #8E8E93;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.tab-bar-spacer {
+  height: 160rpx;
+}

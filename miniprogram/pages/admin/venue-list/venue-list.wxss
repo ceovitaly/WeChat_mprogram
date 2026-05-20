@@ -1,0 +1,198 @@
+.page {
+  min-height: 100vh;
+  background: #F2F2F7;
+}
+
+.nav-bar {
+  background: #FFFFFF;
+  padding: 16rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 0.5px solid #C6C6C8;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav-back-text {
+  font-size: 28rpx;
+  color: #007AFF;
+}
+
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: -0.5rpx;
+}
+
+.nav-btn-text {
+  font-size: 30rpx;
+  color: #007AFF;
+  font-weight: 500;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 40rpx;
+  gap: 20rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #8E8E93;
+}
+
+.empty-btn {
+  margin-top: 8rpx;
+  padding: 16rpx 40rpx;
+  background: #007AFF;
+  border-radius: 20rpx;
+}
+
+.empty-btn-text {
+  font-size: 28rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.list {
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.venue-card {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.venue-card-body {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  gap: 20rpx;
+  border-bottom: 0.5px solid #F2F2F7;
+}
+
+.venue-card-body:active {
+  background: #F9F9F9;
+}
+
+.venue-logo-wrap {
+  flex-shrink: 0;
+}
+
+.venue-logo {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 20rpx;
+}
+
+.venue-logo-placeholder {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 20rpx;
+  background: #E8F0FB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.venue-logo-letter {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #185FA5;
+}
+
+.venue-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  overflow: hidden;
+}
+
+.venue-top {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.venue-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #000000;
+}
+
+.venue-type-badge {
+  background: #F2F2F7;
+  border-radius: 10rpx;
+  padding: 4rpx 12rpx;
+}
+
+.venue-type-text {
+  font-size: 20rpx;
+  color: #8E8E93;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.venue-address {
+  font-size: 24rpx;
+  color: #8E8E93;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venue-hours {
+  font-size: 24rpx;
+  color: #C7C7CC;
+}
+
+.chevron {
+  font-size: 36rpx;
+  color: #C7C7CC;
+  font-weight: 300;
+  flex-shrink: 0;
+}
+
+.venue-card-footer {
+  display: flex;
+  border-top: 0.5px solid #F2F2F7;
+}
+
+.footer-btn {
+  flex: 1;
+  padding: 20rpx;
+  text-align: center;
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.footer-btn:active {
+  opacity: 0.6;
+}
+
+.footer-btn--edit {
+  color: #007AFF;
+  border-right: 0.5px solid #F2F2F7;
+}
+
+.footer-btn--delete {
+  color: #FF3B30;
+}
+
+.safe-area-bottom {
+  height: calc(32rpx + env(safe-area-inset-bottom));
+}

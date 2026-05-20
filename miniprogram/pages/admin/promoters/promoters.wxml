@@ -1,0 +1,184 @@
+<view class="page">
+
+  <view class="nav-bar">
+  <text class="nav-title">Promoters</text>
+  <view class="nav-btn" bindtap="openAddModal">
+    <text class="nav-btn-text">+ Add</text>
+  </view>
+</view>
+
+<!-- Loading -->
+<view wx:if="{{loading}}" class="empty-state">
+  <text class="empty-text">Loading...</text>
+</view>
+
+<!-- Empty -->
+<view wx:elif="{{promoters.length === 0}}" class="empty-state">
+  <text class="empty-icon">⭐</text>
+  <text class="empty-text">No promoters yet</text>
+  <view class="empty-btn" bindtap="openAddModal">
+    <text class="empty-btn-text">Add first promoter</text>
+  </view>
+</view>
+
+<!-- List -->
+<view wx:else class="list">
+  <text class="section-title">{{promoters.length}} promoters</text>
+
+  <view class="card">
+    <view
+      wx:for="{{promoters}}"
+      wx:key="_id"
+      class="promoter-row"
+      bindtap="openActions"
+      data-promoter="{{item}}"
+    >
+      <view class="promoter-avatar">
+        <text class="promoter-avatar-text">{{item.avatarLetter}}</text>
+      </view>
+
+      <view class="promoter-info">
+        <view class="promoter-top">
+          <text class="promoter-name">{{item.name}}</text>
+          <view class="status-badge badge-{{item.status}}">
+            <text class="status-text">{{item.status}}</text>
+          </view>
+        </view>
+        <view class="promoter-meta">
+          <text class="promo-code">{{item.promoCode || 'No code'}}</text>
+          <text class="meta-dot">·</text>
+          <text class="meta-info">{{item.joinDate}}</text>
+          <text class="meta-dot">·</text>
+          <text class="meta-info">{{item.guestCount || 0}} guests</text>
+        </view>
+      </view>
+
+      <text class="chevron">›</text>
+    </view>
+  </view>
+</view>
+
+<view class="safe-area-bottom" />
+
+<!-- ══ ADD MODAL ══ -->
+<view wx:if="{{showAddModal}}" class="modal-overlay" catchtap="closeAddModal">
+  <view class="modal" catchtap="stopPropagation">
+
+    <view class="modal-header">
+      <text class="modal-title">New Promoter</text>
+      <view bindtap="closeAddModal">
+        <text class="modal-close">✕</text>
+      </view>
+    </view>
+
+    <view class="modal-body">
+      <view class="field-row">
+        <text class="field-label">Name</text>
+        <input
+          class="field-input"
+          placeholder="Full name"
+          placeholder-class="field-placeholder"
+          value="{{newName}}"
+          bindinput="onNameInput"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Promo code</text>
+        <input
+          class="field-input"
+          placeholder="MYCODE"
+          placeholder-class="field-placeholder"
+          value="{{newPromoCode}}"
+          bindinput="onPromoCodeInput"
+        />
+      </view>
+    </view>
+
+    <view class="modal-footer">
+      <view class="modal-cancel" bindtap="closeAddModal">
+        <text>Cancel</text>
+      </view>
+      <view class="modal-save" bindtap="createPromoter">
+        <text>Create</text>
+      </view>
+    </view>
+
+  </view>
+</view>
+
+<!-- ══ ACTION SHEET ══ -->
+<view wx:if="{{showActionSheet}}" class="modal-overlay" catchtap="closeActions">
+  <view class="modal" catchtap="stopPropagation">
+
+    <view class="modal-header">
+      <view>
+        <text class="modal-title">{{selectedPromoter.name}}</text>
+        <text class="modal-subtitle">{{selectedPromoter.promoCode}}</text>
+      </view>
+      <view bindtap="closeActions">
+        <text class="modal-close">✕</text>
+      </view>
+    </view>
+
+    <!-- Edit promo code -->
+    <view class="modal-body">
+      <view class="field-row">
+        <text class="field-label">Promo code</text>
+        <input
+          class="field-input"
+          value="{{editPromoCode}}"
+          bindinput="onEditPromoCodeInput"
+          placeholder="CODE"
+          placeholder-class="field-placeholder"
+        />
+      </view>
+    </view>
+    <view class="code-save-wrap">
+      <view class="code-save-btn" bindtap="savePromoCode">
+        <text class="code-save-text">Update code</text>
+      </view>
+    </view>
+
+    <!-- Status actions -->
+    <view class="action-section">
+      <text class="action-section-title">Status</text>
+      <view class="action-list">
+
+        <view
+          wx:if="{{selectedPromoter.status !== 'approved'}}"
+          class="action-row action-row--green"
+          bindtap="setStatus"
+          data-status="approved"
+        >
+          <text class="action-row-text">Approve</text>
+        </view>
+
+        <view
+          wx:if="{{selectedPromoter.status !== 'suspended'}}"
+          class="action-row action-row--orange"
+          bindtap="setStatus"
+          data-status="suspended"
+        >
+          <text class="action-row-text">Suspend</text>
+        </view>
+
+        <view
+          class="action-row action-row--red"
+          bindtap="confirmRevoke"
+        >
+          <text class="action-row-text">Revoke status</text>
+        </view>
+
+      </view>
+    </view>
+
+    <view class="modal-footer">
+      <view class="modal-cancel modal-cancel--full" bindtap="closeActions">
+        <text>Close</text>
+      </view>
+    </view>
+
+  </view>
+</view>
+
+</view>

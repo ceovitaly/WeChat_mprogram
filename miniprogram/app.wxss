@@ -1,0 +1,153 @@
+page {
+  --color-blue: #007AFF;
+  --color-green: #34C759;
+  --color-orange: #FF9500;
+  --color-red: #FF3B30;
+  --color-gray: #8E8E93;
+  --color-separator: #C6C6C8;
+  --color-bg: #F2F2F7;
+  --color-card: #FFFFFF;
+  --color-text-primary: #000000;
+  --color-text-secondary: #8E8E93;
+  --color-text-tertiary: #C7C7CC;
+  --radius-card: 12rpx;
+  --radius-btn: 12rpx;
+  --radius-input: 10rpx;
+
+  font-family: -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif;
+  font-size: 28rpx;
+  color: #000000;
+  background-color: #F2F2F7;
+  box-sizing: border-box;
+}
+
+view, text, input, button {
+  box-sizing: border-box;
+}
+
+button::after {
+  border: none;
+}
+
+.card {
+  background: #FFFFFF;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 28rpx;
+  border-bottom: 0.5px solid #F2F2F7;
+}
+
+.card-row:last-child {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 22rpx;
+  font-weight: 500;
+  color: #8E8E93;
+  text-transform: uppercase;
+  letter-spacing: 1rpx;
+  padding: 24rpx 32rpx 12rpx;
+}
+
+.primary-btn {
+  background: #007AFF;
+  border-radius: 24rpx;
+  padding: 26rpx;
+  text-align: center;
+  color: #FFFFFF;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  width: 100%;
+}
+
+.destructive-btn {
+  background: #FF3B30;
+  border-radius: 24rpx;
+  padding: 26rpx;
+  text-align: center;
+  color: #FFFFFF;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  width: 100%;
+}
+
+.ghost-btn {
+  background: transparent;
+  border-radius: 24rpx;
+  padding: 26rpx;
+  text-align: center;
+  color: #007AFF;
+  font-size: 32rpx;
+  font-weight: 500;
+  border: 1rpx solid #007AFF;
+  width: 100%;
+}
+
+.ios-input {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 22rpx 28rpx;
+  font-size: 30rpx;
+  color: #000000;
+  width: 100%;
+}
+
+.safe-area-bottom {
+  height: env(safe-area-inset-bottom);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 40rpx;
+  color: #8E8E93;
+  font-size: 28rpx;
+}
+
+.chevron {
+  color: #C7C7CC;
+  font-size: 26rpx;
+}
+
+.badge {
+  font-size: 22rpx;
+  font-weight: 500;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.badge-green {
+  background: #E8F8F0;
+  color: #1D9E75;
+}
+
+.badge-blue {
+  background: #E8F0FB;
+  color: #185FA5;
+}
+
+.badge-orange {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.badge-red {
+  background: #FFEBE9;
+  color: #FF3B30;
+}
+
+.badge-gray {
+  background: #F2F2F7;
+  color: #8E8E93;
+}

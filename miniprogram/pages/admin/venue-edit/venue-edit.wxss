@@ -1,0 +1,279 @@
+.page {
+  min-height: 100vh;
+  background: #F2F2F7;
+}
+
+.nav-bar {
+  background: #FFFFFF;
+  padding: 16rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 0.5px solid #C6C6C8;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #000000;
+}
+
+.nav-btn-text {
+  font-size: 30rpx;
+  color: #007AFF;
+  font-weight: 600;
+  min-width: 120rpx;
+  text-align: right;
+}
+
+.nav-btn-text--dim {
+  opacity: 0.4;
+}
+
+.tab-bar {
+  background: #FFFFFF;
+  display: flex;
+  border-bottom: 0.5px solid #C6C6C8;
+  position: sticky;
+  top: 88rpx;
+  z-index: 9;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+  color: #8E8E93;
+  border-bottom: 3rpx solid transparent;
+}
+
+.tab--active {
+  color: #007AFF;
+  font-weight: 600;
+  border-bottom-color: #007AFF;
+}
+
+.tab-content {
+  padding-bottom: 40rpx;
+}
+
+.section {
+  padding: 24rpx 24rpx 0;
+}
+
+.section-title {
+  font-size: 22rpx;
+  font-weight: 500;
+  color: #8E8E93;
+  text-transform: uppercase;
+  letter-spacing: 1rpx;
+  padding: 0 4rpx 12rpx;
+}
+
+.card {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28rpx;
+  min-height: 88rpx;
+  border-bottom: 0.5px solid #F2F2F7;
+}
+
+.field-row:last-child {
+  border-bottom: none;
+}
+
+.field-label {
+  font-size: 28rpx;
+  color: #000000;
+  min-width: 180rpx;
+  flex-shrink: 0;
+}
+
+.field-input {
+  flex: 1;
+  text-align: right;
+  font-size: 28rpx;
+  color: #000000;
+  height: 88rpx;
+}
+
+.field-placeholder {
+  color: #C7C7CC;
+}
+
+.field-picker {
+  font-size: 28rpx;
+  color: #007AFF;
+}
+
+.logo-row {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+}
+
+.logo-wrap {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #F2F2F7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-img {
+  width: 100%;
+  height: 100%;
+}
+
+.logo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-plus {
+  font-size: 40rpx;
+  color: #C7C7CC;
+}
+
+.logo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.logo-hint {
+  font-size: 26rpx;
+  color: #8E8E93;
+}
+
+.logo-btn-text {
+  font-size: 28rpx;
+  color: #007AFF;
+  font-weight: 500;
+}
+
+.gallery-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 20rpx;
+}
+
+.gallery-item {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.gallery-img {
+  width: 100%;
+  height: 100%;
+}
+
+.gallery-remove {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-remove-text {
+  font-size: 20rpx;
+  color: #FFFFFF;
+}
+
+.gallery-add {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 12rpx;
+  border: 2rpx dashed #C6C6C8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.gallery-add:active {
+  opacity: 0.6;
+}
+
+.gallery-add-icon {
+  font-size: 48rpx;
+  color: #C7C7CC;
+}
+
+.gallery-add-text {
+  font-size: 24rpx;
+  color: #C7C7CC;
+}
+
+.next-btn {
+  background: #007AFF;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  text-align: center;
+  margin-top: 8rpx;
+}
+
+.next-btn:active {
+  opacity: 0.8;
+}
+
+.next-btn-text {
+  font-size: 30rpx;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.save-btn {
+  background: #007AFF;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  text-align: center;
+}
+
+.save-btn:active {
+  opacity: 0.8;
+}
+
+.save-btn-text {
+  font-size: 30rpx;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.safe-area-bottom {
+  height: 80rpx;
+}

@@ -1,0 +1,17 @@
+<view class="page">
+
+<view class="nav-bar">
+  <text class="nav-title">Stats</text>
+</view>
+
+<view class="coming-soon">
+  <view class="cs-icon-wrap">
+    <text class="cs-icon">📊</text>
+  </view>
+  <text class="cs-title">Coming Soon</text>
+  <text class="cs-subtitle">Counter analytics will be available in the next update</text>
+</view>
+
+<view class="tab-bar-spacer"></view>
+
+</view>
