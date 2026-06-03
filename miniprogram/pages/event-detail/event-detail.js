@@ -4,26 +4,21 @@ Page({
   data: {
     event: null,
     isRegistered: false,
+    hasProfile: null,
     showTicketModal: false,
-    promoCodeInput: '',
-    promoCodeValid: false,
-    promoCodeError: '',
-    verifiedPromoterName: '',
-    verifiedPromoterId: '',
-    selectedTicketType: ''
+    selectedTicketId: '',
+    selectedTicketName: '',
+    selectedTicketPrice: 0,
+    selectedPackageLink: ''
   },
 
   onLoad: function(options) {
+    this._autoTicket = options.autoTicket === '1';
     app.getCloud((cloud) => {
       this.cloud = cloud;
-
-      if (options.id) {
-        this.getEventDetails(options.id);
-      }
-
-      if (options.eventId) {
-        this.getEventDetails(options.eventId);
-      }
+      const id = options.id || options.eventId;
+      if (id) this.getEventDetails(id);
+      this.checkProfile();
     });
   },
 
@@ -33,41 +28,114 @@ Page({
     db.collection('events').doc(id).get({
       success: async res => {
         const event = res.data;
+        const cloudUrls = [];
 
+        // Собираем все cloud:// урлы
         if (event.promoImage && event.promoImage.startsWith('cloud://')) {
+          cloudUrls.push(event.promoImage);
+        }
+        if (event.promoImages && Array.isArray(event.promoImages)) {
+          event.promoImages.forEach(u => {
+            if (u && u.startsWith('cloud://')) cloudUrls.push(u);
+          });
+        }
+        if (event.promoMaterials && Array.isArray(event.promoMaterials)) {
+          event.promoMaterials.forEach(u => {
+            if (u && u.startsWith('cloud://')) cloudUrls.push(u);
+          });
+        }
+        if (event.coverImage && event.coverImage.startsWith('cloud://')) {
+          cloudUrls.push(event.coverImage);
+        }
+
+        // Резолвим все урлы за один запрос
+        if (cloudUrls.length > 0) {
           try {
-            const tempRes = await this.cloud.getTempFileURL({
-              fileList: [event.promoImage]
+            const cfRes = await this.cloud.callFunction({
+              name: 'clientAuth',
+              data: { action: 'resolveImages', fileList: cloudUrls }
             });
-            event.promoImage = tempRes.fileList[0].tempFileURL;
-          } catch (err) {
-            console.error('promoImage convert error:', err);
-          }
-        }
+            const urlMap = cfRes.result.urlMap || {};
 
-        if (event.promoMaterials && event.promoMaterials.length > 0) {
-          const cloudUrls = event.promoMaterials.filter(u => u.startsWith('cloud://'));
-          if (cloudUrls.length > 0) {
-            try {
-              const tempRes = await this.cloud.getTempFileURL({ fileList: cloudUrls });
-              const urlMap = {};
-              tempRes.fileList.forEach(f => { urlMap[f.fileID] = f.tempFileURL; });
-              event.promoMaterials = event.promoMaterials.map(u => urlMap[u] || u);
-            } catch (err) {
-              console.error('promoMaterials convert error:', err);
+            if (event.promoImage) event.promoImage = urlMap[event.promoImage] || event.promoImage;
+            if (event.coverImage) event.coverImage = urlMap[event.coverImage] || event.coverImage;
+            if (event.promoImages) {
+              event.promoImages = event.promoImages.map(u => urlMap[u] || u);
             }
+            if (event.promoMaterials) {
+              event.promoMaterials = event.promoMaterials.map(u => urlMap[u] || u);
+            }
+          } catch (err) {
+            console.error('getTempFileURL error:', err);
           }
         }
 
+        // Главное фото — берём первое доступное
+        if (!event.promoImage) {
+          if (event.promoImages && event.promoImages.length > 0) {
+            event.promoImage = event.promoImages[0];
+          } else if (event.coverImage) {
+            event.promoImage = event.coverImage;
+          }
+        }
+
+        if (event.date) {
+          const _parts = event.date.split('-');
+          const _d = new Date(parseInt(_parts[0], 10), parseInt(_parts[1], 10) - 1, parseInt(_parts[2], 10));
+          const _days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+          const _months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+          event.displayDate = _days[_d.getDay()] + ', ' + _d.getDate() + ' ' + _months[_d.getMonth()];
+          event.displayDatetime = event.displayDate + (event.startTime ? '  ·  ' + event.startTime : '');
+        }
         this.setData({ event });
+        wx.setNavigationBarTitle({ title: event.title || '' });
+
+        if (event.venueId) {
+          db.collection('venues').doc(event.venueId).get({
+            success: function(venueRes) {
+              var v = venueRes.data;
+              var lat = v.latitude || (v.coordinates && v.coordinates.lat) || 0;
+              var lng = v.longitude || (v.coordinates && v.coordinates.lng) || 0;
+              if (lat && lng) {
+                this.setData({
+                  'event.venueLatitude': lat,
+                  'event.venueLongitude': lng,
+                  'event.venueAddress': v.address || ''
+                });
+              }
+            }.bind(this),
+            fail: function() {}
+          });
+        }
+
         wx.hideLoading();
         this.checkIfRegistered(id);
+        if (this._autoTicket) {
+          this._autoTicket = false;
+          this.openTicketModal();
+        }
       },
       fail: err => {
         wx.hideLoading();
         console.error(err);
       }
     });
+  },
+
+  checkProfile: function() {
+    const db = this.cloud.database();
+    db.collection('guests').limit(1).get({
+      success: res => {
+        this.setData({ hasProfile: res.data.length > 0 });
+      },
+      fail: () => {
+        this.setData({ hasProfile: false });
+      }
+    });
+  },
+
+  goRegister: function() {
+    wx.navigateTo({ url: '/pages/register/register' });
   },
 
   checkIfRegistered: function(eventId) {
@@ -88,191 +156,132 @@ Page({
   },
 
   openTicketModal: function() {
-    this.setData({ showTicketModal: true });
+    var event = this.data.event;
+    var autoId = '';
+    var autoName = '';
+    if (event && event.isFree && (!event.tickets || event.tickets.length === 0)) {
+      autoId = 'free';
+      autoName = 'Free Entry';
+    }
+    this.setData({ showTicketModal: true, selectedTicketId: autoId, selectedTicketName: autoName, selectedTicketPrice: 0 });
   },
 
-  selectTicketType: function(e) {
-    const type = e.currentTarget.dataset.type;
-    this.setData({ selectedTicketType: type });
+  selectTicket: function(e) {
+    const { id, name, price } = e.currentTarget.dataset;
+    this.setData({ selectedTicketId: id, selectedTicketName: name, selectedTicketPrice: price || 0, selectedPackageLink: '' });
+  },
+
+  selectPackage: function(e) {
+    const { idx, name, link } = e.currentTarget.dataset;
+    this.setData({
+      selectedTicketId: 'pkg_' + idx,
+      selectedTicketName: name,
+      selectedTicketPrice: 0,
+      selectedPackageLink: link || ''
+    });
   },
 
   closeTicketModal: function() {
-    this.setData({
-      showTicketModal: false,
-      promoCodeInput: '',
-      promoCodeValid: false,
-      promoCodeError: '',
-      verifiedPromoterName: '',
-      verifiedPromoterId: '',
-      selectedTicketType: ''
-    });
+    this.setData({ showTicketModal: false, selectedTicketId: '', selectedTicketName: '', selectedTicketPrice: 0, selectedPackageLink: '' });
   },
 
-  onPromoCodeInput: function(e) {
-    const val = e.detail.value.toUpperCase();
-    this.setData({
-      promoCodeInput: val,
-      promoCodeValid: false,
-      promoCodeError: '',
-      verifiedPromoterName: '',
-      verifiedPromoterId: ''
-    });
-  },
+  noop: function() {},
 
-  verifyPromoCode: function() {
-    const code = this.data.promoCodeInput.trim();
-    if (!code) return;
+  handleJoin: function() {
+    if (this.data.isRegistered) {
+      this.setData({ showTicketModal: false });
+      wx.showToast({ title: 'Already registered!', icon: 'none' });
+      return;
+    }
 
-    wx.showLoading({ title: 'Checking...', mask: true });
-    const db = this.cloud.database();
-
-    db.collection('promoters').where({
-      promoCode: code,
-      status: 'approved'
-    }).get({
-      success: res => {
-        wx.hideLoading();
-        if (res.data.length > 0) {
-          const promoter = res.data[0];
-          wx.vibrateShort();
-          this.setData({
-            promoCodeValid: true,
-            promoCodeError: '',
-            verifiedPromoterName: promoter.name,
-            verifiedPromoterId: promoter._id
-          });
-        } else {
-          this.setData({
-            promoCodeValid: false,
-            promoCodeError: 'Invalid promo code'
-          });
-        }
-      },
-      fail: () => {
-        wx.hideLoading();
-        this.setData({ promoCodeError: 'Error checking code' });
-      }
-    });
-  },
-
-  handleJoin: function(e) {
-    const type = e.currentTarget.dataset.type || this.data.selectedTicketType;
     const openid = app.globalData.openid;
-
-    this.setData({ showTicketModal: false });
-
     if (!openid) {
       wx.showModal({
         title: 'Login Required',
-        content: 'Please go to "Me" tab and log in first.',
+        content: 'Please go to Profile tab and log in first.',
         showCancel: false
       });
       return;
     }
 
-    // Проверяем, что промокод верифицирован (обязательное условие)
-    if (!this.data.promoCodeValid) {
-      wx.showToast({ 
-        title: 'Введите и проверьте промокод', 
-        icon: 'none' 
-      });
-      this.setData({ showTicketModal: true });
+    const type = this.data.selectedTicketId;
+    if (!type) {
+      wx.showToast({ title: 'Select a ticket type', icon: 'none' });
       return;
     }
 
-    wx.showLoading({ title: 'Registering...' });
+    wx.showLoading({ title: 'Registering...', mask: true });
     const db = this.cloud.database();
     const eventId = this.data.event._id;
-    const verifiedPromoterId = this.data.verifiedPromoterId;
-    const verifiedPromoterName = this.data.verifiedPromoterName;
 
-    db.collection('registrations').where({
-      _openid: openid,
-      eventId: eventId
-    }).get({
-      success: checkRes => {
-        if (checkRes.data.length > 0) {
+    // Берём данные гостя
+    db.collection('guests').limit(1).get({
+      success: userRes => {
+        if (userRes.data.length === 0) {
           wx.hideLoading();
-          this.setData({ isRegistered: true });
-          wx.showToast({ title: 'Already registered!', icon: 'none' });
+          wx.showModal({
+            title: 'Profile Empty',
+            content: 'Please complete your profile in the Profile tab first.',
+            showCancel: false
+          });
           return;
         }
 
-        const tryGuests = () => {
-          db.collection('guests').where({ _openid: openid }).get({
-            success: userRes => {
-              if (userRes.data.length > 0) {
-                registerUser(userRes.data[0]);
-              } else {
-                db.collection('promoters').where({ promoterId: openid }).get({
-                  success: promoRes => {
-                    if (promoRes.data.length > 0) {
-                      registerUser(promoRes.data[0]);
-                    } else {
-                      wx.hideLoading();
-                      wx.showModal({
-                        title: 'Profile Empty',
-                        content: 'Please set your name in "Me" tab first.',
-                        showCancel: false
-                      });
-                    }
-                  },
-                  fail: err => {
-                    wx.hideLoading();
-                    console.error('Promoter lookup failed:', err);
-                  }
+        const guest = userRes.data[0];
+
+        db.collection('registrations').add({
+          data: {
+            eventId,
+            eventTitle: this.data.event.title,
+            eventDate: this.data.event.date,
+            guestName: guest.nickName || guest.name || guest.phone || '',
+            guestAvatar: guest.avatarUrl || '',
+            promoCode: guest.promoCode || '',
+            promoterName: guest.promoterName || '',
+            ticketType: this.data.selectedTicketName || type,
+            status: 'confirmed',
+            createdAt: db.serverDate()
+          },
+          success: () => {
+            wx.hideLoading();
+            this.setData({ isRegistered: true, showTicketModal: false, selectedTicketId: '' });
+            wx.vibrateShort();
+            wx.showToast({ title: "You're in! 🎉", icon: 'success' });
+            const pkgLink = this.data.selectedPackageLink;
+            if (pkgLink) {
+              setTimeout(function() {
+                wx.showModal({
+                  title: 'Payment',
+                  content: 'Your payment link has been copied to clipboard.',
+                  showCancel: false
                 });
-              }
-            },
-            fail: err => {
-              wx.hideLoading();
-              console.error('Guest lookup failed:', err);
+                wx.setClipboardData({ data: pkgLink });
+              }, 1600);
             }
-          });
-        };
-
-        const registerUser = (user) => {
-          // Только с верифицированным промокодом
-          addRegistration(user, verifiedPromoterId, verifiedPromoterName);
-        };
-
-        const addRegistration = (user, promoterId, promoterName) => {
-          db.collection('registrations').add({
-            data: {
-              eventId,
-              eventTitle: this.data.event.title,
-              eventDate: this.data.event.date,
-              guestName: user.nickName || user.name || '',
-              guestAvatar: user.avatarUrl || '',
-              promoterId,
-              promoterName,
-              ticketType: type,
-              status: 'confirmed',
-              createdAt: db.serverDate()
-            },
-            success: () => {
-              wx.hideLoading();
-              this.setData({ isRegistered: true });
-              wx.vibrateShort();
-              wx.showToast({ title: 'You\'re in! 🎉', icon: 'success' });
-              setTimeout(() => {
-                wx.switchTab({ url: '/pages/mytickets/mytickets' });
-              }, 1500);
-            },
-            fail: err => {
-              wx.hideLoading();
-              console.error('Registration failed:', err);
-            }
-          });
-        };
-
-        tryGuests();
+            setTimeout(() => {
+              wx.navigateTo({ url: '/pages/mytickets/mytickets' });
+            }, 1500);
+          },
+          fail: err => {
+            wx.hideLoading();
+            console.error('Registration failed:', err);
+            wx.showToast({ title: 'Registration failed', icon: 'none' });
+          }
+        });
       },
       fail: err => {
         wx.hideLoading();
-        console.error('Check duplicate failed:', err);
+        console.error('Guest lookup failed:', err);
       }
     });
+  },
+
+  previewHeroImage: function(e) {
+    var url = e.currentTarget.dataset.url;
+    var urls = this.data.event.promoImages && this.data.event.promoImages.length
+      ? this.data.event.promoImages
+      : (this.data.event.promoImage ? [this.data.event.promoImage] : []);
+    wx.previewImage({ current: url || urls[0], urls: urls.length ? urls : [url] });
   },
 
   previewMaterial: function(e) {
@@ -297,5 +306,20 @@ Page({
       withShareTicket: true,
       menus: ['shareAppMessage', 'shareTimeline']
     });
+  },
+
+  openMap: function() {
+    var event = this.data.event;
+    if (!event) return;
+    if (event.venueLatitude && event.venueLongitude) {
+      wx.openLocation({
+        latitude: event.venueLatitude,
+        longitude: event.venueLongitude,
+        name: event.venueName || '',
+        address: event.venueAddress || event.venueName || ''
+      });
+    } else {
+      wx.showToast({ title: 'Location not available', icon: 'none' });
+    }
   }
 });

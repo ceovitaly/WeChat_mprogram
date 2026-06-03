@@ -1,91 +1,189 @@
-.container {
-  display: block;
-  padding: 30rpx;
-  padding-bottom: 60rpx;
-  background: #f8f9fa;
-  min-height: 100vh;
-  box-sizing: border-box;
+page {
+  height: 100%;
+  background: #F2F2F7;
 }
 
+.page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Fixed Header */
 .header {
-  margin-bottom: 40rpx;
-  padding: 20rpx 10rpx;
+  background: #FFFFFF;
+  padding-top: calc(44rpx + env(safe-area-inset-top));
+  padding-bottom: 0;
+  border-bottom: 0.5px solid #E5E5EA;
+  flex-shrink: 0;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 24rpx 20rpx;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx 16rpx 8rpx 0;
+  flex-shrink: 0;
+  width: 44rpx;
+}
+
+.header-placeholder {
+  width: 44rpx;
+}
+
+.back-btn:active { opacity: 0.5; }
+
+.back-icon {
+  font-size: 60rpx;
+  color: #1c1c1e;
+  line-height: 1;
+  font-weight: 400;
+}
+
+.back-label {
+  font-size: 30rpx;
+  color: #007AFF;
+  font-weight: 400;
 }
 
 .header-title {
-  font-size: 56rpx;
-  font-weight: bold;
-  color: #1c1c1e;
-  display: block;
-}
-
-.header-sub {
-  font-size: 26rpx;
-  color: #8e8e93;
-  margin-top: 6rpx;
-  display: block;
-}
-
-.loading {
+  flex: 1;
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #1C1C1E;
   text-align: center;
-  padding: 100rpx;
-  color: #999;
 }
 
+.header-count {
+  font-size: 26rpx;
+  color: #8E8E93;
+  flex-shrink: 0;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  padding: 0 32rpx 16rpx;
+  gap: 8rpx;
+}
+
+.tab {
+  height: 72rpx;
+  padding: 0 32rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab:active { opacity: 0.7; }
+
+.tab-active {
+  background: #1C1C1E;
+}
+
+.tab-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #8E8E93;
+}
+
+.tab-active .tab-text {
+  color: #FFFFFF;
+}
+
+/* Scroll */
+.scroll {
+  flex: 1;
+  height: 0;
+}
+
+/* Loading */
+.loading-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  border: 6rpx solid #E5E5EA;
+  border-top-color: #007AFF;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty State */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 120rpx 40rpx;
+  gap: 16rpx;
 }
 
-.empty-icon {
-  font-size: 80rpx;
-  margin-bottom: 20rpx;
-}
+.empty-icon { font-size: 80rpx; }
 
-.empty-text {
+.empty-title {
   font-size: 36rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10rpx;
+  font-weight: 700;
+  color: #1C1C1E;
 }
 
 .empty-sub {
   font-size: 28rpx;
-  color: #999;
+  color: #8E8E93;
   text-align: center;
+  line-height: 1.5;
 }
 
+/* Tickets List */
 .tickets-list {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: 16rpx;
+  padding: 24rpx 24rpx 0;
 }
 
 .ticket-card {
-  background: #fff;
-  border-radius: 32rpx;
-  padding: 40rpx;
-  box-shadow: 0 10rpx 30rpx rgba(0,0,0,0.05);
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-sizing: border-box;
-  width: 100%;
 }
 
-.ticket-info {
-  flex: 1;
-}
+.ticket-card:active { opacity: 0.9; }
+
+.ticket-card-past { opacity: 0.55; }
+
+.ticket-info { flex: 1; }
 
 .ticket-title {
-  font-size: 38rpx;
+  font-size: 32rpx;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #1C1C1E;
   display: block;
   margin-bottom: 12rpx;
 }
+
+.ticket-title-past { color: #8E8E93; }
 
 .ticket-meta {
   display: flex;
@@ -94,30 +192,30 @@
 }
 
 .dot {
-  width: 14rpx;
-  height: 14rpx;
+  width: 12rpx;
+  height: 12rpx;
   border-radius: 50%;
-  background: #34c759;
+  background: #34C759;
   flex-shrink: 0;
 }
 
-.ticket-venue {
+.dot-past { background: #8E8E93; }
+
+.ticket-date {
   font-size: 26rpx;
-  color: #8e8e93;
+  color: #8E8E93;
   font-weight: 500;
 }
 
-.ticket-time {
+.ticket-type {
   font-size: 26rpx;
   font-weight: 600;
-  color: #34c759;
-  margin-left: 16rpx;
+  color: #34C759;
 }
 
-.ticket-actions {
-  flex-shrink: 0;
-}
+.ticket-type-past { color: #8E8E93; }
 
+/* Status Badge */
 .status-badge {
   width: 72rpx;
   height: 72rpx;
@@ -125,15 +223,75 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32rpx;
+  flex-shrink: 0;
+  margin-left: 20rpx;
 }
 
+.badge-icon { font-size: 32rpx; }
+
 .badge-arrived {
-  background: #f0fff4;
-  color: #34c759;
+  background: rgba(52, 199, 89, 0.12);
+  color: #34C759;
 }
 
 .badge-confirmed {
-  background: #f2f2f7;
-  color: #c7c7cc;
+  background: rgba(0, 0, 0, 0.06);
+  color: #8E8E93;
+}
+
+.badge-past {
+  background: rgba(0, 0, 0, 0.06);
+  color: #8E8E93;
+}
+
+.list-bottom-pad {
+  height: calc(40rpx + env(safe-area-inset-bottom));
+}
+
+.ticket-remove-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: rgba(255, 59, 48, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 20rpx;
+  align-self: center;
+}
+
+.ticket-remove-btn:active { opacity: 0.6; }
+
+.ticket-remove-icon {
+  font-size: 44rpx;
+  color: #FF3B30;
+  line-height: 1;
+  font-weight: 300;
+  margin-top: -4rpx;
+}
+
+/* ===== DARK MODE ===== */
+@media (prefers-color-scheme: dark) {
+  page { background: #000000; }
+  .page { background: #000000; }
+
+  .header { background: #1C1C1E; border-bottom-color: #38383A; }
+  .header-title { color: #FFFFFF; }
+  .back-icon { color: #FFFFFF; }
+
+  .tab { background: transparent; }
+  .tab-active { background: #FFFFFF; }
+  .tab-text { color: #636366; }
+  .tab-active .tab-text { color: #1C1C1E; }
+
+  .ticket-card { background: #1C1C1E; }
+  .ticket-title { color: #FFFFFF; }
+  .ticket-date { color: #8E8E93; }
+  .badge-confirmed { background: rgba(255,255,255,0.08); }
+  .badge-past { background: rgba(255,255,255,0.06); }
+
+  .empty-title { color: #FFFFFF; }
+  .loading-spinner { border-color: #38383A; border-top-color: #0A84FF; }
+  .ticket-remove-btn { background: rgba(255, 69, 58, 0.15); }
 }

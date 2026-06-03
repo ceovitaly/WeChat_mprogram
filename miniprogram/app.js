@@ -4,6 +4,7 @@ App({
     cloud: null,
     cloudReady: false,
     cloudReadyCallbacks: [],
+    openidReadyCallbacks: [],
     userInfo: null,
     sceneData: null
   },
@@ -25,10 +26,18 @@ App({
       this.globalData.cloudReadyCallbacks.forEach(cb => cb(cloud))
       this.globalData.cloudReadyCallbacks = []
 
-      cloud.callFunction({ name: 'login' }).then(res => {
-        const openid = res.result.openid || res.result.fromOpenid
-        this.globalData.openid = openid
-      }).catch(err => console.error('[App] login error:', err))
+      const tryLogin = (attemptsLeft) => {
+        cloud.callFunction({ name: 'login' }).then(res => {
+          const openid = res.result.openid || res.result.fromOpenid
+          this.globalData.openid = openid
+          this.globalData.openidReadyCallbacks.forEach(cb => cb(openid))
+          this.globalData.openidReadyCallbacks = []
+        }).catch(err => {
+          console.error('[App] login error:', err)
+          if (attemptsLeft > 0) setTimeout(() => tryLogin(attemptsLeft - 1), 1500)
+        })
+      }
+      tryLogin(2)
     })
 
     // Читаем QR scene
@@ -53,13 +62,10 @@ App({
   },
 
   getOpenid(callback) {
-    const check = () => {
-      if (this.globalData.openid) {
-        callback(this.globalData.openid)
-      } else {
-        setTimeout(check, 100)
-      }
+    if (this.globalData.openid) {
+      callback(this.globalData.openid)
+    } else {
+      this.globalData.openidReadyCallbacks.push(callback)
     }
-    check()
   }
 })

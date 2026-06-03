@@ -1,150 +1,206 @@
 /* pages/register/promo/promo.wxss */
-page {
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
 
 .page {
-  flex: 1;
+  min-height: 100vh;
+  background: #050505;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
 }
 
+/* ─── Background glow ─── */
 .bg-gradient {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-  z-index: -1;
+  top: -100px;
+  left: -100px;
+  right: -100px;
+  height: 600px;
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    rgba(0, 122, 255, 0.18) 0%,
+    rgba(0, 0, 0, 0) 70%
+  );
+  z-index: 0;
+  pointer-events: none;
 }
 
+/* ─── Logo ─── */
 .logo-wrap {
-  padding: 80rpx 40rpx 40rpx;
+  padding: 56px 0 20px;
   display: flex;
+  align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 .logo-box {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 .logo-main {
-  display: block;
-  font-size: 64rpx;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: 4rpx;
+  font-size: 44px;
+  font-weight: 900;
+  color: #FFFFFF;
+  letter-spacing: -1px;
+  line-height: 1;
 }
 
-.logo-sub {
-  display: block;
-  font-size: 28rpx;
-  color: rgba(255,255,255,0.9);
-  margin-top: 8rpx;
-}
-
+/* ─── Card ─── */
 .card {
-  margin: 40rpx;
-  background: #ffffff;
-  border-radius: 32rpx;
-  padding: 48rpx 40rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 1;
+  width: calc(100% - 32px);
+  background: rgba(28, 28, 30, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 28px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
 }
 
 .card-title {
-  display: block;
-  font-size: 40rpx;
+  font-size: 20px;
   font-weight: 700;
-  color: #1c1c1e;
+  color: #FFFFFF;
   text-align: center;
-  margin-bottom: 16rpx;
+  margin-bottom: 2px;
 }
 
 .card-desc {
-  display: block;
-  font-size: 26rpx;
-  color: #8e8e93;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
   text-align: center;
-  line-height: 1.6;
-  margin-bottom: 40rpx;
+  line-height: 1.55;
+  margin-bottom: 18px;
 }
 
+/* ─── Promo input ─── */
 .promo-input-wrap {
-  background: #f2f2f7;
-  border-radius: 16rpx;
-  padding: 0 24rpx;
-  height: 96rpx;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 0 16px;
+  height: 52px;
   display: flex;
   align-items: center;
-  border: 2rpx solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-sizing: border-box;
-  margin-bottom: 20rpx;
+  margin-bottom: 8px;
 }
 
 .input-valid {
-  border-color: #34c759;
-  background: #f0faf4;
+  border-color: #34C759;
+  background: rgba(52, 199, 89, 0.08);
 }
 
 .promo-input {
   flex: 1;
-  font-size: 32rpx;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: 3rpx;
-  color: #1c1c1e;
+  letter-spacing: 2px;
+  color: #FFFFFF;
   text-transform: uppercase;
 }
 
+.input-placeholder {
+  color: rgba(255, 255, 255, 0.25);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* ─── Status text ─── */
 .error-text {
   display: block;
-  font-size: 26rpx;
-  color: #ff3b30;
+  font-size: 13px;
+  color: #FF453A;
   text-align: center;
-  margin-bottom: 20rpx;
+  margin-bottom: 4px;
 }
 
 .success-text {
   display: block;
-  font-size: 26rpx;
-  color: #34c759;
+  font-size: 13px;
+  color: #34C759;
   text-align: center;
-  margin-bottom: 20rpx;
+  margin-bottom: 4px;
 }
 
+/* ─── Submit button ─── */
 .btn-submit {
   width: 100%;
-  height: 96rpx;
-  line-height: 96rpx;
-  background: #1c1c1e;
-  color: #ffffff;
-  font-size: 34rpx;
-  font-weight: 700;
-  border-radius: 48rpx;
+  height: 52px;
+  line-height: 52px;
+  background: #007AFF;
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 14px;
   border: none;
+  margin-top: 8px;
   text-align: center;
-  margin-top: 20rpx;
+  box-sizing: border-box;
+  padding: 0;
+  display: block;
 }
 
-button[disabled] {
-  background: #c7c7cc !important;
-  color: #8e8e93 !important;
+button[disabled].btn-submit {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.25) !important;
 }
 
 button::after {
   border: none;
 }
 
+/* ─── Footer ─── */
 .footer {
-  margin-top: auto;
-  padding: 40rpx;
-  text-align: center;
+  position: relative;
+  z-index: 1;
+  padding: 16px 0 20px;
 }
 
 .footer-text {
-  font-size: 24rpx;
-  color: rgba(255,255,255,0.8);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.15);
+  letter-spacing: 1.5px;
+}
+
+/* Fields */
+.field-wrap {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 0 16px;
+  height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.field-valid {
+  border-color: #34C759;
+  background: rgba(52, 199, 89, 0.08);
+}
+
+.field-input {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 500;
+  color: #FFFFFF;
+  height: 52px;
+}
+
+.field-placeholder {
+  color: rgba(255, 255, 255, 0.25);
+  font-weight: 400;
 }

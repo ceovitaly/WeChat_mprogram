@@ -1,32 +1,195 @@
-<view class="container">
-  <view class="header">Explore Events</view>
-  
-  <view wx:if="{{loading}}" class="loader">Loading...</view>
+<!--pages/feed/feed.wxml-->
+<view class="page-container">
 
-  <block wx:if="{{events.length > 0}}">
-    <view 
-      class="event-wrapper" 
-      wx:for="{{events}}" 
-      wx:key="_id" 
-      bindtap="goToDetail" 
-      data-id="{{item._id}}"
-    >
-      <view class="image-box">
-        <image wx:if="{{item.promoImage}}" class="full-cover" src="{{item.promoImage}}" mode="aspectFill"></image>
-        <view wx:else class="cover-placeholder">No Image</view>
-      </view>
-
-      <view class="info-box">
-        <text class="event-title">{{item.title}}</text>
-        <view class="event-meta">
-          <text>📅 {{item.date}} | {{item.time}}</text>
-          <text>📍 {{item.venue || 'No location'}}</text>
+<!-- Header -->
+<view class="header">
+  <view class="header-top">
+    <view class="header-nav-pills">
+      <view class="nav-pill" bindtap="goToProfile">
+        <image
+          wx:if="{{userInfo && userInfo.avatarUrl}}"
+          src="{{userInfo.avatarUrl}}"
+          mode="aspectFill"
+          class="pill-avatar"
+        />
+        <view wx:else class="pill-avatar-placeholder">
+          <text class="pill-avatar-text">{{userInitial}}</text>
         </view>
+        <text class="pill-label">Profile</text>
+      </view>
+      <view class="nav-pill" bindtap="goToTickets">
+        <view class="pill-icon-wrap">
+          <text class="pill-icon">📋</text>
+        </view>
+        <text class="pill-label">My List</text>
       </view>
     </view>
-  </block>
-
-  <view wx:elif="{{!loading}}" class="empty">
-    <text>No events found</text>
   </view>
+
+  <!-- Search + Calendar row -->
+  <view class="search-row">
+    <view class="calendar-btn {{selectedDate ? 'calendar-btn-active' : ''}}" bindtap="toggleCalendar">
+      <text class="calendar-day-num">{{selectedDate ? selectedDateNum : todayNum}}</text>
+      <text class="calendar-label">{{selectedDate ? selectedDateMonth : todayMonth}}</text>
+    </view>
+    <view class="search-bar">
+      <text class="search-icon-txt">🔍</text>
+      <input
+        class="search-input"
+        placeholder="Search events..."
+        placeholder-class="search-placeholder"
+        confirm-type="search"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+        value="{{searchKeyword}}"
+      />
+      <view wx:if="{{searchKeyword}}" class="search-clear" bindtap="clearSearch">
+        <text class="search-clear-txt">x</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Active filter pill -->
+  <view wx:if="{{selectedDate}}" class="filter-row">
+    <view class="filter-pill" bindtap="clearDateFilter">
+      <text class="filter-pill-txt">📅 {{selectedDate}}</text>
+      <text class="filter-pill-remove">  x</text>
+    </view>
+  </view>
+</view>
+
+<!-- Scrollable Feed -->
+<scroll-view
+  class="feed-scroll"
+  scroll-y
+  enable-flex
+  enhanced
+  show-scrollbar="false"
+  bindscrolltolower="onReachBottom"
+  lower-threshold="200"
+  refresher-enabled
+  refresher-triggered="{{refreshing}}"
+  bindrefresherrefresh="onPullDownRefresh"
+>
+  <view class="event-list-container">
+
+    <!-- Loading skeleton -->
+    <block wx:if="{{loading && events.length === 0}}">
+      <view wx:for="{{[1,2,3]}}" wx:key="*this" class="skeleton-card">
+        <view class="skeleton-img"></view>
+        <view class="skeleton-body">
+          <view class="skeleton-line skeleton-line-sm"></view>
+          <view class="skeleton-line skeleton-line-lg"></view>
+          <view class="skeleton-line skeleton-line-md"></view>
+          <view class="skeleton-btn"></view>
+        </view>
+      </view>
+    </block>
+
+    <!-- Event Cards -->
+    <block wx:if="{{filteredEvents.length > 0}}">
+      <view
+        wx:for="{{filteredEvents}}"
+        wx:key="_id"
+        class="event-card"
+        bindtap="goToDetail"
+        data-id="{{item._id}}"
+      >
+        <!-- Venue bar (top) -->
+        <view class="card-venue-bar">
+          <view class="venue-dot"></view>
+          <text class="card-venue-bar-name">{{item.venueName || 'Venue'}}</text>
+        </view>
+
+        <!-- Image -->
+        <view class="card-media-wrap">
+          <image
+            src="{{item.promoImages[0] || '/images/placeholder.png'}}"
+            mode="aspectFill"
+            class="card-img"
+            style="height:{{item.cardImgHeight || 640}}rpx"
+            lazy-load="{{true}}"
+            bindload="onCardImageLoad"
+            data-id="{{item._id}}"
+          />
+          <view wx:if="{{item.promoImages.length > 1}}" class="img-count-badge">
+            <text class="img-count-txt">{{item.promoImages.length}} 📷</text>
+          </view>
+        </view>
+
+        <!-- Event info -->
+        <view class="card-info">
+          <text class="card-datetime">{{item.displayDatetime}}</text>
+          <text class="card-title">{{item.title}}</text>
+        </view>
+        <view class="card-btn-wrap">
+          <button
+            class="get-ticket-btn"
+            catchtap="goToTicketDirect"
+            data-id="{{item._id}}"
+          >
+            📋 Get on list
+          </button>
+          <button
+            class="more-btn"
+            catchtap="goToDetail"
+            data-id="{{item._id}}"
+          >
+            More
+          </button>
+        </view>
+
+      </view>
+    </block>
+
+    <!-- Empty State -->
+    <view wx:if="{{filteredEvents.length === 0 && !loading}}" class="empty-state">
+      <text class="empty-icon">📋</text>
+      <text class="empty-title">No events found</text>
+      <text class="empty-sub">Try adjusting your search or date filter</text>
+      <view wx:if="{{selectedDate || searchKeyword}}" class="empty-clear-btn" bindtap="clearAllFilters">
+        <text class="empty-clear-txt">Clear filters</text>
+      </view>
+    </view>
+
+    <view class="list-bottom-pad"></view>
+  </view>
+</scroll-view>
+
+<!-- Calendar Modal -->
+<view wx:if="{{showCalendar}}" class="modal-overlay" bindtap="toggleCalendar">
+  <view class="calendar-modal" catchtap="noop">
+    <view class="calendar-header">
+      <view class="cal-nav-btn" bindtap="prevMonth">
+        <text class="cal-nav-txt">‹</text>
+      </view>
+      <text class="calendar-month-title">{{currentMonth}}</text>
+      <view class="cal-nav-btn" bindtap="nextMonth">
+        <text class="cal-nav-txt">›</text>
+      </view>
+    </view>
+    <view class="calendar-grid">
+      <view class="calendar-weekday" wx:for="{{weekdays}}" wx:key="*this">{{item}}</view>
+      <view
+        wx:for="{{calendarDays}}"
+        wx:key="date"
+        class="calendar-day {{item.isEmpty ? 'cal-empty' : ''}} {{item.isToday ? 'cal-today' : ''}} {{selectedDate === item.date ? 'cal-selected' : ''}} {{item.hasEvent ? 'cal-has-event' : ''}}"
+        bindtap="selectDate"
+        data-date="{{item.date}}"
+      >
+        <text class="cal-day-num">{{item.day}}</text>
+        <view wx:if="{{item.hasEvent && !item.isEmpty}}" class="event-dot"></view>
+      </view>
+    </view>
+    <view class="calendar-actions">
+      <view class="cal-action-btn cal-action-clear" bindtap="clearDateFilter">
+        <text class="cal-action-txt">Clear</text>
+      </view>
+      <view class="cal-action-btn cal-action-done" bindtap="toggleCalendar">
+        <text class="cal-action-txt cal-action-done-txt">Done</text>
+      </view>
+    </view>
+  </view>
+</view>
+
 </view>

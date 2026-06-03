@@ -57,3 +57,16 @@ page {
 
 /* ── Tab bar spacer ── */
 .tab-bar-spacer { height: 160rpx; }
+
+@media (prefers-color-scheme: dark) {
+  page {
+    background: #000000;
+  }
+  .nav-bar {
+    background: #1C1C1E;
+    border-bottom-color: #38383A;
+  }
+  .nav-title { color: #FFFFFF; }
+  .card { background: #1C1C1E; }
+  .empty-title { color: #FFFFFF; }
+}

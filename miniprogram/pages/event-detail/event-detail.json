@@ -1,6 +1,4 @@
 {
-  "navigationBarTitleText": "Event",
-  "usingComponents": {},
-  "enableShareAppMessage": true,
-  "enableShareTimeline": true
+  "navigationBarTitleText": "",
+  "usingComponents": {}
 }

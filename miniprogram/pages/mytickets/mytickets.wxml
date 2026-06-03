@@ -1,40 +1,101 @@
-<view class="container">
+<!--pages/mytickets/mytickets.wxml-->
+<view class="page">
 
-<view class="header">
-  <text class="header-title">My Tickets</text>
-  <text class="header-sub">{{tickets.length}} tickets</text>
-</view>
-
-<view wx:if="{{isLoading}}" class="loading">
-  <text>Loading...</text>
-</view>
-
-<view wx:elif="{{tickets.length === 0}}" class="empty-state">
-  <text class="empty-icon">🎫</text>
-  <text class="empty-text">No tickets yet</text>
-  <text class="empty-sub">Register for an event to see your tickets here</text>
-</view>
-
-<view wx:else class="tickets-list">
-  <view
-    wx:for="{{tickets}}"
-    wx:key="_id"
-    class="ticket-card"
-  >
-    <view class="ticket-info">
-      <text class="ticket-title">{{item.eventTitle}}</text>
-      <view class="ticket-meta">
-        <view class="dot"></view>
-        <text class="ticket-venue">{{item.eventDate}}</text>
-        <text class="ticket-time">{{item.ticketType === 'free' ? 'Free' : 'Paid'}}</text>
+  <!-- Fixed Header -->
+  <view class="header">
+    <view class="header-top">
+      <view class="back-btn" bindtap="goBack">
+        <text class="back-icon">‹</text>
       </view>
+      <text class="header-title">My List</text>
+      <view class="header-placeholder"></view>
     </view>
-    <view class="ticket-actions">
-      <view class="status-badge {{item.arrivedAt ? 'badge-arrived' : 'badge-confirmed'}}">
-        <text>{{item.arrivedAt ? '✓' : '•'}}</text>
+    <view class="tabs">
+      <view
+        class="tab {{activeTab === 'active' ? 'tab-active' : ''}}"
+        bindtap="switchTab"
+        data-tab="active"
+      >
+        <text class="tab-text">Active</text>
+      </view>
+      <view
+        class="tab {{activeTab === 'past' ? 'tab-active' : ''}}"
+        bindtap="switchTab"
+        data-tab="past"
+      >
+        <text class="tab-text">Past</text>
       </view>
     </view>
   </view>
-</view>
+
+  <!-- Scrollable Content -->
+  <scroll-view class="scroll" scroll-y>
+
+    <view wx:if="{{isLoading}}" class="loading-wrap">
+      <view class="loading-spinner"></view>
+    </view>
+
+    <!-- Active tickets -->
+    <block wx:elif="{{activeTab === 'active'}}">
+      <view wx:if="{{activeTickets.length === 0}}" class="empty-state">
+        <text class="empty-icon">📋</text>
+        <text class="empty-title">No active tickets</text>
+        <text class="empty-sub">Register for an event to see your tickets here</text>
+      </view>
+      <view wx:else class="tickets-list">
+        <view
+          wx:for="{{activeTickets}}"
+          wx:key="_id"
+          class="ticket-card"
+          bindtap="goToEvent"
+          data-id="{{item.eventId}}"
+        >
+          <view class="ticket-info">
+            <text class="ticket-title">{{item.eventTitle}}</text>
+            <view class="ticket-meta">
+              <view class="dot"></view>
+              <text class="ticket-date">{{item.eventDate}}</text>
+              <text class="ticket-type">{{item.ticketType === 'free' ? 'Free' : 'On guest list'}}</text>
+            </view>
+          </view>
+          <view class="ticket-remove-btn" catchtap="removeFromList" data-id="{{item._id}}">
+            <text class="ticket-remove-icon">×</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- Past tickets -->
+    <block wx:elif="{{activeTab === 'past'}}">
+      <view wx:if="{{pastTickets.length === 0}}" class="empty-state">
+        <text class="empty-icon">📅</text>
+        <text class="empty-title">No past events</text>
+        <text class="empty-sub">Attended events will appear here</text>
+      </view>
+      <view wx:else class="tickets-list">
+        <view
+          wx:for="{{pastTickets}}"
+          wx:key="_id"
+          class="ticket-card ticket-card-past"
+          bindtap="goToEvent"
+          data-id="{{item.eventId}}"
+        >
+          <view class="ticket-info">
+            <text class="ticket-title ticket-title-past">{{item.eventTitle}}</text>
+            <view class="ticket-meta">
+              <view class="dot dot-past"></view>
+              <text class="ticket-date">{{item.eventDate}}</text>
+              <text class="ticket-type ticket-type-past">{{item.ticketType === 'free' ? 'Free' : 'On guest list'}}</text>
+            </view>
+          </view>
+          <view class="status-badge badge-past">
+            <text class="badge-icon">✓</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <view class="list-bottom-pad"></view>
+  </scroll-view>
 
 </view>

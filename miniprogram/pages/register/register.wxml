@@ -1,61 +1,54 @@
 <!-- pages/register/index.wxml -->
 <view class="page">
 
-<!-- Фоновый градиент -->
 <view class="bg-gradient" />
 
-<!-- ─── Спиннер при проверке сессии ─── -->
+<!-- Spinner while checking session -->
 <view wx:if="{{checking}}" class="checking-wrap">
   <view class="spinner" />
 </view>
 
-<!-- ─── Основной экран ─── -->
 <block wx:else>
 
-  <!-- Логотип -->
+  <!-- Logo -->
   <view class="logo-wrap">
     <view class="logo-box">
-      <text class="logo-main">Yue!</text>
-      <text class="logo-sub">悦 · Живи ярче</text>
+      <text class="logo-main">THE LIST</text>
     </view>
   </view>
 
-  <!-- Карточка входа -->
+  <!-- Login card -->
   <view class="card">
-    <text class="card-title">Добро пожаловать</text>
-    <text class="card-desc">Войдите чтобы получить доступ к событиям и билетам</text>
+    <text class="card-title">Welcome</text>
+    <text class="card-desc">Sign in to access events and tickets</text>
 
-    <!-- Обычная кнопка — показывает Privacy -->
+    <!-- Step 1: show Privacy button -->
     <view
       wx:if="{{!privacyAgreed}}"
       class="btn-login"
       bind:tap="onLoginTap"
     >
-      <text class="btn-login-text">Войти через WeChat</text>
+      <text class="btn-login-text">Sign in with WeChat</text>
     </view>
 
-    <!-- После agree — кнопка с open-type для получения телефона -->
+    <!-- Step 2: after agree — phone number button -->
     <button
       wx:else
-      class="btn-login btn-login--phone"
+      class="btn-phone"
+      style="width:100%;margin:0;"
       open-type="getPhoneNumber"
-      bind:getphonenumber="onGetPhoneNumber"
-    >
-      <text class="btn-login-text">Разрешить доступ к номеру</text>
-    </button>
+      bindgetphonenumber="onGetPhoneNumber"
+    >Allow access to phone number</button>
 
   </view>
 
-  <!-- Слоган -->
   <view class="footer">
-    <text class="footer-text">Yue! · 悦 · 2026</text>
+    <text class="footer-text">THE LIST · 2026</text>
   </view>
 
 </block>
 
-<!-- ═══════════════════════════════════════ -->
-<!-- ─── Модалка Privacy Notice ─── -->
-<!-- ═══════════════════════════════════════ -->
+<!-- Privacy Notice sheet -->
 <view
   wx:if="{{showPrivacy}}"
   class="mask"
@@ -65,19 +58,19 @@
 
     <view class="sheet-handle" />
 
-    <text class="sheet-title">Политика конфиденциальности</text>
+    <text class="sheet-title">Privacy Notice</text>
 
     <view class="sheet-body">
-      <text class="sheet-body-heading">Уведомление о конфиденциальности{{'\n\n'}}</text>
-      <text class="sheet-body-text">Перед использованием Yue! ознакомьтесь с политикой конфиденциальности. Мы используем ваши данные исключительно для предоставления сервиса — просмотра событий и получения билетов. Нажимая «Принять», вы соглашаетесь с условиями.</text>
+      <text class="sheet-body-heading">Privacy Policy{{'\n\n'}}</text>
+      <text class="sheet-body-text">Before using The List, please review our privacy policy. We use your data exclusively to provide the service — browsing events and getting tickets. By tapping "Accept" you agree to the terms.</text>
     </view>
 
     <view class="sheet-actions">
       <view class="btn-agree" bind:tap="onAgree">
-        <text class="btn-agree-text">Принять</text>
+        <text class="btn-agree-text">Accept</text>
       </view>
       <view class="btn-disagree" bind:tap="onDisagree">
-        <text class="btn-disagree-text">Отказаться</text>
+        <text class="btn-disagree-text">Decline</text>
       </view>
     </view>
 

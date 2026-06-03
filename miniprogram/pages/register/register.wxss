@@ -1,15 +1,15 @@
 /* pages/register/index.wxss */
 
 .page {
-  min-height: 100vh;
+  height: 100%;
   background: #050505;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  position: relative;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
   overflow: hidden;
-  padding-bottom: constant(safe-area-inset-bottom);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -72,18 +72,11 @@
 }
 
 .logo-main {
-  font-size: 72px;
-  font-weight: 800;
+  font-size: 56px;
+  font-weight: 900;
   color: #FFFFFF;
-  letter-spacing: -3px;
+  letter-spacing: -1px;
   line-height: 1;
-}
-
-.logo-sub {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.3);
-  letter-spacing: 4px;
-  font-weight: 300;
 }
 
 /* ─── Карточка ─── */
@@ -136,16 +129,35 @@
 
 .btn-login::after { border: none; }
 
-.btn-login--phone {
-  opacity: 0.92;
-}
-
 .btn-login-text {
   font-size: 16px;
   font-weight: 600;
   color: #FFFFFF;
   letter-spacing: 0.2px;
 }
+
+/* ─── Phone button wrapper ─── */
+.btn-phone-wrap {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+.btn-phone {
+  width: 100%;
+  min-height: 52px;
+  background: #007AFF;
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.35;
+  margin: 0;
+  padding: 14px 12px;
+  box-sizing: border-box;
+  display: block;
+}
+.btn-phone::after { border: none; }
 
 /* ─── Слоган ─── */
 .footer {
@@ -252,4 +264,13 @@
   font-size: 16px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: rgba(28, 28, 30, 0.95);
+    border-color: rgba(255,255,255,0.1);
+  }
+  .sheet { background: #1C1C1E; }
+  .sheet-body { background: rgba(255,255,255,0.06); }
 }

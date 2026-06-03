@@ -3,166 +3,103 @@ const app = getApp();
 Page({
   data: {
     userInfo: null,
-    hasUserInfo: false,
-    showModal: false,
-    tempAvatarUrl: ''
+    loading: true,
+    avatarLetter: '?',
+    showNameEdit: false,
+    editingName: ''
   },
 
   onLoad: function() {
     app.getCloud((cloud) => {
       this.cloud = cloud;
-      this.checkUserInDB();
+      this._loadProfile();
     });
   },
 
   onShow: function() {
-    if (this.data.hasUserInfo) {
-      this.checkUserInDB();
-    }
+    if (this.cloud) this._loadProfile();
   },
 
-  checkUserInDB: function() {
+  _loadProfile: function() {
     const openid = app.globalData.openid;
     if (!openid) {
-      setTimeout(() => this.checkUserInDB(), 500);
+      setTimeout(() => this._loadProfile(), 300);
       return;
     }
     const db = this.cloud.database();
     db.collection('guests').where({ _openid: openid }).get({
       success: res => {
         if (res.data.length > 0) {
-          this.setData({ userInfo: res.data[0], hasUserInfo: true });
+          const u = res.data[0];
+          const avatarLetter = (u.nickName || u.name || '?').charAt(0).toUpperCase();
+          this.setData({ userInfo: u, avatarLetter, loading: false });
         } else {
-          this.setData({ showModal: true });
+          wx.reLaunch({ url: '/pages/register/register' });
         }
       },
-      fail: err => console.error("Check user error:", err)
+      fail: () => {
+        this.setData({ loading: false });
+      }
     });
   },
 
-  onChooseAvatar: function(e) {
-    this.setData({ tempAvatarUrl: e.detail.avatarUrl });
+  noop() {},
+
+  openNameEdit() {
+    const name = this.data.userInfo.nickName || this.data.userInfo.name || '';
+    this.setData({ showNameEdit: true, editingName: name });
   },
 
-  saveProfile: function(e) {
-    const nickName = e.detail.value.nickName;
-    if (!nickName || !nickName.trim()) {
-      wx.showToast({ title: 'Enter name', icon: 'none' });
+  closeNameEdit() {
+    this.setData({ showNameEdit: false, editingName: '' });
+  },
+
+  onNameInput(e) {
+    this.setData({ editingName: e.detail.value });
+  },
+
+  saveNameEdit() {
+    const name = this.data.editingName.trim();
+    if (!name) {
+      wx.showToast({ title: 'Enter a name', icon: 'none' });
       return;
     }
-    wx.showLoading({ title: 'Saving...' });
-    const avatarToUpload = this.data.tempAvatarUrl;
-    if (avatarToUpload && !avatarToUpload.startsWith('http')) {
-      this.cloud.uploadFile({
-        cloudPath: `avatars/${Date.now()}.png`,
-        filePath: avatarToUpload,
-        success: res => { this.saveToDatabase(nickName.trim(), res.fileID); },
-        fail: () => {
-          wx.hideLoading();
-          wx.showToast({ title: 'Upload failed', icon: 'none' });
-        }
-      });
-    } else {
-      this.saveToDatabase(nickName.trim(), avatarToUpload || '');
-    }
-  },
-
-  saveToDatabase: function(nickName, avatarUrl) {
+    wx.showLoading({ title: 'Saving...', mask: true });
     const db = this.cloud.database();
-    const openid = app.globalData.openid;
-    db.collection('guests').where({ _openid: openid }).get({
-      success: res => {
-        if (res.data.length > 0) {
-          db.collection('guests').doc(res.data[0]._id).update({
-            data: { nickName, avatarUrl },
-            success: () => {
-              wx.hideLoading();
-              this.setData({ showModal: false });
-              this.checkUserInDB();
-            },
-            fail: err => {
-              wx.hideLoading();
-              console.error("Update failed:", err);
-            }
-          });
-        } else {
-          db.collection('guests').add({
-            data: { nickName, avatarUrl, createdAt: db.serverDate() },
-            success: () => {
-              wx.hideLoading();
-              this.setData({ showModal: false });
-              this.checkUserInDB();
-            },
-            fail: err => {
-              wx.hideLoading();
-              console.error("Add failed:", err);
-            }
-          });
-        }
-      },
-      fail: err => {
-        wx.hideLoading();
-        console.error("saveToDatabase check failed:", err);
-      }
-    });
-  },
-
-  scanQR: function() {
-    wx.scanCode({
-      onlyFromCamera: true,
-      success: (res) => {
-        const data = res.result;
-        if (data.startsWith('promoter_invite:')) {
-          const token = data.replace('promoter_invite:', '');
-          this.applyPromoterRole(token);
-        } else {
-          wx.showToast({ title: 'Invalid QR', icon: 'none' });
-        }
-      },
-      fail: () => {}
-    });
-  },
-
-  applyPromoterRole: function(token) {
-    wx.showLoading({ title: 'Applying...', mask: true });
-    const openid = app.globalData.openid;
-    this.cloud.callFunction({
-      name: 'assignPromoter',
-      data: { token, openid }
-    }).then(res => {
+    db.collection('guests').doc(this.data.userInfo._id).update({
+      data: { nickName: name, updatedAt: db.serverDate() }
+    })
+    .then(() => {
       wx.hideLoading();
-      if (res.result && res.result.success) {
-        wx.vibrateShort();
-        wx.showToast({ title: 'You are now a Promoter!', icon: 'success' });
-        this.checkUserInDB();
-      } else {
-        wx.showToast({ title: res.result.message || 'Error', icon: 'none' });
-      }
-    }).catch(() => {
+      const userInfo = Object.assign({}, this.data.userInfo, { nickName: name });
+      const avatarLetter = name.charAt(0).toUpperCase();
+      this.setData({ showNameEdit: false, editingName: '', userInfo, avatarLetter });
+      wx.vibrateShort({ type: 'medium' });
+      wx.showToast({ title: 'Saved!', icon: 'success' });
+    })
+    .catch(() => {
       wx.hideLoading();
-      wx.showToast({ title: 'Error', icon: 'none' });
+      wx.showToast({ title: 'Error saving', icon: 'none' });
     });
-  },
-
-  goToTickets: function() {
-    wx.switchTab({ url: '/pages/mytickets/mytickets' });
   },
 
   logout: function() {
     wx.showModal({
       title: 'Log Out',
       content: 'Confirm logout?',
-      confirmColor: '#ff3b30',
+      confirmColor: '#FF3B30',
       success: (res) => {
         if (res.confirm) {
-          this.setData({
-            userInfo: null,
-            hasUserInfo: false,
-            showModal: true,
-            tempAvatarUrl: ''
-          });
+          try { wx.removeStorageSync('userInfo'); } catch(e) {}
+          const app = getApp();
+          app.globalData.userInfo = null;
+          wx.reLaunch({ url: '/pages/register/register' });
         }
       }
     });
+  },
+
+  goBack() {
+    wx.navigateBack();
   }
 });

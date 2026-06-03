@@ -1,133 +1,180 @@
 <view class="container">
 
 <view class="hero-section">
-  <block wx:if="{{event.promoImage}}">
-    <image src="{{event.promoImage}}" class="hero-image" mode="aspectFill" />
+  <block wx:if="{{event.promoImages && event.promoImages.length > 1}}">
+    <swiper class="hero-swiper" indicator-dots="{{true}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#ffffff" circular="{{true}}">
+      <swiper-item wx:for="{{event.promoImages}}" wx:for-item="img" wx:key="*this">
+        <image src="{{img}}" class="hero-image" mode="aspectFill" catchtap="previewHeroImage" data-url="{{img}}" />
+      </swiper-item>
+    </swiper>
+  </block>
+  <block wx:elif="{{event.promoImage}}">
+    <image src="{{event.promoImage}}" class="hero-image" mode="aspectFill" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
   </block>
   <view wx:else class="image-placeholder">
     <text class="placeholder-text">No Image</text>
   </view>
 </view>
 
+<scroll-view class="content-scroll" scroll-y enhanced show-scrollbar="false">
 <view class="main-card">
-  <view class="title-row">
-    <text class="event-title">{{event.title}}</text>
-    <view class="share-btn" bindtap="handleShare">
-      <text class="share-icon">↑</text>
+
+    <!-- Block 1: date/time + title -->
+    <view class="info-block">
+      <text class="info-datetime">{{event.displayDatetime || event.displayDate || event.date}}</text>
+      <text class="info-title">{{event.title}}</text>
     </view>
-  </view>
-  <view class="venue-row">
-    <text class="venue-icon">📍</text>
-    <text class="venue-name">{{event.venue || 'TBA'}}</text>
-  </view>
-  <view class="meta-row">
-    <view class="meta-chip">
-      <text class="meta-text">📅 {{event.date}}</text>
-    </view>
-    <view class="meta-chip">
-      <text class="meta-text">🕐 {{event.time}}</text>
-    </view>
-  </view>
-  <view class="divider"></view>
-  <view class="section" wx:if="{{event.description}}">
-    <text class="section-label">ABOUT</text>
-    <text class="section-content">{{event.description}}</text>
-  </view>
-  <view class="section" wx:if="{{event.promoMaterials && event.promoMaterials.length > 0}}">
-    <text class="section-label">PROMO</text>
-    <scroll-view scroll-x class="promo-scroll">
-      <view class="promo-list">
-        <image
-          wx:for="{{event.promoMaterials}}"
-          wx:key="index"
-          src="{{item}}"
-          class="promo-thumb"
-          mode="aspectFill"
-          bindtap="previewMaterial"
-          data-url="{{item}}"
-        />
+
+    <!-- Block 2: venue + map -->
+    <view class="venue-block" bindtap="openMap">
+      <view class="venue-loc-icon">
+        <view class="venue-loc-ring"></view>
+        <view class="venue-loc-dot"></view>
       </view>
-    </scroll-view>
+      <text class="venue-block-name">{{event.venueName || 'TBA'}}</text>
+      <view class="venue-v-line"></view>
+      <view class="map-icon-btn">
+        <view class="map-pin-body"></view>
+      </view>
+    </view>
+
+    <view class="section section--desc" wx:if="{{event.description}}">
+      <text class="section-content">{{event.description}}</text>
+    </view>
+
+    <view class="section" wx:if="{{event.promoMaterials && event.promoMaterials.length > 0}}">
+      <text class="section-label">PROMO</text>
+      <scroll-view scroll-x class="promo-scroll">
+        <view class="promo-list">
+          <image
+            wx:for="{{event.promoMaterials}}"
+            wx:key="index"
+            src="{{item}}"
+            class="promo-thumb"
+            mode="aspectFill"
+            bindtap="previewMaterial"
+            data-url="{{item}}"
+          />
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="section" wx:if="{{event.paidPackages && event.paidPackages.length > 0}}">
+      <text class="section-label">PACKAGES</text>
+      <view
+        wx:for="{{event.paidPackages}}"
+        wx:key="index"
+        class="package-item"
+      >
+        <text class="package-name">{{item.name}}</text>
+      </view>
+    </view>
+
   </view>
-</view>
+</scroll-view>
 
 <view class="action-bar">
-  <view wx:if="{{isRegistered}}" class="registered-bar">
-    <text class="registered-icon">✓</text>
-    <text class="registered-text">You're on the list</text>
+  <view wx:if="{{hasProfile === false}}" class="no-profile-bar">
+    <text class="no-profile-text">Вы не зарегистрированы в приложении</text>
+    <button class="btn-join-app" bindtap="goRegister">Зарегистрироваться</button>
   </view>
-  <block wx:else>
-    <button class="btn-register" bindtap="openTicketModal">Sign Up</button>
-  </block>
+  <view wx:elif="{{isRegistered}}" class="registered-bar">
+    <view class="registered-status">
+      <text class="registered-icon">✓</text>
+      <text class="registered-text">You're on the list</text>
+    </view>
+    <button class="btn-share" open-type="share">Share</button>
+  </view>
+  <view wx:else class="action-row">
+    <button class="btn-register" bindtap="openTicketModal">📋 Get on list</button>
+    <button class="btn-share" open-type="share">Share</button>
+  </view>
 </view>
 
 </view>
 
-<!-- Модал вне container -->
-<view wx:if="{{showTicketModal}}" class="ticket-mask">
-<view class="ticket-modal">
-  <view class="modal-handle"></view>
-  <text class="modal-title">Sign Up</text>
+<!-- Ticket modal -->
+<view wx:if="{{showTicketModal}}" class="ticket-mask" bindtap="closeTicketModal">
+  <view class="ticket-modal" catchtap="noop">
+    <view class="modal-handle"></view>
+    <text class="modal-title">Get on list</text>
+    <text class="modal-subtitle">SELECT TICKET TYPE</text>
 
-  <view class="promo-input-row">
-    <text class="promo-input-label">Promo code (required)</text>
-    <view class="promo-input-wrap {{promoCodeValid ? 'input-valid' : ''}}">
-      <input
-        class="promo-input"
-        placeholder="Enter code"
-        value="{{promoCodeInput}}"
-        bindinput="onPromoCodeInput"
-        maxlength="20"
-      />
+    <!-- Free entry option -->
+    <view
+      wx:if="{{event.isFree}}"
+      class="ticket-option {{selectedTicketId === 'free' ? 'ticket-selected' : ''}}"
+      bindtap="selectTicket"
+      data-id="free"
+      data-name="Free Entry"
+      data-price="0"
+    >
+      <view class="ticket-check {{selectedTicketId === 'free' ? 'ticket-check--on' : ''}}">
+        <text wx:if="{{selectedTicketId === 'free'}}" class="check-mark">✓</text>
+      </view>
+      <view class="ticket-left">
+        <text class="ticket-name">Free Entry</text>
+        <text class="ticket-desc">Standard guest list</text>
+      </view>
+      <text class="ticket-price-tag free-tag">FREE</text>
     </view>
-    <view wx:if="{{promoCodeInput.length > 0 && !promoCodeValid}}" class="check-btn" bindtap="verifyPromoCode">
-      <text class="check-btn-text">Check Code</text>
+
+    <!-- Paid tickets from tickets array -->
+    <view
+      wx:for="{{event.tickets}}"
+      wx:key="id"
+      class="ticket-option {{selectedTicketId === item.id ? 'ticket-selected' : ''}}"
+      bindtap="selectTicket"
+      data-id="{{item.id}}"
+      data-name="{{item.name}}"
+      data-price="{{item.price}}"
+    >
+      <view class="ticket-check {{selectedTicketId === item.id ? 'ticket-check--on' : ''}}">
+        <text wx:if="{{selectedTicketId === item.id}}" class="check-mark">✓</text>
+      </view>
+      <view class="ticket-left">
+        <text class="ticket-name">{{item.name}}</text>
+        <text class="ticket-desc" wx:if="{{item.description}}">{{item.description}}</text>
+      </view>
+      <text class="ticket-price-tag paid-tag">¥ {{item.price}}</text>
     </view>
-    <text wx:if="{{promoCodeValid}}" class="promo-promoter-name">✓ Code from {{verifiedPromoterName}}</text>
-    <text wx:elif="{{promoCodeError}}" class="promo-error">{{promoCodeError}}</text>
-  </view>
 
-  <view class="divider"></view>
-  <text class="modal-subtitle">SELECT TICKET</text>
-
-  <view
-    class="ticket-option {{selectedTicketType === 'free' ? 'ticket-selected' : ''}}"
-    wx:if="{{event.isFree}}"
-    bindtap="selectTicketType"
-    data-type="free"
-  >
-    <view class="ticket-left">
-      <text class="ticket-name">Free Entry</text>
-      <text class="ticket-desc">Standard guest list</text>
+    <!-- Paid packages -->
+    <view
+      wx:for="{{event.paidPackages}}"
+      wx:for-index="idx"
+      wx:key="idx"
+      class="ticket-option {{selectedTicketId === 'pkg_' + idx ? 'ticket-selected' : ''}}"
+      bindtap="selectPackage"
+      data-idx="{{idx}}"
+      data-name="{{item.name}}"
+      data-link="{{item.paymentLink}}"
+    >
+      <view class="ticket-check {{selectedTicketId === 'pkg_' + idx ? 'ticket-check--on' : ''}}">
+        <text wx:if="{{selectedTicketId === 'pkg_' + idx}}" class="check-mark">✓</text>
+      </view>
+      <view class="ticket-left">
+        <text class="ticket-name">{{item.name}}</text>
+        <text class="ticket-desc">Paid package</text>
+      </view>
+      <text class="ticket-price-tag paid-tag">PAID</text>
     </view>
-    <text class="ticket-price free">FREE</text>
-  </view>
 
-  <view
-    class="ticket-option {{selectedTicketType === 'paid' ? 'ticket-selected' : ''}}"
-    wx:if="{{event.isPaid}}"
-    bindtap="selectTicketType"
-    data-type="paid"
-  >
-    <view class="ticket-left">
-      <text class="ticket-name">Paid Entry</text>
-      <text class="ticket-desc">{{event.paymentLink ? 'External payment' : 'At the door'}}</text>
+    <view wx:if="{{!event.isFree && (!event.tickets || event.tickets.length === 0) && (!event.paidPackages || event.paidPackages.length === 0)}}" class="no-tickets">
+      <text class="no-tickets-text">No tickets available yet</text>
     </view>
-    <text class="ticket-price paid">¥ {{event.price || '—'}}</text>
-  </view>
 
-  <button
-    wx:if="{{selectedTicketType}}"
-    class="register-btn"
-    bindtap="handleJoin"
-    data-type="{{selectedTicketType}}"
-    disabled="{{!promoCodeValid}}"
-  >
-    {{promoCodeValid ? 'Register' : 'Enter Promo Code First'}}
-  </button>
+    <button
+      wx:if="{{selectedTicketId}}"
+      class="register-btn"
+      style="width:100%;margin:0;box-sizing:border-box;"
+      bindtap="handleJoin"
+    >
+      Register
+    </button>
 
-  <view class="modal-cancel" bindtap="closeTicketModal">
-    <text>Cancel</text>
+    <view class="modal-cancel" bindtap="closeTicketModal">
+      <text>Cancel</text>
+    </view>
   </view>
-</view>
 </view>
