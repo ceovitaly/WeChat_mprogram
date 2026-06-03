@@ -1,0 +1,120 @@
+<view class="page">
+
+  <view class="top-bar">
+    <view class="top-bar-left">
+      <text class="event-title">{{eventTitle}}</text>
+      <text class="event-sub">{{venueName}}</text>
+    </view>
+    <view wx:if="{{!isClosed && isAdmin}}" class="close-event-btn" bindtap="confirmCloseEvent">
+      <text class="close-event-text">Close Event</text>
+    </view>
+    <view wx:elif="{{isClosed}}" class="export-btn" bindtap="exportCSV">
+      <text class="export-btn-text">Export</text>
+    </view>
+  </view>
+
+  <view class="stats-bar {{isClosed ? 'stats-bar--closed' : ''}}">
+    <view class="stat-item">
+      <text class="stat-num stat-num--green">{{dutyStaff.length + arrivedGuests.length}}</text>
+      <text class="stat-label">In venue</text>
+    </view>
+    <view class="stat-div"></view>
+    <view class="stat-item">
+      <text class="stat-num">{{pendingGuests.length}}</text>
+      <text class="stat-label">Waiting</text>
+    </view>
+    <view class="stat-div"></view>
+    <view class="stat-item">
+      <text class="stat-num">{{totalRegistered}}</text>
+      <text class="stat-label">Registered</text>
+    </view>
+    <view class="refresh-btn" bindtap="onRefresh">
+      <text class="refresh-icon">↻</text>
+      <text class="refresh-time">{{lastUpdated}}</text>
+    </view>
+  </view>
+
+  <scroll-view class="scroll" scroll-y>
+
+    <view wx:if="{{loading}}" class="empty-state">
+      <text class="empty-text">Loading...</text>
+    </view>
+
+    <view wx:else class="body">
+
+      <!-- On Duty Staff -->
+      <view wx:if="{{dutyStaff.length > 0}}" class="section">
+        <text class="section-title">On Duty</text>
+        <view class="card">
+          <view
+            wx:for="{{dutyStaff}}"
+            wx:key="_id"
+            class="guest-row guest-row--duty"
+          >
+            <text class="position-num position-num--duty">{{item.position}}</text>
+            <view class="guest-info">
+              <text class="guest-name guest-name--duty">{{item.guestName}}</text>
+              <text class="guest-sub">Counter</text>
+            </view>
+            <text class="arrival-badge">On Duty</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- Arrived guests -->
+      <view wx:if="{{arrivedGuests.length > 0}}" class="section">
+        <text class="section-title">Arrived · {{arrivedGuests.length}}</text>
+        <block wx:for="{{arrivedSections}}" wx:key="tag">
+          <view class="arrived-section-header">
+            <text class="arrived-section-title">{{item.label}}</text>
+            <text class="arrived-section-count">{{item.guests.length}}</text>
+          </view>
+          <view class="card arrived-section-card">
+            <view
+              wx:for="{{item.guests}}"
+              wx:for-item="guest"
+              wx:key="_id"
+              class="guest-row guest-row--arrived row--{{guest.group === 'P' ? 'party' : guest.group === 'AP' ? 'ap' : guest.group === 'LAP' ? 'lap' : 'extra'}}"
+            >
+              <text class="position-num">{{guest.position}}</text>
+              <view class="guest-info">
+                <text class="guest-name guest-name--arrived">{{guest.guestName}}</text>
+                <text class="guest-sub">{{guest.promoterName || '—'}}</text>
+              </view>
+              <view class="tier-badge tier-badge--{{guest.group === 'P' ? 'p' : guest.group === 'AP' ? 'ap' : guest.group === 'LAP' ? 'lap' : 'e'}}">
+                <text class="tier-badge-text">{{guest.group || 'E'}}</text>
+              </view>
+              <text class="arrival-time">{{guest.arrivedAt}}</text>
+            </view>
+          </view>
+        </block>
+      </view>
+
+      <!-- Waiting (no arrival) -->
+      <view wx:if="{{pendingGuests.length > 0}}" class="section">
+        <text class="section-title">Waiting · {{pendingGuests.length}}</text>
+        <view class="card">
+          <view
+            wx:for="{{pendingGuests}}"
+            wx:key="_id"
+            class="guest-row"
+          >
+            <view class="pending-dot"></view>
+            <view class="guest-info">
+              <text class="guest-name">{{item.guestName}}</text>
+              <text class="guest-sub">{{item.promoterName || '—'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{dutyStaff.length === 0 && arrivedGuests.length === 0}}" class="empty-state">
+        <text class="empty-text">No one has arrived yet</text>
+      </view>
+
+    </view>
+
+    <view class="safe-bottom"></view>
+  </scroll-view>
+
+</view>

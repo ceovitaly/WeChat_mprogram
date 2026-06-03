@@ -1,7 +1,5 @@
-const { callFunction } = require('../../../utils/request')
-const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
-
-const PAGE_SIZE = 50
+const { callFunction, collection } = require('../../../utils/request')
+const { CLOUD_FUNCTIONS, COLLECTIONS } = require('../../../utils/constants')
 
 Page({
   data: {
@@ -10,48 +8,39 @@ Page({
     filteredGuests: [],
     searchQuery: '',
     totalCount: 0,
-    page: 0,
-    hasMore: true
+
+    promoters: [],
+    selectedPromoter: '',
+
+    showPromoterSheet: false,
+    selectedGuest: null,
   },
 
   onLoad() {
-    this._fetchGuests(true)
+    this._fetchGuests()
+    this._fetchPromoters()
   },
 
   onPullDownRefresh() {
-    this._fetchGuests(true)
+    this._fetchGuests()
+    this._fetchPromoters()
   },
 
-  onReachBottom() {
-    if (!this.data.hasMore || this.data.isLoading || this.data.searchQuery) return
-    this._fetchGuests(false)
-  },
-
-  async _fetchGuests(reset) {
+  async _fetchGuests() {
     if (this.data.isLoading) return
     this.setData({ isLoading: true })
-
-    const page = reset ? 0 : this.data.page
-    const skip = page * PAGE_SIZE
-
     try {
       const res = await callFunction(
         CLOUD_FUNCTIONS.MANAGE_APPLICATIONS,
-        { action: 'getAllGuests', skip, limit: PAGE_SIZE }
+        { action: 'getAllGuests', skip: 0, limit: 1000 }
       )
-
-      const newGuests = (res && res.data) ? res.data : []
-      const total = (res && res.total) ? res.total : 0
-      const allGuests = reset ? newGuests : [...this.data.allGuests, ...newGuests]
-
+      const allGuests = (res && res.data) ? res.data : []
       this.setData({
         allGuests,
-        filteredGuests: allGuests,
-        totalCount: total,
-        page: page + 1,
-        hasMore: newGuests.length === PAGE_SIZE,
+        totalCount: allGuests.length,
         isLoading: false
       })
+      this._applyFilters()
     } catch (err) {
       console.error('[Guests] fetch error:', err)
       this.setData({ isLoading: false })
@@ -61,21 +50,78 @@ Page({
     }
   },
 
-  onSearchInput(e) {
-    const searchQuery = e.detail.value
-    const q = searchQuery.toLowerCase().trim()
-    const filtered = q
-      ? this.data.allGuests.filter(g =>
-          (g.guestName || '').toLowerCase().includes(q) ||
-          (g.promoterName || '').toLowerCase().includes(q) ||
-          (g.eventTitle || '').toLowerCase().includes(q)
-        )
-      : this.data.allGuests
+  async _fetchPromoters() {
+    try {
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getPromoters' })
+      this.setData({ promoters: res && res.data ? res.data : [] })
+    } catch (err) {
+      console.error('[Guests] promoters error:', err)
+    }
+  },
 
-    this.setData({
-      searchQuery,
-      filteredGuests: filtered,
-      totalCount: q ? filtered.length : this.data.allGuests.length
-    })
-  }
+  _applyFilters() {
+    const { allGuests, searchQuery, selectedPromoter } = this.data
+    let result = allGuests
+    if (selectedPromoter) {
+      result = result.filter(g => g.promoterName === selectedPromoter)
+    }
+    const q = searchQuery.toLowerCase().trim()
+    if (q) {
+      result = result.filter(g => (g.nickName || '').toLowerCase().includes(q))
+    }
+    this.setData({ filteredGuests: result, totalCount: result.length })
+  },
+
+  onSearchInput(e) {
+    this.setData({ searchQuery: e.detail.value }, () => this._applyFilters())
+  },
+
+  selectPromoterFilter(e) {
+    const name = e.currentTarget.dataset.name || ''
+    this.setData({ selectedPromoter: name }, () => this._applyFilters())
+  },
+
+  onGuestTap(e) {
+    const id = e.currentTarget.dataset.id
+    const guest = this.data.allGuests.find(g => g._id === id)
+    if (!guest) return
+    this.setData({ showPromoterSheet: true, selectedGuest: guest })
+  },
+
+  closePromoterSheet() {
+    this.setData({ showPromoterSheet: false, selectedGuest: null })
+  },
+
+  async assignPromoter(e) {
+    const promoterName = e.currentTarget.dataset.name
+    const guest = this.data.selectedGuest
+    if (!guest) return
+
+    this.setData({ showPromoterSheet: false })
+    wx.showLoading({ title: 'Saving...', mask: true })
+
+    try {
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+        action: 'updateGuestPromoter',
+        guestId: guest._id,
+        promoterName
+      })
+      if (!res || !res.success) throw new Error(res && res.message || 'Failed')
+
+      const allGuests = this.data.allGuests.map(g =>
+        g._id === guest._id ? { ...g, promoterName } : g
+      )
+      this.setData({ allGuests, selectedGuest: null })
+      this._applyFilters()
+      wx.vibrateShort({ type: 'light' })
+      wx.showToast({ title: 'Updated', icon: 'success' })
+    } catch (err) {
+      console.error('[Guests] assign promoter error:', err)
+      wx.showToast({ title: 'Failed', icon: 'none' })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
+  noop() {}
 })

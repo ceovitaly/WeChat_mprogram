@@ -1,5 +1,5 @@
-const { collection } = require('../../../utils/request')
-const { COLLECTIONS, EVENT_STATUS } = require('../../../utils/constants')
+const { collection, callFunction } = require('../../../utils/request')
+const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
 const { validateEvent } = require('../../../utils/validator')
 
 Page({
@@ -10,13 +10,13 @@ Page({
     isProcessing: false,
 
     images: [],
+    imageDisplayUrls: [],
 
     title: '',
     description: '',
     date: '',
     startTime: '22:00',
     endTime: '04:00',
-    status: EVENT_STATUS.DRAFT,
 
     venues: [],
     venueIndex: -1,
@@ -41,6 +41,10 @@ Page({
     showTableForm: false,
     tableForm: { name: '', deposit: '', capacity: '', description: '' },
     editTableIndex: -1,
+
+    partyCapacity: '',
+    afterPartyCapacity: '',
+    lateAfterPartyCapacity: '',
   },
 
   onLoad(options) {
@@ -67,7 +71,10 @@ Page({
       sizeType: ['compressed'],
       success: (res) => {
         const newPaths = res.tempFiles.map(f => f.tempFilePath)
-        this.setData({ images: [...this.data.images, ...newPaths] })
+        this.setData({
+          images: [...this.data.images, ...newPaths],
+          imageDisplayUrls: [...this.data.imageDisplayUrls, ...newPaths]
+        })
       }
     })
   },
@@ -75,8 +82,10 @@ Page({
   removeImage(e) {
     const { index } = e.currentTarget.dataset
     const images = [...this.data.images]
+    const imageDisplayUrls = [...this.data.imageDisplayUrls]
     images.splice(index, 1)
-    this.setData({ images })
+    imageDisplayUrls.splice(index, 1)
+    this.setData({ images, imageDisplayUrls })
   },
 
   // ─── Data Loading ────────────────────────────────────────
@@ -104,6 +113,22 @@ Page({
         initialImages = [e.coverImage]
       }
 
+      // Resolve cloud:// URLs server-side (works for all admins, not just uploader)
+      const cloudIds = initialImages.filter(u => u.startsWith('cloud://'))
+      let displayUrls = [...initialImages]
+      if (cloudIds.length > 0) {
+        try {
+          const resolved = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+            action: 'getTempFileURLs',
+            fileList: cloudIds
+          })
+          const urlMap = resolved.urlMap || {}
+          displayUrls = initialImages.map(u => urlMap[u] || u)
+        } catch (e2) {
+          console.warn('[EventEdit] getTempFileURLs failed:', e2)
+        }
+      }
+
       this.setData({
         title: e.title || '',
         description: e.description || '',
@@ -111,6 +136,7 @@ Page({
         startTime: e.startTime || '22:00',
         endTime: e.endTime || '04:00',
         images: initialImages,
+        imageDisplayUrls: displayUrls,
         selectedVenueId: e.venueId || '',
         selectedVenueName: e.venueName || '',
         venueIndex: venueIndex >= 0 ? venueIndex : -1,
@@ -119,7 +145,10 @@ Page({
         paidPackages: e.paidPackages || [],
         tickets: e.tickets || [],
         tables: e.tables || [],
-        bottles: e.bottles || []
+        bottles: e.bottles || [],
+        partyCapacity: e.partyCapacity != null ? String(e.partyCapacity) : '',
+        afterPartyCapacity: e.afterPartyCapacity != null ? String(e.afterPartyCapacity) : '',
+        lateAfterPartyCapacity: e.lateAfterPartyCapacity != null ? String(e.lateAfterPartyCapacity) : '',
       })
     } catch (err) {
       wx.showToast({ title: 'Load failed', icon: 'none' })
@@ -136,8 +165,13 @@ Page({
 
   onTitleInput(e) { this.setData({ title: e.detail.value }) },
   onDescInput(e) { this.setData({ description: e.detail.value }) },
+  onDateChange(e) { this.setData({ date: e.detail.value }) },
   onStartTimeChange(e) { this.setData({ startTime: e.detail.value }) },
   onEndTimeChange(e) { this.setData({ endTime: e.detail.value }) },
+
+  onPartyCapInput(e) { this.setData({ partyCapacity: e.detail.value }) },
+  onAfterPartyCapInput(e) { this.setData({ afterPartyCapacity: e.detail.value }) },
+  onLateAfterPartyCapInput(e) { this.setData({ lateAfterPartyCapacity: e.detail.value }) },
 
   onVenueChange(e) {
     const index = e.detail.value
@@ -270,6 +304,7 @@ Page({
       selectedVenueId, selectedVenueName,
       images, tickets, tables, bottles,
       hasFreeEntry, hasPaidPackages, paidPackages,
+      partyCapacity, afterPartyCapacity, lateAfterPartyCapacity,
       id, isEdit
     } = this.data
 
@@ -288,7 +323,6 @@ Page({
       })
 
       const finalImages = await Promise.all(uploadPromises)
-      const db = wx.cloud.database()
 
       const eventData = {
         title: title.trim(),
@@ -299,26 +333,27 @@ Page({
         venueId: selectedVenueId,
         venueName: selectedVenueName,
         images: finalImages,
+        promoImages: finalImages,
         coverImage: finalImages[0] || '',
         hasFreeEntry,
         hasPaidPackages,
         paidPackages: hasPaidPackages ? paidPackages : [],
         isFree: hasFreeEntry,
         isPaid: hasPaidPackages,
-        status: EVENT_STATUS.DRAFT,
         tickets,
         tables,
         bottles,
-        updatedAt: db.serverDate()
+        partyCapacity: Number(partyCapacity) || 0,
+        afterPartyCapacity: Number(afterPartyCapacity) || 0,
+        lateAfterPartyCapacity: Number(lateAfterPartyCapacity) || 0,
       }
 
-      if (isEdit) {
-        await collection(COLLECTIONS.EVENTS).doc(id).update({ data: eventData })
-      } else {
-        await collection(COLLECTIONS.EVENTS).add({
-          data: { ...eventData, createdAt: db.serverDate() }
-        })
-      }
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+        action: 'saveEvent',
+        id: isEdit ? id : null,
+        eventData
+      })
+      if (!res || !res.success) throw new Error(res && res.message || 'Save failed')
 
       wx.vibrateShort({ type: 'medium' })
       wx.showToast({ title: 'Saved!', icon: 'success' })

@@ -1,71 +1,78 @@
 <view class="page">
 
-<view class="nav-bar">
-  <text class="nav-title">Team</text>
-</view>
+<scroll-view class="scroll" scroll-y>
 
-<view class="section">
-  <text class="section-title">Manage</text>
-  <view class="card">
+  <view class="section" style="padding-top: 32rpx;">
+    <text class="section-title">Manage</text>
+    <view class="card">
 
-    <view
-      class="card-row"
-      bindtap="goTo"
-      data-url="/pages/admin/venue-list/venue-list"
-    >
-      <view class="row-left">
-        <view class="row-icon" style="background:#E8F0FB">
-          <text class="row-icon-emoji">🏛</text>
+      <view class="card-row" bindtap="goTo" data-url="/pages/admin/venue-list/venue-list">
+        <view class="row-left">
+          <view class="row-icon" style="background:#E8F0FB">
+            <text class="row-icon-emoji">🏛</text>
+          </view>
+          <view class="row-text">
+            <text class="row-label">Venues</text>
+            <text class="row-sub">{{venueCount}} venues</text>
+          </view>
         </view>
-        <view class="row-text">
-          <text class="row-label">Venues</text>
-          <text class="row-sub">{{venueCount}} location{{venueCount !== 1 ? 's' : ''}}</text>
+        <view class="row-right">
+          <text class="chevron">›</text>
         </view>
       </view>
-      <text class="chevron">›</text>
-    </view>
 
-    <view
-      class="card-row"
-      bindtap="goTo"
-      data-url="/pages/admin/staff/staff"
-    >
-      <view class="row-left">
-        <view class="row-icon" style="background:#E8F8F0">
-          <text class="row-icon-emoji">👤</text>
+      <view class="card-row" bindtap="goTo" data-url="/pages/admin/staff/staff">
+        <view class="row-left">
+          <view class="row-icon" style="background:#E8F8F0">
+            <text class="row-icon-emoji">👤</text>
+          </view>
+          <view class="row-text">
+            <text class="row-label">Counters</text>
+            <text class="row-sub">{{staffCount}} staff</text>
+          </view>
         </view>
-        <view class="row-text">
-          <text class="row-label">Counters</text>
-          <text class="row-sub">{{staffCount}} staff</text>
+        <view class="row-right">
+          <text class="chevron">›</text>
         </view>
       </view>
-      <text class="chevron">›</text>
-    </view>
 
-    <view
-  class="card-row"
-  bindtap="goTo"
-  data-url="/pages/admin/promoters/promoters"
->
-  <view class="row-left">
-    <view class="row-icon" style="background:#FFF3E0">
-      <text class="row-icon-emoji">⭐</text>
-    </view>
-    <view class="row-text">
-      <text class="row-label">Promoters</text>
-      <text class="row-sub">{{promoterCount}} active{{pendingCount > 0 ? ' · ' + pendingCount + ' pending' : ''}}</text>
+      <view class="card-row" bindtap="goTo" data-url="/pages/admin/promoters/promoters">
+        <view class="row-left">
+          <view class="row-icon" style="background:#FFF3E0">
+            <text class="row-icon-emoji">⭐</text>
+          </view>
+          <view class="row-text">
+            <text class="row-label">Promoters</text>
+            <text class="row-sub">{{promoterCount}} total</text>
+          </view>
+        </view>
+        <view class="row-right">
+          <view wx:if="{{pendingCount > 0}}" class="pending-badge">
+            <text class="pending-badge-text">{{pendingCount}}</text>
+          </view>
+          <text class="chevron">›</text>
+        </view>
+      </view>
+
+      <view class="card-row" bindtap="goTo" data-url="/pages/admin/guests/guests">
+        <view class="row-left">
+          <view class="row-icon" style="background:#F0E8FB">
+            <text class="row-icon-emoji">👥</text>
+          </view>
+          <view class="row-text">
+            <text class="row-label">All Guests</text>
+            <text class="row-sub">{{totalGuests}} total</text>
+          </view>
+        </view>
+        <view class="row-right">
+          <text class="chevron">›</text>
+        </view>
+      </view>
+
     </view>
   </view>
-  <view class="row-right">
-    <view wx:if="{{pendingCount > 0}}" class="pending-badge">
-      <text class="pending-badge-text">{{pendingCount}}</text>
-    </view>
-    <text class="chevron">›</text>
-  </view>
-</view>
 
-  </view>
-</view>
+  <view class="tab-bar-spacer" />
+</scroll-view>
 
-<view class="tab-bar-spacer" />
 </view>

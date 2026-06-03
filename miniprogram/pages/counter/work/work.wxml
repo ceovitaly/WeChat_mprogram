@@ -2,15 +2,13 @@
 
 <!-- ══ STEP 1: VENUE ══ -->
 <view wx:if="{{step === 'venue'}}" class="step-venue">
-  <view class="venue-header">
-    <view class="venue-logo">
-      <text class="venue-logo-text">YUE!</text>
-    </view>
-    <text class="venue-title">Enter Venue</text>
-    <text class="venue-subtitle">{{staffName ? 'Welcome, ' + staffName : 'Enter venue password to start'}}</text>
+  <view class="venue-bg-gradient" />
+  <view class="venue-hero">
+    <text class="venue-app-name">YUE!</text>
+    <text class="venue-greeting">{{staffName ? 'Hi, ' + staffName + '!' : 'Welcome'}}</text>
+    <text class="venue-hint">Enter venue password to start your shift</text>
   </view>
-
-  <view class="venue-form">
+  <view class="venue-card">
     <view class="input-group">
       <text class="input-label">VENUE PASSWORD</text>
       <input
@@ -19,14 +17,15 @@
         placeholder-class="input-placeholder"
         value="{{clubCode}}"
         bindinput="onCodeInput"
-        password
         confirm-type="done"
         bindconfirm="enterVenue"
       />
     </view>
-    <button class="enter-btn" bindtap="enterVenue">Enter Venue</button>
-    <view class="logout-wrap" bindtap="confirmLogout">
-      <text class="logout-text">Log out</text>
+    <view class="primary-btn" bindtap="enterVenue">
+      <text class="primary-btn-text">Enter</text>
+    </view>
+    <view class="danger-btn" bindtap="confirmLogout">
+      <text class="danger-btn-text">Log Out</text>
     </view>
   </view>
 </view>
@@ -34,118 +33,161 @@
 <!-- ══ STEP 2: EVENTS ══ -->
 <view wx:if="{{step === 'event'}}" class="step-event">
   <view class="nav-bar">
+    <view class="nav-back-red" bindtap="leaveVenue">
+      <text class="nav-back-red-arrow">‹</text>
+    </view>
     <text class="nav-title">{{venueName}}</text>
-    <view class="nav-exit" bindtap="leaveVenue">
-      <text class="nav-exit-text">Exit</text>
+    <view class="nav-back-placeholder"></view>
+  </view>
+  <scroll-view class="step-scroll" scroll-y>
+    <view wx:if="{{isLoading}}" class="empty-state">
+      <text class="empty-text">Loading...</text>
     </view>
-  </view>
-
-  <view wx:if="{{isLoading}}" class="empty-state">
-    <text class="empty-text">Loading...</text>
-  </view>
-
-  <view wx:elif="{{events.length === 0}}" class="empty-state">
-    <text class="empty-icon">📅</text>
-    <text class="empty-text">No upcoming events</text>
-  </view>
-
-  <view wx:else class="events-list">
-    <text class="section-title">Select event</text>
-    <view
-      wx:for="{{events}}"
-      wx:key="_id"
-      class="event-card"
-      bindtap="selectEvent"
-      data-event="{{item}}"
-    >
-      <view class="event-cover">
-        <text class="event-cover-title">{{item.title}}</text>
-      </view>
-      <view class="event-info">
-        <view class="event-meta">
-          <text class="event-time">{{item.startTime}} — {{item.endTime}}</text>
-          <text class="event-date">{{item.date}}</text>
+    <view wx:elif="{{events.length === 0}}" class="empty-state">
+      <text class="empty-icon">📅</text>
+      <text class="empty-text">No upcoming events</text>
+    </view>
+    <view wx:else class="events-list">
+      <text class="section-label">Select event</text>
+      <view
+        wx:for="{{events}}"
+        wx:key="_id"
+        class="event-card"
+        bindtap="selectEvent"
+        data-event="{{item}}"
+      >
+        <view class="event-cover">
+          <text class="event-cover-title">{{item.title}}</text>
         </view>
-        <text class="chevron">›</text>
+        <view class="event-info">
+          <view class="event-meta">
+            <text class="event-time">{{item.startTime}} — {{item.endTime}}</text>
+            <text class="event-date">{{item.date}}</text>
+          </view>
+          <text class="chevron">›</text>
+        </view>
       </view>
     </view>
-  </view>
+    <view class="safe-area-bottom"/>
+  </scroll-view>
 </view>
 
 <!-- ══ STEP 3: GUESTS ══ -->
 <view wx:if="{{step === 'guests'}}" class="step-guests">
 
-  <view class="nav-bar">
-    <view class="nav-back" bindtap="backToEvents">
-      <text class="nav-back-text">‹ Events</text>
+  <!-- Fixed header with back arrow and duty toggle -->
+  <view class="guest-header">
+    <view class="header-back" bindtap="backToEvents">
+      <text class="header-back-arrow">‹</text>
     </view>
-    <text class="nav-title">{{currentEvent.title}}</text>
-    <view class="nav-exit" bindtap="leaveVenue">
-      <text class="nav-exit-text">Exit</text>
+    <view class="header-info">
+      <text class="header-name">{{staffName}}</text>
+      <text class="header-venue">{{venueName}} · {{currentEvent.title}}</text>
     </view>
-  </view>
-
-  <!-- Stats row -->
-  <view class="stats-row">
-    <view class="stat-item">
-      <text class="stat-value" style="color:#34C759">{{arrivedGuests.length}}</text>
-      <text class="stat-label">Arrived</text>
-    </view>
-    <view class="stat-divider"></view>
-    <view class="stat-item">
-      <text class="stat-value">{{totalExpected}}</text>
-      <text class="stat-label">Expected</text>
+    <view class="duty-pill {{isOnDuty ? 'duty-pill--on' : 'duty-pill--off'}}" bindtap="toggleDuty">
+      <view class="duty-dot"></view>
+      <text class="duty-label">{{isOnDuty ? 'On duty' : 'Off duty'}}</text>
     </view>
   </view>
 
-  <!-- Tabs -->
-  <view class="guest-tabs">
-    <view
-      class="guest-tab {{guestTab === 'promoter' ? 'guest-tab--active' : ''}}"
-      bindtap="switchGuestTab"
-      data-tab="promoter"
-    >
-      <text>By Promoter</text>
-    </view>
-    <view
-      class="guest-tab {{guestTab === 'arrived' ? 'guest-tab--active' : ''}}"
-      bindtap="switchGuestTab"
-      data-tab="arrived"
-    >
-      <text>Arrived ({{arrivedGuests.length}})</text>
-    </view>
-  </view>
-
-  <!-- Search (promoter tab) -->
-  <view wx:if="{{guestTab === 'promoter'}}" class="search-wrap">
+  <!-- Search bar -->
+  <view class="search-wrap">
     <input
       class="search-input"
-      placeholder="Search guest..."
-      placeholder-class="search-placeholder"
+      placeholder="Search guests..."
+      placeholder-class="search-ph"
       value="{{searchQuery}}"
       bindinput="onSearchInput"
     />
   </view>
 
-  <!-- By Promoter -->
-  <view wx:if="{{guestTab === 'promoter'}}" class="guests-content">
+  <!-- Promoter filter chips -->
+  <scroll-view class="chips-bar" scroll-x enable-flex>
+    <view class="chips-inner">
+      <view
+        class="chip {{selectedPromoter === '' ? 'chip--on' : ''}}"
+        bindtap="filterPromoter"
+        data-name=""
+      ><text class="chip-text">All</text></view>
+      <view
+        wx:for="{{promoterNames}}"
+        wx:key="*this"
+        class="chip {{selectedPromoter === item ? 'chip--on' : ''}}"
+        bindtap="filterPromoter"
+        data-name="{{item}}"
+      ><text class="chip-text">{{item}}</text></view>
+    </view>
+  </scroll-view>
+
+  <!-- Stats -->
+  <view class="stats-row">
+    <text class="stat-green">{{arrivedGuests.length}} arrived</text>
+    <text class="stat-sep">·</text>
+    <text class="stat-grey">{{totalExpected - arrivedGuests.length}} waiting</text>
+  </view>
+
+  <!-- Scrollable guest list -->
+  <scroll-view class="guests-scroll" scroll-y>
+
     <view wx:if="{{isLoading}}" class="empty-state">
       <text class="empty-text">Loading...</text>
     </view>
-    <view wx:elif="{{filteredGuests.length === 0}}" class="empty-state">
-      <text class="empty-text">No guests found</text>
-    </view>
-    <view wx:else>
+
+    <view wx:else class="guests-body">
+
+      <!-- Arrived section -->
+      <view wx:if="{{arrivedGuests.length > 0}}" class="guest-group">
+        <view class="group-hd">
+          <text class="group-hd-name">Arrived</text>
+          <text class="group-hd-count">{{arrivedGuests.length}}</text>
+        </view>
+        <block wx:for="{{filteredArrivedSections}}" wx:key="tag">
+          <view class="arrived-section-header">
+            <text class="arrived-section-title">{{item.label}}</text>
+            <text class="arrived-section-count">{{item.guests.length}}</text>
+          </view>
+          <view class="card arrived-section-card">
+            <view
+              wx:for="{{item.guests}}"
+              wx:for-item="guest"
+              wx:key="_id"
+              class="guest-row guest-row--done {{guest.group === 'P' ? 'row--party' : guest.group === 'AP' ? 'row--ap' : guest.group === 'LAP' ? 'row--lap' : 'row--extra'}}"
+              catchtap="confirmUncheck"
+              data-id="{{guest._id}}"
+              data-name="{{guest.guestName}}"
+            >
+              <text class="arrival-number">{{guest.arrivalNumber}}</text>
+              <view class="guest-info">
+                <text class="guest-name guest-name--done">{{guest.guestName}}</text>
+                <text class="guest-sub">{{guest.promoterName || '—'}}</text>
+              </view>
+              <view class="tier-badge {{guest.group === 'P' ? 'tier-badge--p' : guest.group === 'AP' ? 'tier-badge--ap' : guest.group === 'LAP' ? 'tier-badge--lap' : 'tier-badge--e'}}">
+                <text class="tier-badge-text">{{guest.group || 'E'}}</text>
+              </view>
+              <text class="arrival-time">{{guest.arrivedAt}}</text>
+            </view>
+          </view>
+        </block>
+      </view>
+
+      <!-- Empty pending -->
+      <view wx:if="{{filteredGuests.length === 0}}" class="empty-state">
+        <text class="empty-text">
+          {{searchQuery || selectedPromoter ? 'No guests found' : (arrivedGuests.length > 0 ? 'All guests arrived!' : 'No registered guests')}}
+        </text>
+      </view>
+
+      <!-- Pending grouped by promoter -->
       <view
         wx:for="{{filteredGuests}}"
         wx:key="promoterName"
         wx:for-item="group"
         wx:for-index="pindex"
-        class="promoter-group"
+        class="guest-group"
       >
-        <view class="promoter-header">
-          <text class="promoter-name">{{group.promoterName || 'No promoter'}}</text>
-          <text class="promoter-count">{{group.guests.length}}</text>
+        <view class="group-hd">
+          <text class="group-hd-name">{{group.promoterName || 'No promoter'}}</text>
+          <text class="group-hd-count">{{group.guests.length}}</text>
         </view>
         <view class="card">
           <view
@@ -153,59 +195,25 @@
             wx:key="_id"
             wx:for-item="guest"
             wx:for-index="gindex"
-            class="guest-row {{guest.arrivedAt ? 'guest-row--arrived' : ''}}"
+            class="guest-row"
+            catchtap="checkIn"
+            data-id="{{guest._id}}"
+            data-pindex="{{pindex}}"
+            data-gindex="{{gindex}}"
           >
-            <view class="guest-avatar {{guest.arrivedAt ? 'avatar--arrived' : ''}}">
-              <text class="guest-avatar-text">{{guest.guestName[0]}}</text>
+            <view class="checkbox">
+              <text class="checkbox-empty">○</text>
             </view>
-            <view class="guest-info">
-              <text class="guest-name">{{guest.guestName}}</text>
-              <text wx:if="{{guest.arrivedAt}}" class="guest-time">✓ {{guest.arrivedAt}}</text>
-              <text wx:else class="guest-pending">Waiting</text>
-            </view>
-            <view
-              wx:if="{{!guest.arrivedAt}}"
-              class="checkin-btn"
-              catchtap="checkIn"
-              data-id="{{guest._id}}"
-              data-pindex="{{pindex}}"
-              data-gindex="{{gindex}}"
-            >
-              <text class="checkin-btn-text">Check in</text>
-            </view>
-            <view wx:else class="checked-badge">
-              <text class="checked-text">✓</text>
-            </view>
+            <text class="guest-name">{{guest.guestName}}</text>
           </view>
         </view>
       </view>
-    </view>
-  </view>
 
-  <!-- Arrived tab -->
-  <view wx:if="{{guestTab === 'arrived'}}" class="guests-content">
-    <view wx:if="{{arrivedGuests.length === 0}}" class="empty-state">
-      <text class="empty-icon">🚪</text>
-      <text class="empty-text">No arrivals yet</text>
     </view>
-    <view wx:else class="card">
-      <view
-        wx:for="{{arrivedGuests}}"
-        wx:key="_id"
-        class="guest-row guest-row--arrived"
-      >
-        <view class="arrival-number">
-          <text class="arrival-number-text">{{item.arrivalNumber}}</text>
-        </view>
-        <view class="guest-info">
-          <text class="guest-name">{{item.guestName}}</text>
-          <text class="guest-time">{{item.promoterName || 'No promoter'}} · {{item.arrivedAt}}</text>
-        </view>
-      </view>
-    </view>
-  </view>
 
-  <view class="tab-bar-spacer"></view>
+    <view class="tab-bar-spacer"/>
+  </scroll-view>
+
 </view>
 
 </view>

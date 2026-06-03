@@ -1,14 +1,15 @@
 <view class="container">
 
-<view class="header">
-  <view class="logo-wrap">
-    <text class="logo-text">YUE!</text>
-  </view>
-  <text class="title">Staff Login</text>
-  <text class="subtitle">Enter credentials provided by your administrator</text>
+<view class="bg-gradient" />
+
+<view class="logo-wrap">
+  <text class="logo-main">THE LIST</text>
 </view>
 
-<view class="form">
+<view class="card">
+  <text class="card-title">Sign In</text>
+  <text class="card-desc">Enter credentials provided by your administrator</text>
+
   <view class="input-group">
     <text class="input-label">LOGIN</text>
     <input
@@ -39,13 +40,11 @@
     class="login-btn {{loading ? 'login-btn--loading' : ''}}"
     bindtap="handleLogin"
     disabled="{{loading}}"
-  >{{loading ? 'Connecting...' : 'Login'}}</button>
+  >{{loading ? 'Connecting...' : 'Sign In'}}</button>
 </view>
 
 <view class="footer">
-  <text class="version">YUE! Admin v2.0</text>
+  <text class="version">THE LIST · Admin · v2.0</text>
 </view>
-
-<view class="safe-area-bottom" />
 
 </view>

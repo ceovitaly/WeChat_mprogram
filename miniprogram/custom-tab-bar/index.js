@@ -13,7 +13,8 @@ Component({
   data: {
     selected: 0,
     role: '',
-    list: []
+    list: [],
+    hidden: false
   },
 
   lifetimes: {

@@ -1,23 +1,32 @@
 const { callFunction } = require('../../../utils/request')
+const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
 
 Page({
   data: {
-    loading: false,
-    totalEvents: 0,
-    totalGuests: 0,
-    totalStaff: 0,
-    totalPromoters: 0,
-    totalPending: 0,
-    agentStats: []
+    activeTab: 0,
+    userName: '',
+
+    loadingToday: false,
+    todayEvents: [],
+
+    loadingPast: false,
+    pastEvents: [],
+
+    refreshing: false
   },
 
   onShow() {
     this._syncTabBar()
-    this._refreshStats()
+    const userInfo = getApp().globalData.userInfo
+    this.setData({ userName: userInfo ? (userInfo.name || 'Admin') : 'Admin' })
+    this._loadTodayEvents()
+    this._loadPastEvents()
   },
 
-  onPullDownRefresh() {
-    this._refreshStats()
+  async onRefresh() {
+    this.setData({ refreshing: true })
+    await this._loadTodayEvents()
+    this.setData({ refreshing: false })
   },
 
   _syncTabBar() {
@@ -27,90 +36,102 @@ Page({
     }
   },
 
-  async _refreshStats() {
-    this.setData({ loading: true })
-    wx.showNavigationBarLoading()
+  switchTab(e) {
+    this.setData({ activeTab: Number(e.currentTarget.dataset.index) })
+  },
 
+  async _loadTodayEvents() {
+    this.setData({ loadingToday: true })
     try {
-      const res = await callFunction('manageApplications', {
-        action: 'getStats'
+      const today = new Date()
+      const y = today.getFullYear()
+      const m = String(today.getMonth() + 1).padStart(2, '0')
+      const d = String(today.getDate()).padStart(2, '0')
+      const todayStr = y + '-' + m + '-' + d
+
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+        action: 'getEventsWithGuestCounts',
+        dateFilter: todayStr,
+        mode: 'active'
       })
-
-      if (res && res.success) {
-        const s = res.stats
-        this.setData({
-          totalEvents: s.events || 0,
-          totalStaff: s.staff || 0,
-          totalPromoters: s.promoters || 0,
-          totalPending: s.pendingApplications || 0
-        })
-      }
-
-      // Реальный счётчик гостей из коллекции registrations
-      const countRes = await wx.cloud.database()
-        .collection('registrations')
-        .count()
-      this.setData({ totalGuests: countRes.total || 0 })
-
-      await this._loadAgentStats()
-
+      const now = new Date()
+      const events = (res.data || []).filter(ev => {
+        if (ev.isClosed) return false
+        if (ev.date && ev.endTime) {
+          try {
+            const parts = ev.date.split('-').map(Number)
+            const timeParts = ev.endTime.split(':').map(Number)
+            const endDt = new Date(parts[0], parts[1] - 1, parts[2], timeParts[0], timeParts[1], 0, 0)
+            if (timeParts[0] < 12) endDt.setDate(endDt.getDate() + 1)
+            if (!isNaN(endDt.getTime()) && now > endDt) return false
+          } catch (_) {}
+        }
+        return true
+      })
+      this.setData({ todayEvents: events })
     } catch (err) {
-      console.error('[Stats] error:', err)
-      wx.showToast({ title: 'Load failed', icon: 'none' })
+      console.error('[Stats] today events error:', err)
     } finally {
-      this.setData({ loading: false })
-      wx.hideNavigationBarLoading()
-      wx.stopPullDownRefresh()
+      this.setData({ loadingToday: false })
     }
   },
 
-  async _loadAgentStats() {
+  async _loadPastEvents() {
+    this.setData({ loadingPast: true })
     try {
-      const db = wx.cloud.database()
-      const $ = db.command.aggregate
+      const now = new Date()
+      if (now.getHours() < 5) now.setDate(now.getDate() - 1)
+      const todayStr = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0')
 
-      const res = await db.collection('registrations').aggregate()
-        .match({ promoterId: db.command.exists(true) })
-        .group({
-          _id: '$promoterId',
-          totalCount: $.sum(1),
-          promoterName: $.first('$promoterName')
-        })
-        .sort({ totalCount: -1 })
-        .limit(10)
-        .end()
-
-      const list = res.list || []
-      const maxCount = list.length > 0
-        ? Math.max(...list.map(a => a.totalCount)) : 1
-
-      const agentStats = list.map(item => ({
-        name: item.promoterName || 'Unknown',
-        count: item.totalCount || 0,
-        barPercent: Math.max(Math.round(((item.totalCount || 0) / maxCount) * 100), 5)
-      }))
-
-      this.setData({ agentStats })
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+        action: 'getEventsWithGuestCounts',
+        dateFilter: todayStr,
+        mode: 'past'
+      })
+      const nowTs = new Date()
+      const past = (res.data || []).filter(ev => {
+        if (ev.isClosed) return true
+        if (ev.date < todayStr) return true
+        if (ev.date === todayStr && ev.endTime) {
+          try {
+            const parts = ev.date.split('-').map(Number)
+            const timeParts = ev.endTime.split(':').map(Number)
+            const endDt = new Date(parts[0], parts[1] - 1, parts[2], timeParts[0], timeParts[1], 0, 0)
+            if (timeParts[0] < 12) endDt.setDate(endDt.getDate() + 1)
+            return !isNaN(endDt.getTime()) && nowTs > endDt
+          } catch (_) { return false }
+        }
+        return false
+      })
+      this.setData({ pastEvents: past })
     } catch (err) {
-      console.error('[Stats] agent stats error:', err)
+      console.error('[Stats] past events error:', err)
+    } finally {
+      this.setData({ loadingPast: false })
     }
   },
 
-  goToCalendar() {
-    wx.switchTab({ url: '/pages/admin/calendar/calendar' })
+  openTodayEvent(e) {
+    const id = e.currentTarget.dataset.id
+    const event = this.data.todayEvents.find(ev => ev._id === id)
+    if (!event) return
+    wx.navigateTo({
+      url: `/pages/admin/event-guests/event-guests?eventId=${id}&eventTitle=${encodeURIComponent(event.title || '')}&venueName=${encodeURIComponent(event.venueName || '')}`
+    })
   },
 
-  goToPromoters() {
-    wx.navigateTo({ url: '/pages/admin/promoters/promoters' })
+  openPastEvent(e) {
+    const id = e.currentTarget.dataset.id
+    const event = this.data.pastEvents.find(ev => ev._id === id)
+    if (!event) return
+    wx.navigateTo({
+      url: `/pages/admin/event-guests/event-guests?eventId=${id}&eventTitle=${encodeURIComponent(event.title || '')}&venueName=${encodeURIComponent(event.venueName || '')}`
+    })
   },
 
-  goToStaff() {
-    wx.navigateTo({ url: '/pages/admin/staff/staff' })
-  },
-
-  goToGuests() {
-    wx.navigateTo({ url: '/pages/admin/guests/guests' })
-  },
+  noop() {},
 
   confirmLogout() {
     wx.showModal({

@@ -1,72 +1,100 @@
 <view class="page">
 
 <view class="nav-bar">
-  <text class="nav-title">Stats</text>
+  <text class="nav-username">{{userName}}</text>
   <view class="nav-btn" bindtap="confirmLogout">
     <text class="nav-btn-logout">Log out</text>
   </view>
 </view>
 
-<view class="section">
-  <text class="section-title">Overview</text>
-  <view class="metrics-grid">
-
-    <view class="metric-card" bindtap="goToCalendar">
-      <text class="metric-value">{{totalEvents}}</text>
-      <text class="metric-label">Events</text>
-    </view>
-
-    <view class="metric-card" bindtap="goToGuests">
-      <text class="metric-value">{{totalGuests}}</text>
-      <text class="metric-label">Guests</text>
-    </view>
-
-    <view class="metric-card" bindtap="goToPromoters">
-      <text class="metric-value">{{totalPromoters}}</text>
-      <text class="metric-label">Promoters</text>
-      <view wx:if="{{totalPending > 0}}" class="metric-badge">
-        <text class="metric-badge-text">{{totalPending}} pending</text>
-      </view>
-    </view>
-
-    <view class="metric-card" bindtap="goToStaff">
-      <text class="metric-value">{{totalStaff}}</text>
-      <text class="metric-label">Counters</text>
-    </view>
-
+<!-- Sub-tabs -->
+<view class="sub-tabs">
+  <view class="sub-tab {{activeTab === 0 ? 'sub-tab--active' : ''}}" bindtap="switchTab" data-index="0">
+    <text class="sub-tab-text">Current</text>
+  </view>
+  <view class="sub-tab {{activeTab === 1 ? 'sub-tab--active' : ''}}" bindtap="switchTab" data-index="1">
+    <text class="sub-tab-text">Past</text>
   </view>
 </view>
 
-<view class="section">
-  <text class="section-title">Top promoters</text>
+<scroll-view
+  class="scroll"
+  scroll-y
+>
 
-  <view wx:if="{{agentStats.length === 0}}" class="empty-state">
-    <text class="empty-text">No data yet</text>
-  </view>
+  <!-- ── Current tab ── -->
+  <view wx:if="{{activeTab === 0}}">
 
-  <view wx:else class="card">
-    <view wx:for="{{agentStats}}" wx:key="name" class="agent-row">
+    <view class="section">
+      <text class="section-title">Today's Events</text>
 
-      <view class="agent-left">
-        <view class="agent-avatar">
-          <text class="agent-avatar-text">{{item.name[0]}}</text>
-        </view>
-        <view class="agent-info">
-          <text class="agent-name">{{item.name}}</text>
-          <view class="agent-bar-wrap">
-            <view class="agent-bar-fill" style="flex:{{item.barPercent}}"></view>
-            <view class="agent-bar-empty" style="flex:{{100 - item.barPercent}}"></view>
+      <view wx:if="{{loadingToday}}" class="empty-state">
+        <text class="empty-text">Loading...</text>
+      </view>
+
+      <view wx:elif="{{todayEvents.length === 0}}" class="empty-state">
+        <text class="empty-text">No events today</text>
+      </view>
+
+      <view wx:else class="today-list">
+        <view
+          wx:for="{{todayEvents}}"
+          wx:key="_id"
+          class="today-card"
+          bindtap="openTodayEvent"
+          data-id="{{item._id}}"
+        >
+          <view class="today-card-info">
+            <text class="today-event-title">{{item.title}}</text>
+            <text class="today-event-meta">{{item.venueName || 'Venue'}}{{item.startTime ? ' · ' + item.startTime : ''}}</text>
+          </view>
+          <view class="today-card-right">
+            <text class="today-guest-count">{{item.guestCount || 0}}</text>
+            <text class="today-guest-label">guests</text>
           </view>
         </view>
       </view>
-
-      <text class="agent-count">{{item.count}}</text>
-
     </view>
+
   </view>
 
-</view>
+  <!-- ── Past tab ── -->
+  <view wx:if="{{activeTab === 1}}">
 
-<view class="tab-bar-spacer"></view>
+    <view class="section">
+      <text class="section-title">Past Events</text>
+
+      <view wx:if="{{loadingPast}}" class="empty-state">
+        <text class="empty-text">Loading...</text>
+      </view>
+
+      <view wx:elif="{{pastEvents.length === 0}}" class="empty-state">
+        <text class="empty-text">No past events</text>
+      </view>
+
+      <view wx:else class="today-list">
+        <view
+          wx:for="{{pastEvents}}"
+          wx:key="_id"
+          class="today-card"
+          bindtap="openPastEvent"
+          data-id="{{item._id}}"
+        >
+          <view class="today-card-info">
+            <text class="today-event-title">{{item.title}}</text>
+            <text class="today-event-meta">{{item.date}} · {{item.venueName || 'Venue'}}</text>
+          </view>
+          <view class="today-card-right">
+            <text class="today-guest-count">{{item.guestCount || 0}}</text>
+            <text class="today-guest-label">guests</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+  </view>
+
+  <view class="tab-bar-spacer" />
+</scroll-view>
 
 </view>

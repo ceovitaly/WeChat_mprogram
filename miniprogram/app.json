@@ -10,6 +10,7 @@
     "pages/admin/staff/staff",
     "pages/admin/promoters/promoters",
     "pages/admin/guests/guests",
+    "pages/admin/event-guests/event-guests",
     "pages/counter/work/work",
     "pages/counter/stats/stats"
   ],
@@ -34,5 +35,6 @@
     "enablePullDownRefresh": false
   },
   "style": "v2",
+  "darkmode": true,
   "sitemapLocation": "sitemap.json"
 }

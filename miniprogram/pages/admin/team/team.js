@@ -1,9 +1,13 @@
+const { callFunction } = require('../../../utils/request')
+const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
+
 Page({
   data: {
     venueCount: 0,
     staffCount: 0,
     promoterCount: 0,
-    pendingCount: 0
+    pendingCount: 0,
+    totalGuests: 0
   },
 
   onShow() {
@@ -20,19 +24,16 @@ Page({
 
   async _loadCounts() {
     try {
-      const db = wx.cloud.database()
-      const [vRes, sRes, pRes, pendRes] = await Promise.all([
-        db.collection('venues').count(),
-        db.collection('staff').where({ role: 'counter' }).count(),
-        db.collection('promoters').where({ status: 'approved' }).count(),
-        db.collection('promoters').where({ status: 'pending' }).count()
-      ])
-      this.setData({
-        venueCount: vRes.total || 0,
-        staffCount: sRes.total || 0,
-        promoterCount: pRes.total || 0,
-        pendingCount: pendRes.total || 0
-      })
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getTeamCounts' })
+      if (res && res.success) {
+        this.setData({
+          venueCount: res.venueCount || 0,
+          staffCount: res.staffCount || 0,
+          promoterCount: res.promoterCount || 0,
+          pendingCount: res.pendingCount || 0,
+          totalGuests: res.totalGuests || 0
+        })
+      }
     } catch (err) {
       console.error('[Team] counts error:', err)
     }

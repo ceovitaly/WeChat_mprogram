@@ -17,7 +17,7 @@
 }
 .install_tip_detail {
   position: fixed;
-  background-color: white;
+  background-color: var(--bg-card);
   right: 0;
   bottom: 0;
   left: 0;
@@ -34,7 +34,7 @@
 
 .install_tip_detail_tip {
   font-size: 25rpx;
-  color: rgba(0,0,0,0.4);
+  color: var(--text-2);
   margin-top: 20rpx;
   text-align: left;
 }
@@ -45,7 +45,7 @@
 .install_tip_detail_button {
   color: #07C160;
   font-weight: 500;
-  background-color: rgba(0,0,0,0.1);
+  background-color: var(--separator);
   width: 40%;
   text-align: center;
   /* height: 90rpx; */

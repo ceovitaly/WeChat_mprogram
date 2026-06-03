@@ -3,5 +3,5 @@
   "navigationBarTitleText": "Stats",
   "navigationBarBackgroundColor": "#ffffff",
   "navigationBarTextStyle": "black",
-  "enablePullDownRefresh": true
+  "disableScroll": true
 }

@@ -14,7 +14,8 @@ Page({
     // Action sheet
     showActionSheet: false,
     selectedPromoter: null,
-    editPromoCode: ''
+    editPromoCode: '',
+    editName: ''
   },
 
   onShow() {
@@ -89,7 +90,15 @@ Page({
         wx.vibrateShort({ type: 'medium' })
         wx.showToast({ title: 'Created!', icon: 'success' })
         this.closeAddModal()
-        await this._fetchPromoters()
+        const newPromoter = {
+          _id: res.promoterId,
+          name: newName.trim(),
+          promoCode: newPromoCode.trim(),
+          status: 'approved',
+          joinDate: formatDate(new Date()),
+          avatarLetter: newName.trim()[0].toUpperCase()
+        }
+        this.setData({ promoters: [newPromoter, ...this.data.promoters] })
       } else {
         wx.showToast({ title: res.message || 'Error', icon: 'none' })
       }
@@ -103,25 +112,36 @@ Page({
   // ─── Action sheet ────────────────────────────────────────
 
   openActions(e) {
-    const { promoter } = e.currentTarget.dataset
+    const id = e.currentTarget.dataset.id
+    const promoter = this.data.promoters.find(p => p._id === id)
+    if (!promoter) return
     this.setData({
       selectedPromoter: promoter,
       showActionSheet: true,
-      editPromoCode: promoter.promoCode || ''
+      editPromoCode: promoter.promoCode || '',
+      editName: promoter.name || ''
     })
   },
 
   closeActions() {
-    this.setData({ showActionSheet: false, selectedPromoter: null })
+    this.setData({ showActionSheet: false, selectedPromoter: null, editName: '' })
   },
 
   onEditPromoCodeInput(e) {
     this.setData({ editPromoCode: e.detail.value.toUpperCase() })
   },
 
-  async savePromoCode() {
-    const { selectedPromoter, editPromoCode } = this.data
+  onEditNameInput(e) {
+    this.setData({ editName: e.detail.value })
+  },
 
+  async savePromoterInfo() {
+    const { selectedPromoter, editName, editPromoCode } = this.data
+
+    if (!editName.trim()) {
+      wx.showToast({ title: 'Enter name', icon: 'none' })
+      return
+    }
     if (!editPromoCode.trim()) {
       wx.showToast({ title: 'Enter promo code', icon: 'none' })
       return
@@ -129,15 +149,25 @@ Page({
 
     wx.showLoading({ title: 'Saving...', mask: true })
     try {
-      await callFunction('manageApplications', {
-        action: 'updatePromoterCode',
+      const res = await callFunction('manageApplications', {
+        action: 'updatePromoter',
         id: selectedPromoter._id,
+        name: editName.trim(),
         promoCode: editPromoCode.trim()
       })
+      if (!res.success) {
+        wx.showToast({ title: res.message || 'Error', icon: 'none' })
+        return
+      }
       wx.vibrateShort({ type: 'medium' })
       wx.showToast({ title: 'Saved!', icon: 'success' })
       this.closeActions()
-      await this._fetchPromoters()
+      const updated = this.data.promoters.map(p =>
+        p._id === selectedPromoter._id
+          ? { ...p, name: editName.trim(), promoCode: editPromoCode.trim(), avatarLetter: editName.trim()[0].toUpperCase() }
+          : p
+      )
+      this.setData({ promoters: updated })
     } catch (err) {
       wx.showToast({ title: 'Error', icon: 'none' })
     } finally {
@@ -160,7 +190,10 @@ Page({
       wx.vibrateShort({ type: 'medium' })
       wx.showToast({ title: 'Updated!', icon: 'success' })
       this.closeActions()
-      await this._fetchPromoters()
+      const updated = this.data.promoters.map(p =>
+        p._id === selectedPromoter._id ? { ...p, status } : p
+      )
+      this.setData({ promoters: updated })
     } catch (err) {
       wx.showToast({ title: 'Update failed', icon: 'none' })
     } finally {
@@ -190,7 +223,43 @@ Page({
           wx.vibrateShort({ type: 'medium' })
           wx.showToast({ title: 'Revoked!', icon: 'success' })
           this.closeActions()
-          await this._fetchPromoters()
+          const updated = this.data.promoters.map(p =>
+            p._id === selectedPromoter._id ? { ...p, status: 'revoked' } : p
+          )
+          this.setData({ promoters: updated })
+        } catch (err) {
+          wx.showToast({ title: 'Error', icon: 'none' })
+        } finally {
+          wx.hideLoading()
+        }
+      }
+    })
+  },
+
+  confirmDelete() {
+    const { selectedPromoter } = this.data
+    if (!selectedPromoter) return
+
+    wx.showModal({
+      title: 'Delete promoter?',
+      content: `This will permanently delete ${selectedPromoter.name}. This cannot be undone.`,
+      confirmColor: '#FF3B30',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      success: async ({ confirm }) => {
+        if (!confirm) return
+        wx.showLoading({ title: 'Deleting...', mask: true })
+        try {
+          await callFunction('manageApplications', {
+            action: 'deletePromoter',
+            id: selectedPromoter._id
+          })
+          wx.vibrateShort({ type: 'medium' })
+          wx.showToast({ title: 'Deleted', icon: 'success' })
+          this.closeActions()
+          this.setData({
+            promoters: this.data.promoters.filter(p => p._id !== selectedPromoter._id)
+          })
         } catch (err) {
           wx.showToast({ title: 'Error', icon: 'none' })
         } finally {

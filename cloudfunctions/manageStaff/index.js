@@ -27,17 +27,17 @@ exports.main = async (event, context) => {
   // ADD NEW STAFF
   if (action === 'add') {
     try {
-      const newPassword = generatePassword(6);
+      const finalPassword = password ? password : generatePassword(6);
       await db.collection('staff').add({
         data: {
           name: name.trim(),
-          password: newPassword,
+          password: finalPassword,
           role: role || 'counter',
           createdAt: db.serverDate(),
           updatedAt: db.serverDate()
         }
       });
-      return { success: true, password: newPassword };
+      return { success: true, password: finalPassword };
     } catch (e) {
       return { success: false, error: e.message };
     }
@@ -63,6 +63,27 @@ exports.main = async (event, context) => {
   if (action === 'delete') {
     try {
       await db.collection('staff').doc(id).remove();
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
+
+  // SET DUTY STATUS
+  if (action === 'setDutyStatus') {
+    try {
+      const { staffId, isOnDuty, eventId, eventTitle } = event;
+      if (!staffId) return { success: false, message: 'No staffId' };
+      const updateData = {
+        isOnDuty: !!isOnDuty,
+        currentEventId: isOnDuty ? (eventId || '') : '',
+        currentEventTitle: isOnDuty ? (eventTitle || '') : '',
+        dutyUpdatedAt: db.serverDate()
+      };
+      if (isOnDuty && eventId) {
+        updateData.workedEventIds = db.command.push(eventId);
+      }
+      await db.collection('staff').doc(staffId).update({ data: updateData });
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };

@@ -45,7 +45,9 @@ Page({
   },
 
   openEditModal(e) {
-    const { item } = e.currentTarget.dataset
+    const id = e.currentTarget.dataset.id
+    const item = this.data.staffList.find(s => s._id === id)
+    if (!item) return
     this.setData({
       showModal: true,
       tempName: item.name,
@@ -87,6 +89,13 @@ Page({
           password: tempPassword,
           role: tempRole
         })
+        wx.vibrateShort({ type: 'medium' })
+        wx.showToast({ title: 'Saved!', icon: 'success' })
+        this.closeModal()
+        const updated = this.data.staffList.map(s =>
+          s._id === editingId ? { ...s, name: tempName.trim(), role: tempRole, ...(tempPassword ? { password: tempPassword } : {}) } : s
+        )
+        this.setData({ staffList: updated })
       } else {
         await callFunction('manageStaff', {
           action: 'add',
@@ -94,12 +103,11 @@ Page({
           password: tempPassword,
           role: tempRole
         })
+        wx.vibrateShort({ type: 'medium' })
+        wx.showToast({ title: 'Saved!', icon: 'success' })
+        this.closeModal()
+        await this._fetchStaff()
       }
-
-      wx.vibrateShort({ type: 'medium' })
-      wx.showToast({ title: 'Saved!', icon: 'success' })
-      this.closeModal()
-      await this._fetchStaff()
 
     } catch (err) {
       console.error('[Staff] save error:', err)
@@ -127,18 +135,41 @@ Page({
       cancelText: 'Cancel',
       success: async ({ confirm }) => {
         if (!confirm) return
-        wx.showLoading({ title: 'Deleting...' })
-        try {
-          await callFunction('manageStaff', { action: 'delete', id })
-          wx.vibrateShort({ type: 'medium' })
-          wx.showToast({ title: 'Deleted', icon: 'success' })
-          await this._fetchStaff()
-        } catch (err) {
-          wx.showToast({ title: 'Error', icon: 'none' })
-        } finally {
-          wx.hideLoading()
+        this._deleteById(id)
+      }
+    })
+  },
+
+  deleteEditing() {
+    const id = this.data.editingId
+    const name = this.data.tempName
+    if (!id) return
+    wx.showModal({
+      title: 'Delete Counter',
+      content: `Delete "${name}"?`,
+      confirmColor: '#FF3B30',
+      confirmText: 'Delete',
+      success: (res) => {
+        if (res.confirm) {
+          this.closeModal()
+          this._deleteById(id)
         }
       }
     })
+  },
+
+  async _deleteById(id) {
+    wx.showLoading({ title: 'Deleting...' })
+    try {
+      await callFunction('manageStaff', { action: 'delete', id })
+      wx.vibrateShort({ type: 'medium' })
+      wx.showToast({ title: 'Deleted', icon: 'success' })
+      const updated = this.data.staffList.filter(s => s._id !== id)
+      this.setData({ staffList: updated })
+    } catch (err) {
+      wx.showToast({ title: 'Error', icon: 'none' })
+    } finally {
+      wx.hideLoading()
+    }
   }
 })

@@ -1,5 +1,5 @@
-const { collection } = require('../../../utils/request')
-const { COLLECTIONS } = require('../../../utils/constants')
+const { collection, callFunction } = require('../../../utils/request')
+const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -7,9 +7,6 @@ const MONTH_NAMES = [
 ]
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-const CURRENT_YEAR = new Date().getFullYear()
-const YEARS = Array.from({ length: 11 }, (_, i) => CURRENT_YEAR - 2 + i)
 
 Page({
   data: {
@@ -23,12 +20,11 @@ Page({
     filteredEvents: [],
     calendarVisible: false,
     loading: false,
+    refreshing: false,
 
     pickerVisible: false,
     pickerMonthIndex: 0,
-    pickerYearIndex: 2,
-    monthNames: MONTH_NAMES,
-    years: YEARS
+    monthNames: MONTH_NAMES
   },
 
   onLoad() {
@@ -67,8 +63,7 @@ Page({
     const dayName = DAY_NAMES[date.getDay()]
     const d = date.getDate()
     const month = MONTH_NAMES[date.getMonth()]
-    const y = date.getFullYear()
-    return `${dayName}, ${d} ${month} ${y}`
+    return `${dayName}, ${d} ${month}`
   },
 
   _updateCalendar() {
@@ -97,7 +92,16 @@ Page({
     this.setData({ loading: true })
     wx.showNavigationBarLoading()
     try {
-      const res = await collection(COLLECTIONS.EVENTS).get()
+      const { currYear, currMonth } = this.data
+      const db = wx.cloud.database()
+      const _ = db.command
+      const fromDate = new Date(currYear, currMonth - 3, 1)
+      const toDate = new Date(currYear, currMonth + 4, 0)
+      const fmt = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+      const res = await db.collection('events')
+        .where({ date: _.gte(fmt(fromDate)).and(_.lte(fmt(toDate))) })
+        .orderBy('date', 'asc')
+        .get()
       this.setData({ events: res.data }, () => this._filterEvents())
     } catch (err) {
       console.error('[Calendar] fetch error:', err)
@@ -114,6 +118,11 @@ Page({
       .filter(e => e.date === selectedDate)
       .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
     this.setData({ filteredEvents: filtered })
+  },
+
+  async onRefresh() {
+    await this._fetchEvents()
+    this.setData({ refreshing: false })
   },
 
   selectDate(e) {
@@ -135,49 +144,10 @@ Page({
     this.setData({ calendarVisible: !this.data.calendarVisible })
   },
 
-  prevDay() {
-    const { selectedDate } = this.data
-    const date = new Date(selectedDate)
-    date.setDate(date.getDate() - 1)
-    const y = date.getFullYear()
-    const m = date.getMonth()
-    const newSelected = this._formatDate(y, m + 1, date.getDate())
-    this.setData({
-      selectedDate: newSelected,
-      selectedDateLabel: this._formatLabel(date),
-      currYear: y,
-      currMonth: m
-    }, () => {
-      this._updateCalendar()
-      this._filterEvents()
-    })
-  },
-
-  nextDay() {
-    const { selectedDate } = this.data
-    const date = new Date(selectedDate)
-    date.setDate(date.getDate() + 1)
-    const y = date.getFullYear()
-    const m = date.getMonth()
-    const newSelected = this._formatDate(y, m + 1, date.getDate())
-    this.setData({
-      selectedDate: newSelected,
-      selectedDateLabel: this._formatLabel(date),
-      currYear: y,
-      currMonth: m
-    }, () => {
-      this._updateCalendar()
-      this._filterEvents()
-    })
-  },
-
   openPicker() {
-    const { currMonth, currYear } = this.data
-    const yearIndex = YEARS.indexOf(currYear)
     this.setData({
       pickerVisible: true,
-      pickerMonthIndex: currMonth,
-      pickerYearIndex: yearIndex >= 0 ? yearIndex : 2
+      pickerMonthIndex: this.data.currMonth
     })
   },
 
@@ -186,23 +156,19 @@ Page({
   },
 
   onPickerMonthChange(e) {
-    this.setData({ pickerMonthIndex: e.detail.value })
-  },
-
-  onPickerYearChange(e) {
-    this.setData({ pickerYearIndex: e.detail.value })
+    this.setData({ pickerMonthIndex: e.detail.value[0] })
   },
 
   confirmPicker() {
-    const { pickerMonthIndex, pickerYearIndex } = this.data
-    const newMonth = pickerMonthIndex
-    const newYear = YEARS[pickerYearIndex]
+    const { pickerMonthIndex, currYear } = this.data
     this.setData({
-      currMonth: newMonth,
-      currYear: newYear,
+      currMonth: pickerMonthIndex,
       pickerVisible: false,
       calendarVisible: true
-    }, () => this._updateCalendar())
+    }, () => {
+      this._updateCalendar()
+      this._fetchEvents()
+    })
   },
 
   goCreateEvent() {
@@ -230,13 +196,17 @@ Page({
         if (!confirm) return
         wx.showLoading({ title: 'Deleting...' })
         try {
-          await collection(COLLECTIONS.EVENTS).doc(id).remove()
+          const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+            action: 'deleteEvent',
+            eventId: id
+          })
+          if (!res || !res.success) throw new Error(res && res.error || 'Delete failed')
           wx.vibrateShort({ type: 'medium' })
           wx.showToast({ title: 'Deleted', icon: 'success' })
           await this._fetchEvents()
         } catch (err) {
           console.error('[Calendar] delete error:', err)
-          wx.showToast({ title: 'Error', icon: 'none' })
+          wx.showModal({ title: 'Error', content: String(err && err.message || 'Delete failed'), showCancel: false })
         } finally {
           wx.hideLoading()
         }

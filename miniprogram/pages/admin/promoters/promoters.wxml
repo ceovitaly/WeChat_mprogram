@@ -1,64 +1,47 @@
 <view class="page">
 
-  <view class="nav-bar">
-  <text class="nav-title">Promoters</text>
-  <view class="nav-btn" bindtap="openAddModal">
-    <text class="nav-btn-text">+ Add</text>
+  <view class="nav-bar" bindtap="openAddModal">
+    <text class="nav-add-text">+ Add Promoter</text>
   </view>
-</view>
 
-<!-- Loading -->
-<view wx:if="{{loading}}" class="empty-state">
-  <text class="empty-text">Loading...</text>
-</view>
+  <scroll-view class="scroll-content" scroll-y>
 
-<!-- Empty -->
-<view wx:elif="{{promoters.length === 0}}" class="empty-state">
-  <text class="empty-icon">⭐</text>
-  <text class="empty-text">No promoters yet</text>
-  <view class="empty-btn" bindtap="openAddModal">
-    <text class="empty-btn-text">Add first promoter</text>
-  </view>
-</view>
+    <view wx:if="{{loading}}" class="empty-state">
+      <text class="empty-text">Loading...</text>
+    </view>
 
-<!-- List -->
-<view wx:else class="list">
-  <text class="section-title">{{promoters.length}} promoters</text>
-
-  <view class="card">
-    <view
-      wx:for="{{promoters}}"
-      wx:key="_id"
-      class="promoter-row"
-      bindtap="openActions"
-      data-promoter="{{item}}"
-    >
-      <view class="promoter-avatar">
-        <text class="promoter-avatar-text">{{item.avatarLetter}}</text>
+    <view wx:elif="{{promoters.length === 0}}" class="empty-state">
+      <text class="empty-icon">⭐</text>
+      <text class="empty-text">No promoters yet</text>
+      <view class="empty-btn" bindtap="openAddModal">
+        <text class="empty-btn-text">Add first promoter</text>
       </view>
+    </view>
 
-      <view class="promoter-info">
-        <view class="promoter-top">
-          <text class="promoter-name">{{item.name}}</text>
-          <view class="status-badge badge-{{item.status}}">
-            <text class="status-text">{{item.status}}</text>
+    <view wx:else class="list">
+      <view wx:for="{{promoters}}" wx:key="_id" class="item-card" bindtap="openActions" data-id="{{item._id}}">
+        <view class="item-top">
+          <view class="item-avatar"><text class="item-avatar-text">{{item.avatarLetter}}</text></view>
+          <view class="item-info">
+            <view class="item-name-row">
+              <text class="item-name">{{item.name}}</text>
+              <view class="status-badge badge-{{item.status}}">
+                <text class="status-text">{{item.status}}</text>
+              </view>
+            </view>
+            <view class="item-meta">
+              <text class="promo-code">{{item.promoCode || 'No code'}}</text>
+              <text class="meta-dot">·</text>
+              <text class="item-sub">{{item.guestCount || 0}} guests</text>
+            </view>
           </view>
         </view>
-        <view class="promoter-meta">
-          <text class="promo-code">{{item.promoCode || 'No code'}}</text>
-          <text class="meta-dot">·</text>
-          <text class="meta-info">{{item.joinDate}}</text>
-          <text class="meta-dot">·</text>
-          <text class="meta-info">{{item.guestCount || 0}} guests</text>
-        </view>
       </view>
-
-      <text class="chevron">›</text>
     </view>
-  </view>
-</view>
 
-<view class="safe-area-bottom" />
+    <view class="safe-area-bottom" />
+
+  </scroll-view>
 
 <!-- ══ ADD MODAL ══ -->
 <view wx:if="{{showAddModal}}" class="modal-overlay" catchtap="closeAddModal">
@@ -120,8 +103,17 @@
       </view>
     </view>
 
-    <!-- Edit promo code -->
     <view class="modal-body">
+      <view class="field-row">
+        <text class="field-label">Name</text>
+        <input
+          class="field-input"
+          value="{{editName}}"
+          bindinput="onEditNameInput"
+          placeholder="Full name"
+          placeholder-class="field-placeholder"
+        />
+      </view>
       <view class="field-row">
         <text class="field-label">Promo code</text>
         <input
@@ -134,12 +126,11 @@
       </view>
     </view>
     <view class="code-save-wrap">
-      <view class="code-save-btn" bindtap="savePromoCode">
-        <text class="code-save-text">Update code</text>
+      <view class="code-save-btn" bindtap="savePromoterInfo">
+        <text class="code-save-text">Save changes</text>
       </view>
     </view>
 
-    <!-- Status actions -->
     <view class="action-section">
       <text class="action-section-title">Status</text>
       <view class="action-list">
@@ -167,6 +158,13 @@
           bindtap="confirmRevoke"
         >
           <text class="action-row-text">Revoke status</text>
+        </view>
+
+        <view
+          class="action-row action-row--red"
+          bindtap="confirmDelete"
+        >
+          <text class="action-row-text">Delete promoter</text>
         </view>
 
       </view>

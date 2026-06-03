@@ -1,39 +1,141 @@
 .page {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  background: #F2F2F7;
 }
 
-.nav-bar {
-  background: #FFFFFF;
-  padding: 16rpx 32rpx;
-  border-bottom: 0.5px solid #C6C6C8;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+/* Counter bar */
+.counter-bar {
+  background: var(--bg-card);
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  flex-shrink: 0;
 }
 
-.nav-title {
-  font-size: 34rpx;
+.counter-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.counter-num {
+  font-size: 40rpx;
   font-weight: 700;
-  color: #000000;
-  letter-spacing: -0.5rpx;
+  color: var(--text);
+  line-height: 1;
 }
 
+.counter-label {
+  font-size: 22rpx;
+  color: var(--text-2);
+}
+
+.counter-divider {
+  width: 1rpx;
+  height: 48rpx;
+  background: var(--border);
+}
+
+/* Scroll */
+.scroll {
+  flex: 1;
+}
+
+/* Section */
 .section {
-  padding: 32rpx 24rpx 0;
+  padding: 0 24rpx 0;
 }
 
 .section-title {
   font-size: 22rpx;
   font-weight: 500;
-  color: #8E8E93;
+  color: var(--text-2);
   text-transform: uppercase;
   letter-spacing: 1rpx;
   padding: 0 8rpx 12rpx;
+  display: block;
 }
 
+/* Event list (guest lists) */
+.event-list {
+  background: var(--bg-card);
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.event-row {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 28rpx;
+  border-bottom: 0.5px solid var(--bg);
+  gap: 16rpx;
+}
+
+.event-row:last-child {
+  border-bottom: none;
+}
+
+.event-row:active {
+  background: var(--bg);
+}
+
+.event-row-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.event-row-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.event-row-meta {
+  font-size: 24rpx;
+  color: var(--text-2);
+}
+
+.event-row-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.event-row-count {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--blue);
+  line-height: 1;
+}
+
+.event-row-count-label {
+  font-size: 20rpx;
+  color: var(--text-2);
+  margin-top: 2rpx;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 48rpx 0;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: var(--text-3);
+}
+
+/* Manage card */
 .card {
-  background: #FFFFFF;
+  background: var(--bg-card);
   border-radius: 24rpx;
   overflow: hidden;
 }
@@ -43,7 +145,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 24rpx 28rpx;
-  border-bottom: 0.5px solid #F2F2F7;
+  border-bottom: 0.5px solid var(--bg);
 }
 
 .card-row:last-child {
@@ -51,7 +153,7 @@
 }
 
 .card-row:active {
-  background: #F2F2F7;
+  background: var(--bg);
 }
 
 .row-left {
@@ -82,13 +184,13 @@
 
 .row-label {
   font-size: 30rpx;
-  color: #000000;
+  color: var(--text);
   font-weight: 500;
 }
 
 .row-sub {
   font-size: 24rpx;
-  color: #8E8E93;
+  color: var(--text-2);
 }
 
 .row-right {
@@ -116,7 +218,7 @@
 
 .chevron {
   font-size: 36rpx;
-  color: #C7C7CC;
+  color: var(--text-3);
   font-weight: 300;
 }
 

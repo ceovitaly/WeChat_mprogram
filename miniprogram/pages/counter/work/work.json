@@ -1,6 +1,5 @@
 {
   "navigationBarTitleText": "YUE! COUNTER",
-  "usingComponents": {
-    "cloud-tip-modal": "/components/cloudTipModal/index"
-  }
+  "usingComponents": {},
+  "disableScroll": true
 }

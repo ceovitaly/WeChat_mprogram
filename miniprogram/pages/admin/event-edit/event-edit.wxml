@@ -14,8 +14,13 @@
     <view class="tab {{activeTab === 1 ? 'tab--active' : ''}}" bindtap="switchTab" data-index="1">
       <text>Packages</text>
     </view>
+    <view class="tab {{activeTab === 2 ? 'tab--active' : ''}}" bindtap="switchTab" data-index="2">
+      <text>Entry Limits</text>
+    </view>
   </view>
 </view>
+
+<scroll-view class="content-area" scroll-y show-scrollbar="{{false}}">
 
 <!-- ── General Tab ── -->
 <view wx:if="{{activeTab === 0}}" class="tab-content">
@@ -23,7 +28,7 @@
   <view class="section">
     <text class="section-title">Photos ({{images.length}}/10)</text>
     <view class="media-grid">
-      <view class="media-item" wx:for="{{images}}" wx:key="index">
+      <view class="media-item" wx:for="{{imageDisplayUrls}}" wx:key="index">
         <image src="{{item}}" mode="aspectFill" class="media-img" />
         <view class="media-remove" bindtap="removeImage" data-index="{{index}}">
           <text>✕</text>
@@ -70,7 +75,9 @@
     <view class="card">
       <view class="field-row">
         <text class="field-label">Date</text>
-        <text class="field-value">{{date || 'Not set'}}</text>
+        <picker mode="date" value="{{date}}" bindchange="onDateChange">
+          <text class="field-picker {{date ? '' : 'field-placeholder'}}">{{date || 'Select date'}}</text>
+        </picker>
       </view>
       <view class="field-row">
         <text class="field-label">Start</text>
@@ -93,9 +100,7 @@
       <view class="field-row">
         <text class="field-label">Location</text>
         <picker range="{{venues}}" range-key="name" value="{{venueIndex}}" bindchange="onVenueChange">
-          <text class="field-picker {{selectedVenueName ? '' : 'field-placeholder'}}">
-            {{selectedVenueName || 'Select venue'}}
-          </text>
+          <text class="field-picker {{selectedVenueName ? '' : 'field-placeholder'}}">{{selectedVenueName || 'Select venue'}}</text>
         </picker>
       </view>
     </view>
@@ -187,5 +192,58 @@
   </view>
 </view>
 
+<!-- ── Entry Limits Tab ── -->
+<view wx:if="{{activeTab === 2}}" class="tab-content">
+
+  <view class="section">
+    <text class="section-title">Guest groups</text>
+    <view class="card">
+      <view class="field-row">
+        <text class="field-label">Party (P)</text>
+        <input
+          class="field-input"
+          type="number"
+          placeholder="0"
+          placeholder-class="field-placeholder"
+          value="{{partyCapacity}}"
+          bindinput="onPartyCapInput"
+          confirm-type="done"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">After Party (AP)</text>
+        <input
+          class="field-input"
+          type="number"
+          placeholder="0"
+          placeholder-class="field-placeholder"
+          value="{{afterPartyCapacity}}"
+          bindinput="onAfterPartyCapInput"
+          confirm-type="done"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Late After (LAP)</text>
+        <input
+          class="field-input"
+          type="number"
+          placeholder="0"
+          placeholder-class="field-placeholder"
+          value="{{lateAfterPartyCapacity}}"
+          bindinput="onLateAfterPartyCapInput"
+          confirm-type="done"
+        />
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="save-btn {{isProcessing ? 'save-btn--dim' : ''}}" bindtap="onSave">
+      <text class="save-btn-text">{{isProcessing ? 'Saving...' : 'Save Event'}}</text>
+    </view>
+  </view>
+</view>
+
 <view class="safe-area-bottom" />
+</scroll-view>
 </view>

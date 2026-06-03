@@ -1,38 +1,38 @@
+page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
 .page {
-  min-height: 100vh;
-  background: #F2F2F7;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.scroll-content {
+  flex: 1;
+  height: 0;
 }
 
 .nav-bar {
-  background: #FFFFFF;
-  padding: 16rpx 32rpx;
+  background: var(--bg-card);
+  padding: 24rpx 32rpx;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-bottom: 0.5px solid #C6C6C8;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  justify-content: center;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
 }
 
-.nav-back-text {
-  font-size: 28rpx;
-  color: #007AFF;
-  min-width: 120rpx;
-}
+.nav-bar:active { background: var(--bg); }
 
-.nav-title {
+.nav-add-text {
   font-size: 34rpx;
-  font-weight: 700;
-  color: #000000;
-}
-
-.nav-btn-text {
-  font-size: 30rpx;
-  color: #007AFF;
-  font-weight: 500;
-  min-width: 120rpx;
-  text-align: right;
+  font-weight: 600;
+  color: var(--blue);
 }
 
 .empty-state {
@@ -43,61 +43,33 @@
   gap: 20rpx;
 }
 
-.empty-icon {
-  font-size: 80rpx;
-}
-
-.empty-text {
-  font-size: 28rpx;
-  color: #8E8E93;
-}
-
-.empty-btn {
-  padding: 16rpx 40rpx;
-  background: #007AFF;
-  border-radius: 20rpx;
-}
-
-.empty-btn-text {
-  font-size: 28rpx;
-  color: #FFFFFF;
-  font-weight: 500;
-}
+.empty-icon { font-size: 80rpx; }
+.empty-text { font-size: 28rpx; color: #8E8E93; }
 
 .list {
   padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
 }
 
-.section-title {
-  font-size: 22rpx;
-  font-weight: 500;
-  color: #8E8E93;
-  text-transform: uppercase;
-  letter-spacing: 1rpx;
-  padding: 0 4rpx 12rpx;
-}
-
-.card {
-  background: #FFFFFF;
+.item-card {
+  background: var(--bg-card);
   border-radius: 24rpx;
   overflow: hidden;
 }
 
-.staff-row {
+.item-top {
   display: flex;
   align-items: center;
-  padding: 20rpx 24rpx;
-  gap: 16rpx;
-  border-bottom: 0.5px solid #F2F2F7;
+  padding: 28rpx;
+  gap: 20rpx;
+  border-bottom: 0.5px solid var(--bg);
 }
 
-.staff-row:last-child {
-  border-bottom: none;
-}
-
-.staff-avatar {
-  width: 72rpx;
-  height: 72rpx;
+.item-avatar {
+  width: 88rpx;
+  height: 88rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -105,108 +77,102 @@
   flex-shrink: 0;
 }
 
-.avatar--admin {
-  background: #E8F0FB;
+.avatar--admin { background: #E8F0FB; }
+.avatar--counter { background: var(--bg); }
+
+.item-avatar-text {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--text);
 }
 
-.avatar--counter {
-  background: #F2F2F7;
-}
-
-.staff-avatar-text {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #000000;
-}
-
-.staff-info {
+.item-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6rpx;
-  overflow: hidden;
+  gap: 8rpx;
 }
 
-.staff-top {
+.item-name-row {
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  gap: 12rpx;
+  flex-wrap: wrap;
 }
 
-.staff-name {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #000000;
+.item-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .role-badge {
-  padding: 4rpx 12rpx;
+  padding: 4rpx 14rpx;
   border-radius: 10rpx;
 }
 
-.badge-admin {
-  background: #E8F0FB;
-}
-
-.badge-counter {
-  background: #F2F2F7;
-}
+.badge-admin { background: #E8F0FB; }
+.badge-counter { background: var(--bg); }
 
 .role-badge-text {
-  font-size: 20rpx;
+  font-size: 22rpx;
   font-weight: 500;
   color: #8E8E93;
   text-transform: uppercase;
   letter-spacing: 0.5rpx;
 }
 
-.staff-pass {
-  font-size: 24rpx;
-  color: #8E8E93;
+.item-sub {
+  font-size: 28rpx;
+  color: var(--text-2);
 }
 
-.staff-actions {
-  display: flex;
-  gap: 8rpx;
-  flex-shrink: 0;
+.modal-delete-row {
+  margin: 0 24rpx 0;
+  background: #FFF1F0;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  text-align: center;
 }
 
-.action-btn {
-  padding: 10rpx 16rpx;
-  border-radius: 12rpx;
-  font-size: 22rpx;
+.modal-delete-row:active { opacity: 0.7; }
+
+.modal-delete-text {
+  font-size: 28rpx;
+  color: #FF3B30;
   font-weight: 500;
 }
 
-.action-btn:active {
-  opacity: 0.6;
+.item-actions {
+  display: flex;
 }
 
-.action-btn--copy {
-  background: #F2F2F7;
-  color: #007AFF;
+.action-btn {
+  flex: 1;
+  padding: 22rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 500;
+  border-right: 0.5px solid var(--bg);
 }
 
-.action-btn--edit {
-  background: #E8F0FB;
-  color: #185FA5;
-}
+.action-btn:last-child { border-right: none; }
+.action-btn:active { opacity: 0.6; }
 
-.action-btn--delete {
-  background: #FFEBE9;
-  color: #FF3B30;
-}
+.action-btn--copy { color: #007AFF; }
+.action-btn--edit { color: #185FA5; }
+.action-btn--delete { color: #FF3B30; }
 
 .safe-area-bottom {
   height: calc(32rpx + env(safe-area-inset-bottom));
 }
 
+/* ── Modal ── */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: flex-end;
@@ -215,7 +181,7 @@
 
 .modal {
   width: 100%;
-  background: #F2F2F7;
+  background: var(--bg);
   border-radius: 24rpx 24rpx 0 0;
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -227,20 +193,11 @@
   padding: 32rpx 32rpx 20rpx;
 }
 
-.modal-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #000000;
-}
-
-.modal-close {
-  font-size: 28rpx;
-  color: #8E8E93;
-  padding: 8rpx 16rpx;
-}
+.modal-title { font-size: 32rpx; font-weight: 700; color: var(--text); }
+.modal-close { font-size: 28rpx; color: var(--text-2); padding: 8rpx 16rpx; }
 
 .modal-body {
-  background: #FFFFFF;
+  background: var(--bg-card);
   margin: 0 24rpx;
   border-radius: 20rpx;
   overflow: hidden;
@@ -252,52 +209,40 @@
   justify-content: space-between;
   padding: 0 28rpx;
   min-height: 88rpx;
-  border-bottom: 0.5px solid #F2F2F7;
+  border-bottom: 0.5px solid var(--bg);
 }
 
-.field-row:last-child {
-  border-bottom: none;
-}
+.field-row:last-child { border-bottom: none; }
 
-.field-label {
-  font-size: 28rpx;
-  color: #000000;
-  min-width: 160rpx;
-}
+.field-label { font-size: 28rpx; color: var(--text); min-width: 160rpx; }
 
 .field-input {
   flex: 1;
   text-align: right;
   font-size: 28rpx;
-  color: #000000;
+  color: var(--text);
   height: 88rpx;
 }
 
-.field-placeholder {
-  color: #C7C7CC;
-}
+.field-placeholder { color: var(--text-3); }
 
-.role-section {
-  padding: 24rpx 24rpx 0;
-}
+.role-section { padding: 24rpx 24rpx 0; }
 
 .role-section-title {
   font-size: 22rpx;
   font-weight: 500;
-  color: #8E8E93;
+  color: var(--text-2);
   text-transform: uppercase;
   letter-spacing: 1rpx;
   padding: 0 4rpx 12rpx;
+  display: block;
 }
 
-.role-options {
-  display: flex;
-  gap: 16rpx;
-}
+.role-options { display: flex; gap: 16rpx; }
 
 .role-option {
   flex: 1;
-  background: #FFFFFF;
+  background: var(--bg-card);
   border-radius: 16rpx;
   padding: 20rpx;
   display: flex;
@@ -306,21 +251,9 @@
   border: 2rpx solid transparent;
 }
 
-.role-option--active {
-  border-color: #007AFF;
-  background: #E8F0FB;
-}
-
-.role-option-text {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #000000;
-}
-
-.role-option-sub {
-  font-size: 22rpx;
-  color: #8E8E93;
-}
+.role-option--active { border-color: var(--blue); background: #E8F0FB; }
+.role-option-text { font-size: 28rpx; font-weight: 600; color: var(--text); }
+.role-option-sub { font-size: 22rpx; color: var(--text-2); }
 
 .modal-footer {
   display: flex;
@@ -330,26 +263,28 @@
 
 .modal-cancel {
   flex: 1;
-  background: #FFFFFF;
+  background: var(--bg-card);
   border-radius: 16rpx;
   padding: 24rpx;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 28rpx;
-  color: #8E8E93;
+  color: var(--text-2);
   font-weight: 500;
 }
 
 .modal-save {
   flex: 2;
-  background: #007AFF;
+  background: var(--blue);
   border-radius: 16rpx;
   padding: 24rpx;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 28rpx;
   color: #FFFFFF;
   font-weight: 600;
 }
 
-.modal-save:active {
-  opacity: 0.8;
-}
+.modal-save:active { opacity: 0.8; }

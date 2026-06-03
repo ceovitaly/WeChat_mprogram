@@ -1,99 +1,89 @@
 <view class="page">
 
-<!-- Header -->
+<!-- Fixed Header -->
 <view class="nav-bar">
-  <text class="nav-title">Schedule</text>
+  <view class="nav-date" bindtap="toggleCalendar">
+    <text class="nav-date-text">{{selectedDateLabel}}</text>
+    <text class="nav-chevron">{{calendarVisible ? '▲' : '▼'}}</text>
+  </view>
   <view class="nav-btn" bindtap="goCreateEvent">
     <text class="nav-btn-text">+ Add</text>
   </view>
 </view>
 
-<!-- Date bar -->
-<view class="month-bar">
-  <view class="month-arrow" bindtap="prevDay">‹</view>
-  <view class="month-center">
-    <view class="month-label" bindtap="openPicker">
-      <text class="month-name">{{selectedDateLabel}}</text>
-      <text class="month-chevron">▲</text>
+<!-- Scrollable content -->
+<scroll-view
+  class="content-scroll"
+  scroll-y
+  refresher-enabled
+  refresher-triggered="{{refreshing}}"
+  bindrefresherrefresh="onRefresh"
+>
+
+  <!-- Calendar grid (collapsible) -->
+  <view class="calendar-wrap {{calendarVisible ? 'calendar-wrap--visible' : ''}}">
+    <view class="calendar-month-header">
+      <text class="calendar-month-name" bindtap="openPicker">{{monthName}} {{currYear}} ›</text>
     </view>
-    <view class="calendar-icon-btn" bindtap="toggleCalendar">
-      <text class="calendar-icon">{{calendarVisible ? '📅' : '🗓'}}</text>
+    <view class="weekdays">
+      <text wx:for="{{['Mo','Tu','We','Th','Fr','Sa','Su']}}" wx:key="*this" class="weekday">{{item}}</text>
     </view>
-  </view>
-  <view class="month-arrow" bindtap="nextDay">›</view>
-</view>
-
-<!-- Calendar grid -->
-<view class="calendar-wrap {{calendarVisible ? 'calendar-wrap--visible' : ''}}">
-  <view class="weekdays">
-    <text wx:for="{{['Mo','Tu','We','Th','Fr','Sa','Su']}}" wx:key="*this" class="weekday">{{item}}</text>
-  </view>
-  <view class="days-grid">
-    <view
-      wx:for="{{calendarDays}}"
-      wx:key="fullDate"
-      class="day-cell {{item.fullDate === selectedDate ? 'day-cell--selected' : ''}} {{!item.day ? 'day-cell--empty' : ''}}"
-      bindtap="selectDate"
-      data-date="{{item.fullDate}}"
-    >
-      <text class="day-num">{{item.day}}</text>
-    </view>
-  </view>
-</view>
-
-<!-- Selected date label -->
-<view class="date-label-wrap">
-  <text class="date-label">{{selectedDate}}</text>
-</view>
-
-<!-- Events list -->
-<view class="events-wrap">
-
-  <view wx:if="{{loading}}" class="empty-state">
-    <text class="empty-text">Loading...</text>
-  </view>
-
-  <view wx:elif="{{filteredEvents.length === 0}}" class="empty-state">
-    <text class="empty-icon">📅</text>
-    <text class="empty-text">No events on this date</text>
-    <view class="empty-btn" bindtap="goCreateEvent">
-      <text class="empty-btn-text">Create event</text>
-    </view>
-  </view>
-
-  <view wx:else>
-    <view wx:for="{{filteredEvents}}" wx:key="_id" class="event-card">
-      <view class="event-cover">
-        <text class="event-cover-title">{{item.title}}</text>
-        <view class="event-status-badge {{item.status === 'published' ? 'badge-green' : item.status === 'cancelled' ? 'badge-red' : 'badge-gray'}}">
-          <text>{{item.status || 'draft'}}</text>
-        </view>
-      </view>
-      <view class="event-info">
-        <view class="event-meta">
-          <text class="event-time">{{item.startTime}}{{item.endTime ? ' — ' + item.endTime : ''}}</text>
-          <text class="event-venue">{{item.venueName || 'No venue'}}</text>
-        </view>
-        <view class="event-actions">
-          <view class="action-btn action-btn--edit" bindtap="goEditEvent" data-id="{{item._id}}">
-            <text>Edit</text>
-          </view>
-          <view class="action-btn action-btn--delete" bindtap="confirmDelete" data-id="{{item._id}}" data-title="{{item.title}}">
-            <text>Delete</text>
-          </view>
-        </view>
+    <view class="days-grid">
+      <view
+        wx:for="{{calendarDays}}"
+        wx:key="fullDate"
+        class="day-cell {{item.fullDate === selectedDate ? 'day-cell--selected' : ''}} {{!item.day ? 'day-cell--empty' : ''}}"
+        bindtap="selectDate"
+        data-date="{{item.fullDate}}"
+      >
+        <text class="day-num">{{item.day}}</text>
       </view>
     </view>
   </view>
 
-</view>
+  <!-- Events list -->
+  <view class="events-wrap">
 
-<!-- Month/Year Picker Modal -->
+    <view wx:if="{{loading}}" class="empty-state">
+      <text class="empty-text">Loading...</text>
+    </view>
+
+    <view wx:elif="{{filteredEvents.length === 0}}" class="empty-state">
+      <text class="empty-icon">📅</text>
+      <text class="empty-text">No events on this date</text>
+      <view class="empty-btn" bindtap="goCreateEvent">
+        <text class="empty-btn-text">Create event</text>
+      </view>
+    </view>
+
+    <view wx:else>
+      <view wx:for="{{filteredEvents}}" wx:key="_id" class="event-card" bindtap="goEditEvent" data-id="{{item._id}}">
+        <view class="event-cover">
+          <text class="event-cover-title">{{item.title}}</text>
+          <text class="event-cover-meta">{{item.startTime}}{{item.endTime ? ' — ' + item.endTime : ''}}{{item.venueName ? ' · ' + item.venueName : ''}}</text>
+        </view>
+        <view class="event-card-actions">
+          <view class="event-action-btn event-action-btn--edit" catchtap="goEditEvent" data-id="{{item._id}}">
+            <text class="event-action-text">Edit</text>
+          </view>
+          <view class="event-action-btn event-action-btn--delete" catchtap="confirmDelete" data-id="{{item._id}}" data-title="{{item.title}}">
+            <text class="event-action-text">Delete</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+  </view>
+
+  <view class="tab-bar-spacer" />
+</scroll-view>
+
+<!-- Month Picker Modal -->
 <view wx:if="{{pickerVisible}}" class="picker-mask" bindtap="closePicker">
   <view class="picker-sheet" catchtap="">
     <view class="picker-header">
       <text class="picker-cancel" bindtap="closePicker">Cancel</text>
-      <text class="picker-title">Select Month & Year</text>
+      <text class="picker-title">Select Month</text>
       <text class="picker-confirm" bindtap="confirmPicker">Done</text>
     </view>
     <view class="picker-columns">
@@ -107,19 +97,8 @@
           <view wx:for="{{monthNames}}" wx:key="*this" class="picker-item">{{item}}</view>
         </picker-view-column>
       </picker-view>
-      <picker-view
-        class="picker-view"
-        indicator-style="height: 88rpx;"
-        value="{{[pickerYearIndex]}}"
-        bindchange="onPickerYearChange"
-      >
-        <picker-view-column>
-          <view wx:for="{{years}}" wx:key="*this" class="picker-item">{{item}}</view>
-        </picker-view-column>
-      </picker-view>
     </view>
   </view>
 </view>
 
-<view class="tab-bar-spacer" />
 </view>

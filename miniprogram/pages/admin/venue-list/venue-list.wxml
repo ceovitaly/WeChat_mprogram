@@ -1,75 +1,50 @@
 <view class="page">
 
-  <view class="nav-bar">
-  <text class="nav-title">Venues</text>
-  <view class="nav-btn" bindtap="goCreate">
-    <text class="nav-btn-text">+ Add</text>
+<view class="nav-bar" bindtap="goCreate">
+  <text class="nav-add-text">+ Add Venue</text>
+</view>
+
+<scroll-view class="scroll-content" scroll-y>
+
+  <view wx:if="{{loading}}" class="empty-state">
+    <text class="empty-text">Loading...</text>
   </view>
-</view>
 
-<view wx:if="{{loading}}" class="empty-state">
-  <text class="empty-text">Loading...</text>
-</view>
-
-<view wx:elif="{{venues.length === 0}}" class="empty-state">
-  <text class="empty-icon">🏛</text>
-  <text class="empty-text">No venues yet</text>
-  <view class="empty-btn" bindtap="goCreate">
-    <text class="empty-btn-text">Add first venue</text>
+  <view wx:elif="{{venues.length === 0}}" class="empty-state">
+    <text class="empty-icon">🏛</text>
+    <text class="empty-text">No venues yet</text>
+    <view class="empty-btn" bindtap="goCreate">
+      <text class="empty-btn-text">Add first venue</text>
+    </view>
   </view>
-</view>
 
-<view wx:else class="list">
-  <view
-    wx:for="{{venues}}"
-    wx:key="_id"
-    class="venue-card"
-  >
-    <view class="venue-card-body" bindtap="goEdit" data-id="{{item._id}}">
-      <view class="venue-logo-wrap">
-        <image
-          wx:if="{{item.logo}}"
-          class="venue-logo"
-          src="{{item.logo}}"
-          mode="aspectFill"
-        />
-        <view wx:else class="venue-logo-placeholder">
-          <text class="venue-logo-letter">{{item.name[0]}}</text>
+  <view wx:else class="list">
+    <view wx:for="{{venues}}" wx:key="_id" class="item-card" bindtap="goEdit" data-id="{{item._id}}">
+
+      <view class="item-top">
+        <view class="item-avatar">
+          <image wx:if="{{item.logo}}" class="venue-logo-img" src="{{item.logo}}" mode="aspectFill"/>
+          <text wx:else class="item-avatar-text">{{item.name[0]}}</text>
+        </view>
+        <view class="item-info">
+          <text class="item-name">{{item.name}}</text>
+          <text class="item-sub">{{item.password || 'No password'}}</text>
         </view>
       </view>
-      <view class="venue-info">
-        <view class="venue-top">
-          <text class="venue-name">{{item.name}}</text>
-          <view class="venue-type-badge">
-            <text class="venue-type-text">{{item.type || 'club'}}</text>
-          </view>
+
+      <view class="item-actions">
+        <view class="action-btn action-btn--primary" catchtap="goEdit" data-id="{{item._id}}">
+          <text>Edit</text>
         </view>
-        <text class="venue-address">{{item.address || 'No address'}}</text>
-        <text class="venue-hours">{{item.hours || 'Hours not set'}}</text>
+        <view class="action-btn action-btn--danger" catchtap="confirmDelete" data-id="{{item._id}}" data-name="{{item.name}}">
+          <text>Delete</text>
+        </view>
       </view>
-      <text class="chevron">›</text>
-    </view>
 
-    <view class="venue-card-footer">
-      <view
-        class="footer-btn footer-btn--edit"
-        bindtap="goEdit"
-        data-id="{{item._id}}"
-      >
-        <text>Edit</text>
-      </view>
-      <view
-        class="footer-btn footer-btn--delete"
-        bindtap="confirmDelete"
-        data-id="{{item._id}}"
-        data-name="{{item.name}}"
-      >
-        <text>Delete</text>
-      </view>
     </view>
-
   </view>
-</view>
 
-<view class="safe-area-bottom" />
+  <view class="safe-area-bottom"/>
+
+</scroll-view>
 </view>
