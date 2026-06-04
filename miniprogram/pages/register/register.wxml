@@ -40,10 +40,10 @@
       bindgetphonenumber="onGetPhoneNumber"
     >Allow access to phone number</button>
 
-  </view>
+    <view class="footer">
+      <text class="footer-text">THE LIST · 2026</text>
+    </view>
 
-  <view class="footer">
-    <text class="footer-text">THE LIST · 2026</text>
   </view>
 
 </block>

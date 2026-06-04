@@ -124,12 +124,19 @@
         </view>
         <view class="card-btn-wrap">
           <button
+            wx:if="{{!item.isRegistered}}"
             class="get-ticket-btn"
             catchtap="goToTicketDirect"
             data-id="{{item._id}}"
           >
             📋 Get on list
           </button>
+          <view
+            wx:else
+            class="registered-badge"
+          >
+            <text class="registered-badge-txt">✓ You're on the list</text>
+          </view>
           <button
             class="more-btn"
             catchtap="goToDetail"

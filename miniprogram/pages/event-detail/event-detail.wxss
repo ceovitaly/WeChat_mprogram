@@ -445,6 +445,14 @@ button::after { border: none; }
   color: #8e8e93;
 }
 
+.prompt-desc {
+  font-size: 28rpx;
+  color: #8E8E93;
+  text-align: center;
+  line-height: 1.6;
+  padding: 0 8rpx 24rpx;
+}
+
 .package-item {
   display: flex;
   align-items: center;

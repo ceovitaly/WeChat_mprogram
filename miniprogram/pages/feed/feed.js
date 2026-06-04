@@ -20,7 +20,8 @@ Page({
     todayMonth: '',
     selectedDateNum: '',
     selectedDateMonth: '',
-    eventDates: []
+    eventDates: [],
+    myRegistrationIds: []
   },
 
   onLoad: function() {
@@ -43,6 +44,7 @@ Page({
     app.getCloud(function(cloud) {
       this.cloud = cloud;
       this.loadEventsFromCacheOrFetch();
+      this.loadMyRegistrations();
     }.bind(this));
   },
 
@@ -53,6 +55,7 @@ Page({
       initial = initial.toUpperCase();
       this.setData({ userInfo: userInfo, userInitial: initial });
     }
+    if (this.cloud) this.loadMyRegistrations();
   },
 
   // ===== CALENDAR =====
@@ -179,6 +182,37 @@ Page({
     });
 
     this.setData({ filteredEvents: filtered });
+
+    var regIds = this.data.myRegistrationIds;
+    if (regIds && regIds.length > 0) {
+      var marked = filtered.map(function(e) {
+        return Object.assign({}, e, { isRegistered: regIds.indexOf(e._id) !== -1 });
+      });
+      this.setData({ filteredEvents: marked });
+    }
+  },
+
+  // ===== REGISTRATIONS =====
+
+  loadMyRegistrations: function() {
+    var self = this;
+    var doLoad = function(openid) {
+      if (!openid || !self.cloud) return;
+      var db = self.cloud.database();
+      db.collection('registrations').where({ _openid: openid }).field({ eventId: true }).get({
+        success: function(res) {
+          var ids = res.data.map(function(r) { return r.eventId; });
+          self.setData({ myRegistrationIds: ids });
+          self.applyFilters();
+        },
+        fail: function(err) { console.error('[feed] loadMyRegistrations failed:', err); }
+      });
+    };
+    if (app.globalData.openid) {
+      doLoad(app.globalData.openid);
+    } else {
+      app.getOpenid(doLoad);
+    }
   },
 
   // ===== DATA LOADING =====

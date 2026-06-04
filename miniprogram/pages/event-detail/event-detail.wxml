@@ -74,11 +74,7 @@
 </scroll-view>
 
 <view class="action-bar">
-  <view wx:if="{{hasProfile === false}}" class="no-profile-bar">
-    <text class="no-profile-text">Вы не зарегистрированы в приложении</text>
-    <button class="btn-join-app" bindtap="goRegister">Зарегистрироваться</button>
-  </view>
-  <view wx:elif="{{isRegistered}}" class="registered-bar">
+  <view wx:if="{{isRegistered}}" class="registered-bar">
     <view class="registered-status">
       <text class="registered-icon">✓</text>
       <text class="registered-text">You're on the list</text>
@@ -174,6 +170,19 @@
     </button>
 
     <view class="modal-cancel" bindtap="closeTicketModal">
+      <text>Cancel</text>
+    </view>
+  </view>
+</view>
+
+<!-- Register prompt for users without profile -->
+<view wx:if="{{showRegisterPrompt}}" class="ticket-mask" bindtap="closeRegisterPrompt">
+  <view class="ticket-modal" catchtap="noop">
+    <view class="modal-handle"></view>
+    <text class="modal-title">Not registered</text>
+    <text class="prompt-desc">To get on the list, you need to register in the app first.</text>
+    <button class="register-btn" style="width:100%;margin:0;box-sizing:border-box;" bindtap="goRegister">Register</button>
+    <view class="modal-cancel" bindtap="closeRegisterPrompt">
       <text>Cancel</text>
     </view>
   </view>

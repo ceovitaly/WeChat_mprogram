@@ -6,6 +6,7 @@ Page({
     isRegistered: false,
     hasProfile: null,
     showTicketModal: false,
+    showRegisterPrompt: false,
     selectedTicketId: '',
     selectedTicketName: '',
     selectedTicketPrice: 0,
@@ -156,6 +157,10 @@ Page({
   },
 
   openTicketModal: function() {
+    if (this.data.hasProfile === false) {
+      this.setData({ showRegisterPrompt: true });
+      return;
+    }
     var event = this.data.event;
     var autoId = '';
     var autoName = '';
@@ -183,6 +188,10 @@ Page({
 
   closeTicketModal: function() {
     this.setData({ showTicketModal: false, selectedTicketId: '', selectedTicketName: '', selectedTicketPrice: 0, selectedPackageLink: '' });
+  },
+
+  closeRegisterPrompt: function() {
+    this.setData({ showRegisterPrompt: false });
   },
 
   noop: function() {},
