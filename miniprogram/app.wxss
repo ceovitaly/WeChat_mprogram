@@ -58,6 +58,20 @@ page {
 /* ── Tab bar spacer ── */
 .tab-bar-spacer { height: 160rpx; }
 
+/* ── Shared spinner (used by register/me/mytickets loading states) ── */
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  border: 6rpx solid #E5E5EA;
+  border-top-color: #007AFF;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (prefers-color-scheme: dark) {
   page {
     background: #000000;
@@ -69,4 +83,5 @@ page {
   .nav-title { color: #FFFFFF; }
   .card { background: #1C1C1E; }
   .empty-title { color: #FFFFFF; }
+  .loading-spinner { border-color: #38383A; border-top-color: #0A84FF; }
 }
