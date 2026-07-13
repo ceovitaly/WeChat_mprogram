@@ -1,11 +1,12 @@
 {
   "pages": [
-    "pages/register/register",
     "pages/feed/feed",
     "pages/event-detail/event-detail",
     "pages/mytickets/mytickets",
     "pages/me/me",
-    "pages/register/promo/promo"
+    "pages/register/register",
+    "pages/register/promo/promo",
+    "pages/webview/webview"
   ],
   "window": {
     "navigationBarBackgroundColor": "@navBgColor",

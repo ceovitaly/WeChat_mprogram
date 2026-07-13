@@ -11,7 +11,7 @@
 
 <view class="card">
   <text class="card-title">Your Profile</text>
-  <text class="card-desc">Set your photo and name, then enter your invite code</text>
+  <text class="card-desc">Set your photo and name, then enter who invited you</text>
 
   <!-- Nickname -->
   <view class="field-wrap">
@@ -30,7 +30,7 @@
   <view class="field-wrap {{promoValid ? 'field-valid' : ''}}">
     <input
       class="field-input"
-      placeholder="Invite code"
+      placeholder="Invite by"
       placeholder-class="field-placeholder"
       value="{{promoInput}}"
       bindinput="onPromoInput"

@@ -2,8 +2,6 @@
 
 Page({
   data: {
-    showPrivacy: false,
-    privacyAgreed: false,
     checking: true,
   },
 
@@ -12,6 +10,15 @@ Page({
   },
 
   async _checkSession() {
+    // If user explicitly logged out, show registration screen
+    try {
+      if (wx.getStorageSync('loggedOut') === '1') {
+        wx.removeStorageSync('loggedOut');
+        this.setData({ checking: false });
+        return;
+      }
+    } catch(e) {}
+
     // Fast path: storage
     try {
       const stored = wx.getStorageSync('userInfo');
@@ -46,35 +53,21 @@ Page({
     });
   },
 
-  // Нажали "Войти через WeChat"
-  onLoginTap() {
-    this.setData({ showPrivacy: true });
+  goBack() {
+    wx.navigateBack({
+      fail: () => wx.reLaunch({ url: '/pages/feed/feed' }),
+    });
   },
-
-  // Privacy → Отказ
-  onDisagree() {
-    this.setData({ showPrivacy: false });
-  },
-
-  onAgree() {
-    this.setData({ showPrivacy: false, privacyAgreed: true });
-  },
-
-  noop() {},
 
   // WeChat вернул code для получения телефона
   onGetPhoneNumber(e) {
     console.log('[onGetPhoneNumber] detail:', JSON.stringify(e.detail));
     if (e.detail.errno !== undefined && e.detail.errno !== 0) {
       console.warn('[onGetPhoneNumber] errno:', e.detail.errno);
-      wx.showToast({ title: 'Phone number required', icon: 'none' });
-      this.setData({ privacyAgreed: false });
       return;
     }
     if (!e.detail.code) {
       console.warn('[onGetPhoneNumber] no code in detail');
-      wx.showToast({ title: 'Could not get phone number', icon: 'none' });
-      this.setData({ privacyAgreed: false });
       return;
     }
 
@@ -83,13 +76,11 @@ Page({
     const app = getApp();
     app.getCloud(async (cloud) => {
       try {
-        console.log('[onGetPhoneNumber] calling clientAuth getPhone...');
         const res = await cloud.callFunction({
           name: 'clientAuth',
           data: { action: 'getPhone', phoneCode: e.detail.code, cloudID: e.detail.cloudID },
         });
         wx.hideLoading();
-        console.log('[onGetPhoneNumber] cf result:', JSON.stringify(res.result));
         const { result } = res;
         if (result.success && result.phone) {
           const phone = result.phone;
@@ -114,13 +105,11 @@ Page({
             content: (result.message || '?') + '\n' + (result.detail || ''),
             showCancel: false
           });
-          this.setData({ privacyAgreed: false });
         }
       } catch (err) {
         wx.hideLoading();
         console.error('[onGetPhoneNumber] exception:', err);
         wx.showToast({ title: 'Connection error', icon: 'none' });
-        this.setData({ privacyAgreed: false });
       }
     });
   },

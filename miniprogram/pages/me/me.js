@@ -91,6 +91,7 @@ Page({
       success: (res) => {
         if (res.confirm) {
           try { wx.removeStorageSync('userInfo'); } catch(e) {}
+          try { wx.setStorageSync('loggedOut', '1'); } catch(e) {}
           const app = getApp();
           app.globalData.userInfo = null;
           wx.reLaunch({ url: '/pages/register/register' });

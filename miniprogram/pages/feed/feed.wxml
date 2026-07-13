@@ -102,15 +102,12 @@
         </view>
 
         <!-- Image -->
-        <view class="card-media-wrap">
+        <view class="card-media-wrap" style="height:{{cardImgHeight}}rpx">
           <image
             src="{{item.promoImages[0] || '/images/placeholder.png'}}"
             mode="aspectFill"
             class="card-img"
-            style="height:{{item.cardImgHeight || 640}}rpx"
             lazy-load="{{true}}"
-            bindload="onCardImageLoad"
-            data-id="{{item._id}}"
           />
           <view wx:if="{{item.promoImages.length > 1}}" class="img-count-badge">
             <text class="img-count-txt">{{item.promoImages.length}} 📷</text>

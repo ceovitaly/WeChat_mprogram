@@ -99,7 +99,43 @@ Page({
         }
 
         try { wx.setStorageSync('userInfo', profileData); } catch(e) {}
-        wx.reLaunch({ url: '/pages/feed/feed' });
+
+        // Auto-register for event if user came from an event page
+        let pendingEventId;
+        try {
+          pendingEventId = wx.getStorageSync('pendingEventId');
+          if (pendingEventId) wx.removeStorageSync('pendingEventId');
+        } catch(e) {}
+
+        if (pendingEventId) {
+          try {
+            const eventRes = await db.collection('events').doc(pendingEventId).get();
+            const event = eventRes.data;
+            await db.collection('registrations').add({
+              data: {
+                eventId: pendingEventId,
+                eventTitle: event.title || '',
+                eventDate: event.date || '',
+                guestName: this.data.nickName || '',
+                promoCode: this.data.promoInput || '',
+                promoterName: this.data.verifiedPromoterName || '',
+                ticketType: 'Free Entry',
+                status: 'confirmed',
+                createdAt: db.serverDate()
+              }
+            });
+            wx.vibrateShort();
+            wx.showToast({ title: "You're in! 🎉", icon: 'success' });
+            setTimeout(() => {
+              wx.reLaunch({ url: '/pages/mytickets/mytickets' });
+            }, 1500);
+          } catch(err) {
+            console.error('[pendingEvent] registration failed:', err);
+            wx.reLaunch({ url: '/pages/feed/feed' });
+          }
+        } else {
+          wx.reLaunch({ url: '/pages/feed/feed' });
+        }
       } catch (err) {
         console.error('[_doSubmit] error:', err);
         this.setData({ submitting: false });

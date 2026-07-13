@@ -10,10 +10,17 @@ Page({
     selectedTicketId: '',
     selectedTicketName: '',
     selectedTicketPrice: 0,
-    selectedPackageLink: ''
+    selectedPackageLink: '',
+    heroHeight: 560
   },
 
   onLoad: function(options) {
+    // Hero = 40% of screen height, min 280rpx, max 560rpx (in px, converted to rpx)
+    const { windowHeight, windowWidth } = wx.getWindowInfo();
+    const rpxPerPx = 750 / windowWidth;
+    const heroH = Math.round(Math.min(Math.max(windowHeight * 0.40, 280 / rpxPerPx), 560 / rpxPerPx) * rpxPerPx);
+    this.setData({ heroHeight: heroH });
+
     this._autoTicket = options.autoTicket === '1';
     app.getCloud((cloud) => {
       this.cloud = cloud;
@@ -136,6 +143,10 @@ Page({
   },
 
   goRegister: function() {
+    const eventId = this.data.event && this.data.event._id;
+    if (eventId) {
+      try { wx.setStorageSync('pendingEventId', eventId); } catch(e) {}
+    }
     wx.navigateTo({ url: '/pages/register/register' });
   },
 
@@ -172,8 +183,8 @@ Page({
   },
 
   selectTicket: function(e) {
-    const { id, name, price } = e.currentTarget.dataset;
-    this.setData({ selectedTicketId: id, selectedTicketName: name, selectedTicketPrice: price || 0, selectedPackageLink: '' });
+    const { id, name, price, link } = e.currentTarget.dataset;
+    this.setData({ selectedTicketId: id, selectedTicketName: name, selectedTicketPrice: price || 0, selectedPackageLink: link || '' });
   },
 
   selectPackage: function(e) {
@@ -255,21 +266,18 @@ Page({
             wx.hideLoading();
             this.setData({ isRegistered: true, showTicketModal: false, selectedTicketId: '' });
             wx.vibrateShort();
-            wx.showToast({ title: "You're in! 🎉", icon: 'success' });
             const pkgLink = this.data.selectedPackageLink;
             if (pkgLink) {
-              setTimeout(function() {
-                wx.showModal({
-                  title: 'Payment',
-                  content: 'Your payment link has been copied to clipboard.',
-                  showCancel: false
-                });
-                wx.setClipboardData({ data: pkgLink });
-              }, 1600);
+              wx.showToast({ title: "You're in! 🎉", icon: 'success' });
+              setTimeout(() => {
+                wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(pkgLink) });
+              }, 1200);
+            } else {
+              wx.showToast({ title: "You're in! 🎉", icon: 'success' });
+              setTimeout(() => {
+                wx.navigateTo({ url: '/pages/mytickets/mytickets' });
+              }, 1500);
             }
-            setTimeout(() => {
-              wx.navigateTo({ url: '/pages/mytickets/mytickets' });
-            }, 1500);
           },
           fail: err => {
             wx.hideLoading();

@@ -21,10 +21,21 @@ Page({
     selectedDateNum: '',
     selectedDateMonth: '',
     eventDates: [],
-    myRegistrationIds: []
+    myRegistrationIds: [],
+    cardImgHeight: 600
   },
 
   onLoad: function() {
+    // Calculate card image height so the full card fits on screen.
+    // Header ~130px + WeChat bars ~56px + card extras (venue+info+buttons+padding) ~200px
+    var info = wx.getWindowInfo();
+    var availPx = info.windowHeight - 56 - 130 - 200;
+    var maxPx = Math.max(availPx, 220); // never smaller than 220px
+    // Convert px → rpx (750rpx = screen width)
+    var maxRpx = Math.round(maxPx * 750 / info.windowWidth);
+    // Cap at 4:5 ratio (937rpx at 750rpx width) so large screens keep portrait look
+    this.setData({ cardImgHeight: Math.min(maxRpx, 937) });
+
     var today = new Date();
     var monthShort = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     this.setData({
@@ -389,28 +400,12 @@ Page({
     wx.navigateTo({ url: '/pages/me/me' });
   },
 
-  onCardImageLoad: function(e) {
-    var id = e.currentTarget.dataset.id;
-    var w = e.detail.width;
-    var h = e.detail.height;
-    if (!id || !w || !h) return;
-    // 750rpx = 100% screen width; cap at 900rpx for very tall images
-    var displayH = Math.min(Math.round(750 * h / w), 900);
-    var filteredEvents = this.data.filteredEvents;
-    for (var i = 0; i < filteredEvents.length; i++) {
-      if (filteredEvents[i]._id === id) {
-        this.setData({ ['filteredEvents[' + i + '].cardImgHeight']: displayH });
-        break;
-      }
-    }
-    var events = this.data.events;
-    for (var j = 0; j < events.length; j++) {
-      if (events[j]._id === id) {
-        this.setData({ ['events[' + j + '].cardImgHeight']: displayH });
-        break;
-      }
-    }
-  },
+stopPropagation: function() {},
 
-  stopPropagation: function() {}
+  onShareAppMessage: function() {
+    return {
+      title: 'Check out upcoming events on The List',
+      path: '/pages/feed/feed'
+    };
+  }
 });

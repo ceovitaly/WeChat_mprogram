@@ -1,15 +1,15 @@
 <view class="container">
 
-<view class="hero-section">
+<view class="hero-section" style="height:{{heroHeight}}rpx">
   <block wx:if="{{event.promoImages && event.promoImages.length > 1}}">
-    <swiper class="hero-swiper" indicator-dots="{{true}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#ffffff" circular="{{true}}">
+    <swiper class="hero-swiper" style="height:{{heroHeight}}rpx" indicator-dots="{{true}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#ffffff" circular="{{true}}">
       <swiper-item wx:for="{{event.promoImages}}" wx:for-item="img" wx:key="*this">
-        <image src="{{img}}" class="hero-image" mode="aspectFill" catchtap="previewHeroImage" data-url="{{img}}" />
+        <image src="{{img}}" class="hero-image" style="height:{{heroHeight}}rpx" mode="aspectFill" catchtap="previewHeroImage" data-url="{{img}}" />
       </swiper-item>
     </swiper>
   </block>
   <block wx:elif="{{event.promoImage}}">
-    <image src="{{event.promoImage}}" class="hero-image" mode="aspectFill" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
+    <image src="{{event.promoImage}}" class="hero-image" style="height:{{heroHeight}}rpx" mode="aspectFill" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
   </block>
   <view wx:else class="image-placeholder">
     <text class="placeholder-text">No Image</text>
@@ -124,6 +124,7 @@
       data-id="{{item.id}}"
       data-name="{{item.name}}"
       data-price="{{item.price}}"
+      data-link="{{item.paymentLink}}"
     >
       <view class="ticket-check {{selectedTicketId === item.id ? 'ticket-check--on' : ''}}">
         <text wx:if="{{selectedTicketId === item.id}}" class="check-mark">✓</text>
@@ -166,7 +167,7 @@
       style="width:100%;margin:0;box-sizing:border-box;"
       bindtap="handleJoin"
     >
-      Register
+      Join
     </button>
 
     <view class="modal-cancel" bindtap="closeTicketModal">
@@ -181,7 +182,7 @@
     <view class="modal-handle"></view>
     <text class="modal-title">Not registered</text>
     <text class="prompt-desc">To get on the list, you need to register in the app first.</text>
-    <button class="register-btn" style="width:100%;margin:0;box-sizing:border-box;" bindtap="goRegister">Register</button>
+    <button class="register-btn" style="width:100%;margin:0;box-sizing:border-box;" bindtap="goRegister">Join</button>
     <view class="modal-cancel" bindtap="closeRegisterPrompt">
       <text>Cancel</text>
     </view>
