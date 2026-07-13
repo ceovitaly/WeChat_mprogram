@@ -537,13 +537,16 @@ page {
 }
 
 .calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 8rpx;
   margin-bottom: 32rpx;
 }
 
+/* 7 equal columns per row: 7 * flex-basis + 6 * gap = 100% */
 .calendar-weekday {
+  flex: 0 0 calc((100% - 48rpx) / 7);
+  box-sizing: border-box;
   text-align: center;
   font-size: 22rpx;
   font-weight: 600;
@@ -552,6 +555,8 @@ page {
 }
 
 .calendar-day {
+  flex: 0 0 calc((100% - 48rpx) / 7);
+  box-sizing: border-box;
   aspect-ratio: 1;
   display: flex;
   flex-direction: column;
