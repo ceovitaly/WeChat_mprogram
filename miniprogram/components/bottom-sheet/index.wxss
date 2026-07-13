@@ -20,7 +20,10 @@
 .bottom-sheet-shell {
   width: 100%;
   box-sizing: border-box;
-  animation: slideUp 0.25s ease-out;
+  /* Spring/overshoot: the sheet slides past translateY(0) slightly then
+     settles back, instead of a flat ease-out. Mask fade stays a plain
+     ease-out fade (unchanged) — only the sheet's slide gets the spring feel. */
+  animation: slideUp 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .bottom-sheet-shell--center {
