@@ -18,6 +18,48 @@ page {
   justify-content: center;
 }
 
+/* Signed-out state (mirrors the empty-state + sign-in CTA conventions
+   from mytickets/feed) */
+.signed-out-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 40rpx calc(120rpx + env(safe-area-inset-bottom));
+  gap: 16rpx;
+}
+
+.empty-icon { font-size: 80rpx; }
+
+.empty-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.empty-sub {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.signin-btn {
+  margin-top: 8rpx;
+  background: var(--blue);
+  border-radius: 14rpx;
+  padding: 16rpx 40rpx;
+}
+
+.signin-btn:active { opacity: 0.8; }
+
+.signin-btn-text {
+  color: #FFFFFF;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
 /* Header */
 .header {
   background: var(--bg-elevated);

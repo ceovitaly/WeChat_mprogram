@@ -1,9 +1,11 @@
 const app = getApp();
+const auth = require('../../utils/auth.js');
 
 Page({
   data: {
     userInfo: null,
     loading: true,
+    isAnonymous: false,
     avatarLetter: '?',
     showNameEdit: false,
     editingName: ''
@@ -21,26 +23,20 @@ Page({
   },
 
   _loadProfile: function() {
-    const openid = app.globalData.openid;
-    if (!openid) {
-      setTimeout(() => this._loadProfile(), 300);
-      return;
-    }
-    const db = this.cloud.database();
-    db.collection('guests').where({ _openid: openid }).get({
-      success: res => {
-        if (res.data.length > 0) {
-          const u = res.data[0];
-          const avatarLetter = (u.nickName || u.name || '?').charAt(0).toUpperCase();
-          this.setData({ userInfo: u, avatarLetter, loading: false });
-        } else {
-          wx.reLaunch({ url: '/pages/register/register' });
-        }
-      },
-      fail: () => {
-        this.setData({ loading: false });
+    // Central auth state instead of polling for openid: anonymous users
+    // get an in-page signed-out state (no forced redirect to register).
+    auth.getAuth((profile) => {
+      if (!profile) {
+        this.setData({ isAnonymous: true, userInfo: null, loading: false });
+        return;
       }
+      const avatarLetter = (profile.nickName || profile.name || '?').charAt(0).toUpperCase();
+      this.setData({ isAnonymous: false, userInfo: profile, avatarLetter, loading: false });
     });
+  },
+
+  goSignIn: function() {
+    wx.navigateTo({ url: '/pages/register/register' });
   },
 
   openNameEdit() {
@@ -71,6 +67,9 @@ Page({
       wx.hideLoading();
       const userInfo = Object.assign({}, this.data.userInfo, { nickName: name });
       const avatarLetter = name.charAt(0).toUpperCase();
+      // Refresh the central auth cache so the feed header/badges pick up
+      // the new name without an app restart.
+      auth.completeSignIn(userInfo);
       this.setData({ showNameEdit: false, editingName: '', userInfo, avatarLetter });
       wx.vibrateShort({ type: 'medium' });
       wx.showToast({ title: 'Saved!', icon: 'success' });
@@ -88,11 +87,10 @@ Page({
       confirmColor: '#FF3B30',
       success: (res) => {
         if (res.confirm) {
-          try { wx.removeStorageSync('userInfo'); } catch(e) {}
-          try { wx.setStorageSync('loggedOut', '1'); } catch(e) {}
-          const app = getApp();
-          app.globalData.userInfo = null;
-          wx.reLaunch({ url: '/pages/register/register' });
+          auth.logout();
+          // Land on the feed (the app's anonymous-friendly home) rather
+          // than register, which would immediately re-prompt for sign-in.
+          wx.reLaunch({ url: '/pages/feed/feed' });
         }
       }
     });

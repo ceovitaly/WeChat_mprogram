@@ -6,6 +6,21 @@
     <view class="loading-spinner"></view>
   </view>
 
+  <!-- Signed out -->
+  <block wx:elif="{{isAnonymous}}">
+    <view class="header">
+      <page-header title="Profile" bind:back="goBack" />
+    </view>
+    <view class="signed-out-wrap">
+      <text class="empty-icon">👤</text>
+      <text class="empty-title">You're signed out</text>
+      <text class="empty-sub">Sign in to see your profile and manage your events</text>
+      <view class="signin-btn" bindtap="goSignIn">
+        <text class="signin-btn-text">Sign In</text>
+      </view>
+    </view>
+  </block>
+
   <!-- Profile -->
   <block wx:elif="{{userInfo}}">
     <view class="header">
