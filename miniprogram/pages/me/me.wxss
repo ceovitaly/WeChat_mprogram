@@ -1,5 +1,6 @@
 page {
   height: 100%;
+  overflow: hidden;
   background: #F2F2F7;
 }
 
@@ -7,7 +8,6 @@ page {
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 /* Loading */
@@ -310,7 +310,7 @@ page {
 /* ===== DARK MODE ===== */
 @media (prefers-color-scheme: dark) {
   page { background: #000000; }
-  .page { background: #000000; overflow: hidden; }
+  .page { background: #000000; }
 
   .header { background: #1C1C1E; border-bottom-color: #38383A; }
   .header-title { color: #FFFFFF; }

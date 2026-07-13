@@ -1,16 +1,15 @@
 /* ===== FEED PAGE ===== */
 
+page {
+  height: 100%;
+  overflow: hidden;
+  background: #F2F2F7;
+}
+
 .page-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background: #F2F2F7;
-  overflow: hidden;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  height: 100%;
 }
 
 /* ===== HEADER ===== */
@@ -673,7 +672,7 @@
 
 /* ===== DARK MODE ===== */
 @media (prefers-color-scheme: dark) {
-  .page-container { background: #000000; }
+  page { background: #000000; }
 
   .header { background: #1C1C1E; border-bottom-color: #38383A; }
   .nav-pill { background: #2C2C2E; border-color: #38383A; }
