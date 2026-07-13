@@ -98,6 +98,23 @@ page {
   line-height: 1.5;
 }
 
+/* Sign-in CTA in the signed-out empty state (same shape as feed's
+   .empty-clear-btn) */
+.signin-btn {
+  margin-top: 8rpx;
+  background: var(--blue);
+  border-radius: 14rpx;
+  padding: 16rpx 40rpx;
+}
+
+.signin-btn:active { opacity: 0.8; }
+
+.signin-btn-text {
+  color: #FFFFFF;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
 /* Tickets List */
 .tickets-list {
   display: flex;

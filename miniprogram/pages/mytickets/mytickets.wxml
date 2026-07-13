@@ -31,6 +31,16 @@
       <view class="loading-spinner"></view>
     </view>
 
+    <!-- Signed-out state -->
+    <view wx:elif="{{isAnonymous}}" class="empty-state">
+      <text class="empty-icon">📋</text>
+      <text class="empty-title">Sign in to see your list</text>
+      <text class="empty-sub">Your event registrations will appear here once you sign in</text>
+      <view class="signin-btn" bindtap="goSignIn">
+        <text class="signin-btn-text">Sign In</text>
+      </view>
+    </view>
+
     <!-- Active tickets -->
     <block wx:elif="{{activeTab === 'active'}}">
       <view wx:if="{{activeTickets.length === 0}}" class="empty-state">
