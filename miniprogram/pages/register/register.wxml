@@ -17,19 +17,73 @@
     </view>
   </view>
 
-  <!-- Login card -->
+  <!-- Onboarding card: phone sign-in, then profile — one in-page step at a time -->
   <view class="card">
-    <text class="card-title">Welcome</text>
 
-    <button
-      class="btn-phone-main"
-      open-type="getPhoneNumber"
-      bindgetphonenumber="onGetPhoneNumber"
-    >Sign In</button>
-
-    <view class="btn-skip" bind:tap="goBack">
-      <text class="btn-skip-text">Browse without signing in</text>
+    <view class="progress-dots">
+      <view class="progress-dot {{step === 'phone' ? 'progress-dot-active' : 'progress-dot-done'}}" />
+      <view class="progress-dot {{step === 'profile' ? 'progress-dot-active' : ''}}" />
     </view>
+
+    <block wx:if="{{step === 'phone'}}">
+      <view class="step-content">
+        <text class="card-title">Welcome</text>
+
+        <button
+          class="btn-phone-main"
+          open-type="getPhoneNumber"
+          bindgetphonenumber="onGetPhoneNumber"
+        >Sign In</button>
+
+        <view class="btn-skip" bind:tap="goBack">
+          <text class="btn-skip-text">Browse without signing in</text>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{step === 'profile'}}">
+      <view class="step-content">
+        <text class="card-title">Your Profile</text>
+        <text class="card-desc">Set your photo and name, then enter who invited you</text>
+
+        <!-- Nickname -->
+        <view class="field-wrap">
+          <input
+            class="field-input"
+            type="nickname"
+            value="{{nickName}}"
+            bindinput="onNickNameInput"
+            placeholder="Your name"
+            placeholder-class="field-placeholder"
+            maxlength="30"
+          />
+        </view>
+
+        <!-- Promo code -->
+        <view class="field-wrap {{promoValid ? 'field-valid' : ''}}">
+          <input
+            class="field-input"
+            placeholder="Invite by"
+            placeholder-class="field-placeholder"
+            value="{{promoInput}}"
+            bindinput="onPromoInput"
+            maxlength="20"
+            auto-capitalize="characters"
+          />
+        </view>
+
+        <text wx:if="{{promoError}}" class="error-text">{{promoError}}</text>
+        <text wx:if="{{promoValid}}" class="success-text">✓ Code accepted</text>
+
+        <button
+          class="btn-submit"
+          bindtap="onSubmit"
+          disabled="{{!promoInput || !nickName || submitting}}"
+        >
+          {{submitting ? 'Saving...' : promoValid ? 'Continue' : 'Verify & Join'}}
+        </button>
+      </view>
+    </block>
 
     <view class="footer">
       <text class="footer-text">THE LIST · 2026</text>

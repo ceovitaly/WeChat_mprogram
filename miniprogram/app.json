@@ -5,7 +5,6 @@
     "pages/mytickets/mytickets",
     "pages/me/me",
     "pages/register/register",
-    "pages/register/promo/promo",
     "pages/webview/webview"
   ],
   "window": {
