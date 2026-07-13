@@ -1,7 +1,7 @@
 page {
   height: 100%;
   overflow: hidden;
-  background: #F2F2F7;
+  background: var(--bg);
 }
 
 .page {
@@ -12,10 +12,10 @@ page {
 
 /* Fixed Header */
 .header {
-  background: #FFFFFF;
+  background: var(--bg-elevated);
   padding-top: calc(44rpx + env(safe-area-inset-top));
   padding-bottom: 0;
-  border-bottom: 0.5px solid #E5E5EA;
+  border-bottom: 0.5px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -44,6 +44,8 @@ page {
 
 .tab:active { opacity: 0.7; }
 
+/* Inverted high-contrast pill (black-on-white / white-on-black) — a
+   one-off design distinct from the standard token pairs, left un-tokenized */
 .tab-active {
   background: #1C1C1E;
 }
@@ -51,7 +53,7 @@ page {
 .tab-text {
   font-size: 28rpx;
   font-weight: 600;
-  color: #8E8E93;
+  color: var(--text-secondary);
 }
 
 .tab-active .tab-text {
@@ -86,12 +88,12 @@ page {
 .empty-title {
   font-size: 36rpx;
   font-weight: 700;
-  color: #1C1C1E;
+  color: var(--text-primary);
 }
 
 .empty-sub {
   font-size: 28rpx;
-  color: #8E8E93;
+  color: var(--text-secondary);
   text-align: center;
   line-height: 1.5;
 }
@@ -105,7 +107,7 @@ page {
 }
 
 .ticket-card {
-  background: #FFFFFF;
+  background: var(--bg-elevated);
   border-radius: 24rpx;
   padding: 32rpx;
   display: flex;
@@ -123,12 +125,12 @@ page {
 .ticket-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #1C1C1E;
+  color: var(--text-primary);
   display: block;
   margin-bottom: 12rpx;
 }
 
-.ticket-title-past { color: #8E8E93; }
+.ticket-title-past { color: var(--text-secondary); }
 
 .ticket-meta {
   display: flex;
@@ -144,11 +146,11 @@ page {
   flex-shrink: 0;
 }
 
-.dot-past { background: #8E8E93; }
+.dot-past { background: var(--text-secondary); }
 
 .ticket-date {
   font-size: 26rpx;
-  color: #8E8E93;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -158,7 +160,7 @@ page {
   color: #34C759;
 }
 
-.ticket-type-past { color: #8E8E93; }
+.ticket-type-past { color: var(--text-secondary); }
 
 /* Status Badge */
 .status-badge {
@@ -181,12 +183,12 @@ page {
 
 .badge-confirmed {
   background: rgba(0, 0, 0, 0.06);
-  color: #8E8E93;
+  color: var(--text-secondary);
 }
 
 .badge-past {
   background: rgba(0, 0, 0, 0.06);
-  color: #8E8E93;
+  color: var(--text-secondary);
 }
 
 .list-bottom-pad {
@@ -217,23 +219,22 @@ page {
 }
 
 /* ===== DARK MODE ===== */
+/* Most colors flip automatically via the tokens above. Only genuinely
+   page-local shades (out of the token palette, or diverging from the
+   token's dark value) are overridden below. */
 @media (prefers-color-scheme: dark) {
-  page { background: #000000; }
-  .page { background: #000000; }
-
-  .header { background: #1C1C1E; border-bottom-color: #38383A; }
+  .page { background: var(--bg); }
 
   .tab { background: transparent; }
   .tab-active { background: #FFFFFF; }
+  /* tab-text uses a dimmer gray than --text-secondary specifically in
+     dark mode here, rather than the usual theme-invariant value */
   .tab-text { color: #636366; }
   .tab-active .tab-text { color: #1C1C1E; }
 
-  .ticket-card { background: #1C1C1E; }
-  .ticket-title { color: #FFFFFF; }
-  .ticket-date { color: #8E8E93; }
   .badge-confirmed { background: rgba(255,255,255,0.08); }
   .badge-past { background: rgba(255,255,255,0.06); }
 
-  .empty-title { color: #FFFFFF; }
   .ticket-remove-btn { background: rgba(255, 69, 58, 0.15); }
 }
+</content>

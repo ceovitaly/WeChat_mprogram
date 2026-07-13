@@ -115,10 +115,11 @@ page {
 }
 
 /* ─── Главная кнопка ─── */
+/* Primary onboarding CTA — brand emphasis, promoted from --blue to --accent */
 .btn-phone-main {
   width: 100% !important;
   height: 96rpx;
-  background: #007AFF;
+  background: var(--accent);
   border-radius: 28rpx;
   color: #FFFFFF;
   font-size: 32rpx;

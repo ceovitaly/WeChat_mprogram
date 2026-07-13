@@ -19,7 +19,7 @@
 
 .back-icon {
   font-size: 56rpx;
-  color: #1C1C1E;
+  color: var(--text-primary);
   line-height: 1;
   font-weight: 400;
 }
@@ -28,7 +28,7 @@
   flex: 1;
   font-size: 40rpx;
   font-weight: 700;
-  color: #1C1C1E;
+  color: var(--text-primary);
   text-align: center;
 }
 
@@ -36,8 +36,4 @@
   width: 64rpx;
   flex-shrink: 0;
 }
-
-@media (prefers-color-scheme: dark) {
-  .header-title { color: #FFFFFF; }
-  .back-icon { color: #FFFFFF; }
-}
+</content>

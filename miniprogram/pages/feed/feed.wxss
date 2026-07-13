@@ -3,7 +3,7 @@
 page {
   height: 100%;
   overflow: hidden;
-  background: #F2F2F7;
+  background: var(--bg);
 }
 
 .page-container {
@@ -14,10 +14,10 @@ page {
 
 /* ===== HEADER ===== */
 .header {
-  background: #ffffff;
+  background: var(--bg-elevated);
   padding-top: calc(44rpx + env(safe-area-inset-top));
   padding-bottom: 20rpx;
-  border-bottom: 1rpx solid #E5E5EA;
+  border-bottom: 1rpx solid var(--border);
   flex-shrink: 0;
   z-index: 100;
 }
@@ -38,14 +38,14 @@ page {
   flex-direction: row;
   align-items: center;
   gap: 12rpx;
-  background: #F2F2F7;
+  background: var(--bg-inset);
   border-radius: 48rpx;
   padding: 10rpx 24rpx 10rpx 10rpx;
-  border: 1rpx solid #E5E5EA;
+  border: 1rpx solid var(--border);
 }
 
 .nav-pill:active {
-  background: #E5E5EA;
+  background: var(--border);
   transform: scale(0.97);
 }
 
@@ -53,14 +53,14 @@ page {
   width: 56rpx;
   height: 56rpx;
   border-radius: 50%;
-  background: #E5E5EA;
+  background: var(--border);
 }
 
 .pill-avatar-placeholder {
   width: 56rpx;
   height: 56rpx;
   border-radius: 50%;
-  background: #007AFF;
+  background: var(--blue);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,7 +76,7 @@ page {
   width: 56rpx;
   height: 56rpx;
   border-radius: 50%;
-  background: #E5E5EA;
+  background: var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,7 +90,7 @@ page {
 .pill-label {
   font-size: 28rpx;
   font-weight: 600;
-  color: #1C1C1E;
+  color: var(--text-primary);
 }
 
 /* Search + Calendar Row */
@@ -107,8 +107,8 @@ page {
   height: 96rpx;
   flex-shrink: 0;
   border-radius: 20rpx;
-  background: #F2F2F7;
-  border: 1rpx solid #E5E5EA;
+  background: var(--bg-inset);
+  border: 1rpx solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -117,13 +117,14 @@ page {
 }
 
 .calendar-btn:active {
-  background: #E5E5EA;
+  background: var(--border);
   transform: scale(0.95);
 }
 
+/* Active date filter — brand emphasis, not a system action */
 .calendar-btn-active {
-  background: #007AFF;
-  border-color: #007AFF;
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .calendar-btn-active .calendar-day-num,
@@ -134,14 +135,14 @@ page {
 .calendar-day-num {
   font-size: 32rpx;
   font-weight: 700;
-  color: #1C1C1E;
+  color: var(--text-primary);
   line-height: 1;
 }
 
 .calendar-label {
   font-size: 20rpx;
   font-weight: 500;
-  color: #8E8E93;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 1rpx;
 }
@@ -150,9 +151,9 @@ page {
 .search-bar {
   flex: 1;
   height: 96rpx;
-  background: #F2F2F7;
+  background: var(--bg-inset);
   border-radius: 20rpx;
-  border: 1rpx solid #E5E5EA;
+  border: 1rpx solid var(--border);
   display: flex;
   align-items: center;
   padding: 0 24rpx;
@@ -168,7 +169,7 @@ page {
 .search-input {
   flex: 1;
   font-size: 30rpx;
-  color: #1C1C1E;
+  color: var(--text-primary);
   background: transparent;
 }
 
@@ -193,7 +194,7 @@ page {
   font-weight: 700;
 }
 
-/* Active Filter Pill */
+/* Active Filter Pill — same "date filter active" state as .calendar-btn-active */
 .filter-row {
   padding: 16rpx 32rpx 0;
 }
@@ -202,21 +203,21 @@ page {
   display: inline-flex;
   align-items: center;
   gap: 12rpx;
-  background: #E8F0FE;
-  border: 1rpx solid #007AFF;
+  background: rgba(255, 107, 53, 0.12);
+  border: 1rpx solid var(--accent);
   border-radius: 32rpx;
   padding: 8rpx 20rpx;
 }
 
 .filter-pill-txt {
   font-size: 26rpx;
-  color: #007AFF;
+  color: var(--accent);
   font-weight: 500;
 }
 
 .filter-pill-remove {
   font-size: 22rpx;
-  color: #007AFF;
+  color: var(--accent);
   font-weight: 700;
 }
 
@@ -239,11 +240,11 @@ page {
 
 /* ===== EVENT CARD ===== */
 .event-card {
-  background: #ffffff;
+  background: var(--bg-elevated);
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.08);
-  border: 1rpx solid #F2F2F7;
+  border: 1rpx solid var(--bg-inset);
 }
 
 .event-card:active {
@@ -257,15 +258,15 @@ page {
   align-items: center;
   gap: 12rpx;
   padding: 20rpx 28rpx;
-  background: #F8F9FA;
-  border-bottom: 1rpx solid #F2F2F7;
+  background: var(--bg-inset);
+  border-bottom: 1rpx solid var(--bg-inset);
 }
 
 .venue-dot {
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background: #FF6B35;
+  background: var(--accent);
   flex-shrink: 0;
 }
 
@@ -321,18 +322,18 @@ page {
 .card-datetime {
   font-size: 28rpx;
   font-weight: 500;
-  color: #8E8E93;
+  color: var(--text-secondary);
   letter-spacing: 0.3rpx;
 }
 
 .card-title {
   font-size: 44rpx;
   font-weight: 700;
-  color: #1C1C1E;
+  color: var(--text-primary);
   line-height: 1.3;
 }
 
-/* Get Ticket Button */
+/* Get Ticket Button — primary brand CTA */
 .card-btn-wrap {
   padding: 0 32rpx 32rpx;
   display: flex;
@@ -344,7 +345,7 @@ page {
   flex: 1;
   display: block;
   height: 88rpx;
-  background: #007AFF;
+  background: var(--accent);
   color: #ffffff;
   border: none;
   border-radius: 18rpx;
@@ -368,8 +369,8 @@ page {
   height: 88rpx;
   line-height: 88rpx;
   padding: 0 32rpx;
-  background: #F2F2F7;
-  color: #1c1c1e;
+  background: var(--bg-inset);
+  color: var(--text-primary);
   font-size: 28rpx;
   font-weight: 600;
   border-radius: 18rpx;
@@ -384,7 +385,7 @@ page {
 
 /* ===== SKELETON LOADING ===== */
 .skeleton-card {
-  background: #ffffff;
+  background: var(--bg-elevated);
   border-radius: 24rpx;
   overflow: hidden;
 }
@@ -392,7 +393,7 @@ page {
 .skeleton-img {
   width: 100%;
   height: 640rpx;
-  background: linear-gradient(90deg, #F2F2F7 25%, #E5E5EA 50%, #F2F2F7 75%);
+  background: linear-gradient(90deg, var(--bg-inset) 25%, var(--border) 50%, var(--bg-inset) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
@@ -407,7 +408,7 @@ page {
 .skeleton-line {
   height: 28rpx;
   border-radius: 8rpx;
-  background: linear-gradient(90deg, #F2F2F7 25%, #E5E5EA 50%, #F2F2F7 75%);
+  background: linear-gradient(90deg, var(--bg-inset) 25%, var(--border) 50%, var(--bg-inset) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
@@ -428,7 +429,7 @@ page {
 .skeleton-btn {
   height: 88rpx;
   border-radius: 18rpx;
-  background: linear-gradient(90deg, #F2F2F7 25%, #E5E5EA 50%, #F2F2F7 75%);
+  background: linear-gradient(90deg, var(--bg-inset) 25%, var(--border) 50%, var(--bg-inset) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   margin-top: 4rpx;
@@ -455,19 +456,19 @@ page {
 .empty-title {
   font-size: 36rpx;
   font-weight: 700;
-  color: #1C1C1E;
+  color: var(--text-primary);
 }
 
 .empty-sub {
   font-size: 28rpx;
-  color: #8E8E93;
+  color: var(--text-secondary);
   text-align: center;
   line-height: 1.5;
 }
 
 .empty-clear-btn {
   margin-top: 8rpx;
-  background: #007AFF;
+  background: var(--blue);
   border-radius: 14rpx;
   padding: 16rpx 40rpx;
 }
@@ -483,7 +484,7 @@ page {
    this stays page-specific card styling for the calendar dialog's contents. */
 .calendar-modal {
   width: 640rpx;
-  background: #ffffff;
+  background: var(--bg-elevated);
   border-radius: 32rpx;
   padding: 40rpx 32rpx 32rpx;
   box-shadow: 0 24rpx 64rpx rgba(0, 0, 0, 0.18);
@@ -499,26 +500,26 @@ page {
 .calendar-month-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #1C1C1E;
+  color: var(--text-primary);
 }
 
 .cal-nav-btn {
   width: 64rpx;
   height: 64rpx;
   border-radius: 50%;
-  background: #F2F2F7;
+  background: var(--bg-inset);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .cal-nav-btn:active {
-  background: #E5E5EA;
+  background: var(--border);
 }
 
 .cal-nav-txt {
   font-size: 40rpx;
-  color: #007AFF;
+  color: var(--blue);
   font-weight: 700;
   line-height: 1;
 }
@@ -537,7 +538,7 @@ page {
   text-align: center;
   font-size: 22rpx;
   font-weight: 600;
-  color: #8E8E93;
+  color: var(--text-secondary);
   padding: 12rpx 0;
 }
 
@@ -554,22 +555,23 @@ page {
 }
 
 .calendar-day:active {
-  background: #E5E5EA;
+  background: var(--border);
   transform: scale(0.9);
 }
 
 .cal-day-num {
   font-size: 26rpx;
   font-weight: 500;
-  color: #1C1C1E;
+  color: var(--text-primary);
 }
 
 .cal-empty {
   visibility: hidden;
 }
 
+/* "Today" marker — a system fact, not a user selection; stays on --blue */
 .cal-today {
-  background: #007AFF;
+  background: var(--blue);
 }
 
 .cal-today .cal-day-num {
@@ -577,13 +579,14 @@ page {
   font-weight: 700;
 }
 
+/* User-picked date — same "active date" state as .calendar-btn-active/.filter-pill */
 .cal-selected:not(.cal-today) {
-  background: #E8F0FE;
-  border: 1rpx solid #007AFF;
+  background: rgba(255, 107, 53, 0.12);
+  border: 1rpx solid var(--accent);
 }
 
 .cal-selected:not(.cal-today) .cal-day-num {
-  color: #007AFF;
+  color: var(--accent);
   font-weight: 700;
 }
 
@@ -591,7 +594,7 @@ page {
   width: 8rpx;
   height: 8rpx;
   border-radius: 50%;
-  background: #007AFF;
+  background: var(--blue);
 }
 
 .cal-today .event-dot {
@@ -618,17 +621,17 @@ page {
 }
 
 .cal-action-clear {
-  background: #F2F2F7;
+  background: var(--bg-inset);
 }
 
 .cal-action-done {
-  background: #007AFF;
+  background: var(--blue);
 }
 
 .cal-action-txt {
   font-size: 30rpx;
   font-weight: 600;
-  color: #8E8E93;
+  color: var(--text-secondary);
 }
 
 .cal-action-done-txt {
@@ -647,40 +650,26 @@ page {
 .registered-badge-txt {
   font-size: 30rpx;
   font-weight: 600;
-  color: #1C1C1E;
+  color: var(--text-primary);
   letter-spacing: 0.3rpx;
 }
 
 /* ===== DARK MODE ===== */
+/* Most colors flip automatically via the tokens above. Only genuinely
+   page-local shades (out of the token palette, or diverging from the
+   token's dark value) are overridden below. */
 @media (prefers-color-scheme: dark) {
-  page { background: #000000; }
-
-  .header { background: #1C1C1E; border-bottom-color: #38383A; }
-  .nav-pill { background: #2C2C2E; border-color: #38383A; }
-  .pill-label { color: #FFFFFF; }
-  .pill-avatar-placeholder { background: #0A84FF; }
-
-  .search-bar { background: #2C2C2E; border-color: #38383A; }
-  .search-input { color: #FFFFFF; }
   .search-placeholder { color: rgba(255,255,255,0.25); }
   .search-clear { background: #48484A; }
 
-  .calendar-btn { background: #2C2C2E; border-color: #38383A; }
-  .calendar-day-num { color: #FFFFFF; }
-  .calendar-btn-active { background: #0A84FF; border-color: #0A84FF; }
+  /* Accent tint background needs its own dark-appropriate opacity */
+  .filter-pill { background: rgba(255, 107, 53, 0.18); }
 
-  .filter-pill { background: rgba(10,132,255,0.15); border-color: #0A84FF; }
-  .filter-pill-txt { color: #0A84FF; }
-  .filter-pill-remove { color: #0A84FF; }
+  .event-card { box-shadow: none; }
+  /* card-venue-bar's border reads as a real divider in dark mode (--border),
+     not the barely-there bg-inset blend it uses in light mode */
+  .card-venue-bar { border-bottom-color: var(--border); }
 
-  .event-card { background: #1C1C1E; border-color: #2C2C2E; box-shadow: none; }
-  .card-venue-bar { background: #2C2C2E; border-bottom-color: #38383A; }
-  .card-venue-bar-name { color: #EBEBF5; }
-  .card-title { color: #FFFFFF; }
-  .get-ticket-btn { background: #0A84FF; }
-  .more-btn { background: #2C2C2E; color: #FFFFFF; }
-
-  .skeleton-card { background: #1C1C1E; }
   .skeleton-img,
   .skeleton-line,
   .skeleton-btn {
@@ -688,17 +677,7 @@ page {
     background-size: 200% 100%;
   }
 
-  .empty-title { color: #FFFFFF; }
-
-  .calendar-modal { background: #1C1C1E; box-shadow: none; }
-  .calendar-month-title { color: #FFFFFF; }
-  .cal-nav-btn { background: #2C2C2E; }
-  .cal-day-num { color: #FFFFFF; }
-  .cal-today { background: #0A84FF; }
-  .cal-selected:not(.cal-today) { background: rgba(10,132,255,0.15); border-color: #0A84FF; }
-  .cal-selected:not(.cal-today) .cal-day-num { color: #0A84FF; }
-  .cal-action-clear { background: #2C2C2E; }
-  .cal-action-done { background: #0A84FF; }
-  .cal-action-txt { color: #8E8E93; }
-  .registered-badge-txt { color: #FFFFFF; }
+  .calendar-modal { box-shadow: none; }
+  .cal-selected:not(.cal-today) { background: rgba(255, 107, 53, 0.18); }
 }
+</content>

@@ -139,11 +139,13 @@ page {
 }
 
 /* ─── Submit button ─── */
+/* Registration submit button — the explicit "primary CTA" example from the
+   token task; promoted from --blue to --accent */
 .btn-submit {
   width: 100%;
   height: 96rpx;
   line-height: 96rpx;
-  background: #007AFF;
+  background: var(--accent);
   color: #FFFFFF;
   font-size: 32rpx;
   font-weight: 600;

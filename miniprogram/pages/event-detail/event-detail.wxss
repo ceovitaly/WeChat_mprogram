@@ -1,5 +1,5 @@
 page {
-  background: #f8f9fa;
+  background: var(--bg);
   overflow: hidden;
   height: 100%;
 }
@@ -15,6 +15,11 @@ page {
 }
 
 /* Hero */
+/* Image-placeholder gray — a deliberately distinct shade from --bg-inset
+   (darker than F2F2F7/f8f9fa) used only while the hero image loads.
+   Its dark-mode value happens to match --bg-inset's dark value, but the
+   light value doesn't, so this is intentionally left un-tokenized rather
+   than forced onto --bg-inset (which would visibly lighten it). */
 .hero-section {
   width: 100%;
   height: 560rpx;
@@ -44,7 +49,7 @@ page {
 
 /* Main card */
 .main-card {
-  background: #ffffff;
+  background: var(--bg-elevated);
   border-radius: 40rpx 40rpx 0 0;
   margin-top: -40rpx;
   padding: 48rpx 40rpx 240rpx;
@@ -53,7 +58,7 @@ page {
 
 /* Block 1: info (date + title) */
 .info-block {
-  background: #f8f9fa;
+  background: var(--bg-inset);
   border-radius: 28rpx;
   padding: 32rpx 36rpx;
   margin-bottom: 20rpx;
@@ -65,20 +70,20 @@ page {
 .info-datetime {
   font-size: 26rpx;
   font-weight: 500;
-  color: #8e8e93;
+  color: var(--text-secondary);
   letter-spacing: 0.3rpx;
 }
 
 .info-title {
   font-size: 48rpx;
   font-weight: 800;
-  color: #1c1c1e;
+  color: var(--text-primary);
   line-height: 1.2;
 }
 
 /* Block 2: venue + map */
 .venue-block {
-  background: #f8f9fa;
+  background: var(--bg-inset);
   border-radius: 28rpx;
   padding: 28rpx 32rpx;
   margin-bottom: 36rpx;
@@ -107,7 +112,7 @@ page {
   width: 44rpx;
   height: 44rpx;
   border-radius: 50%;
-  border: 3rpx solid #FF6B35;
+  border: 3rpx solid var(--accent);
   box-sizing: border-box;
 }
 
@@ -115,14 +120,14 @@ page {
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background: #FF6B35;
+  background: var(--accent);
 }
 
 .venue-block-name {
   flex: 1;
   font-size: 30rpx;
   font-weight: 600;
-  color: #1c1c1e;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -131,11 +136,11 @@ page {
 .venue-v-line {
   width: 2rpx;
   height: 52rpx;
-  background: #E5E5EA;
+  background: var(--border);
   flex-shrink: 0;
 }
 
-/* CSS map pin icon */
+/* CSS map pin icon — neutral system/map action, stays on --blue */
 .map-icon-btn {
   width: 64rpx;
   height: 64rpx;
@@ -151,7 +156,7 @@ page {
   width: 32rpx;
   height: 32rpx;
   border-radius: 50% 50% 50% 0;
-  background: #007AFF;
+  background: var(--blue);
   transform: rotate(-45deg);
   position: relative;
 }
@@ -190,7 +195,7 @@ page {
 
 /* Description block */
 .section--desc {
-  background: #f8f9fa;
+  background: var(--bg-inset);
   border-radius: 28rpx;
   padding: 32rpx 36rpx;
   margin-bottom: 28rpx;
@@ -218,18 +223,19 @@ page {
   padding: 20rpx 32rpx;
   padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
   background: rgba(255,255,255,0.97);
-  border-top: 1rpx solid #f2f2f7;
+  border-top: 1rpx solid var(--bg-inset);
 }
 .action-row {
   display: flex;
   gap: 16rpx;
   align-items: center;
 }
+/* Primary brand CTA — the core "get on the list" action */
 .btn-register {
   flex: 1;
   height: 100rpx;
   line-height: 100rpx;
-  background: #007AFF;
+  background: var(--accent);
   color: #ffffff;
   font-size: 32rpx;
   font-weight: 700;
@@ -243,8 +249,8 @@ page {
   width: 100rpx;
   height: 100rpx;
   line-height: 100rpx;
-  background: #F2F2F7;
-  color: #1c1c1e;
+  background: var(--bg-inset);
+  color: var(--text-primary);
   font-size: 26rpx;
   font-weight: 600;
   border-radius: 24rpx;
@@ -263,14 +269,15 @@ button::after { border: none; }
 }
 .no-profile-text {
   font-size: 26rpx;
-  color: #8e8e93;
+  color: var(--text-secondary);
   text-align: center;
 }
+/* Same primary CTA family as .btn-register, for users without a profile yet */
 .btn-join-app {
   width: 100%;
   height: 100rpx;
   line-height: 100rpx;
-  background: #007AFF;
+  background: var(--accent);
   color: #ffffff;
   font-size: 32rpx;
   font-weight: 700;
@@ -307,7 +314,7 @@ button::after { border: none; }
    page-specific card styling for the ticket sheet's contents. */
 .ticket-modal {
   width: 100%;
-  background: #ffffff;
+  background: var(--bg-elevated);
   border-radius: 32rpx 32rpx 0 0;
   padding: 16rpx 32rpx;
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
@@ -316,14 +323,14 @@ button::after { border: none; }
 .modal-handle {
   width: 80rpx;
   height: 8rpx;
-  background: #e5e5ea;
+  background: var(--border);
   border-radius: 4rpx;
   margin: 0 auto 32rpx;
 }
 .modal-title {
   font-size: 36rpx;
   font-weight: 700;
-  color: #1c1c1e;
+  color: var(--text-primary);
   display: block;
   text-align: center;
   margin-bottom: 32rpx;
@@ -332,7 +339,7 @@ button::after { border: none; }
   display: block;
   font-size: 22rpx;
   font-weight: 600;
-  color: #8e8e93;
+  color: var(--text-secondary);
   letter-spacing: 2rpx;
   margin-bottom: 16rpx;
 }
@@ -340,16 +347,18 @@ button::after { border: none; }
   display: flex;
   align-items: center;
   gap: 20rpx;
-  background: #f8f9fa;
+  background: var(--bg-inset);
   border-radius: 24rpx;
   padding: 28rpx;
   margin-bottom: 16rpx;
   border: 2rpx solid transparent;
 }
 
+/* Ticket-type selection — kept on --blue (a system list-selection state),
+   distinct from the accent-branded CTAs above */
 .ticket-selected {
   background: #EEF5FF;
-  border-color: #007AFF;
+  border-color: var(--blue);
 }
 
 .ticket-check {
@@ -364,8 +373,8 @@ button::after { border: none; }
 }
 
 .ticket-check--on {
-  background: #007AFF;
-  border-color: #007AFF;
+  background: var(--blue);
+  border-color: var(--blue);
 }
 
 .check-mark {
@@ -384,12 +393,12 @@ button::after { border: none; }
 .ticket-name {
   font-size: 30rpx;
   font-weight: 600;
-  color: #1c1c1e;
+  color: var(--text-primary);
 }
 
 .ticket-desc {
   font-size: 24rpx;
-  color: #8e8e93;
+  color: var(--text-secondary);
 }
 
 .ticket-price-tag {
@@ -399,7 +408,7 @@ button::after { border: none; }
 }
 
 .free-tag { color: #34c759; }
-.paid-tag { color: #1c1c1e; }
+.paid-tag { color: var(--text-primary); }
 
 .no-tickets {
   padding: 40rpx;
@@ -408,14 +417,15 @@ button::after { border: none; }
 
 .no-tickets-text {
   font-size: 28rpx;
-  color: #8e8e93;
+  color: var(--text-secondary);
 }
 
+/* Primary brand CTA — commits the ticket selection ("ticket action button") */
 .register-btn {
   width: 100%;
   height: 100rpx;
   line-height: 100rpx;
-  background: #007AFF;
+  background: var(--accent);
   color: #ffffff;
   font-size: 32rpx;
   font-weight: 700;
@@ -431,12 +441,12 @@ button::after { border: none; }
   text-align: center;
   padding: 28rpx;
   font-size: 30rpx;
-  color: #8e8e93;
+  color: var(--text-secondary);
 }
 
 .prompt-desc {
   font-size: 28rpx;
-  color: #8E8E93;
+  color: var(--text-secondary);
   text-align: center;
   line-height: 1.6;
   padding: 0 8rpx 24rpx;
@@ -446,54 +456,41 @@ button::after { border: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f8f9fa;
+  background: var(--bg-inset);
   border-radius: 20rpx;
   padding: 28rpx 32rpx;
   margin-bottom: 16rpx;
-  border: 2rpx solid #e5e5ea;
+  border: 2rpx solid var(--border);
 }
 .package-name {
   font-size: 30rpx;
   font-weight: 600;
-  color: #1c1c1e;
+  color: var(--text-primary);
 }
 
 /* ===== DARK MODE ===== */
+/* Most colors flip automatically via the tokens above. Only genuinely
+   page-local shades (out of the token palette, or diverging from the
+   token's dark value) are overridden below. */
 @media (prefers-color-scheme: dark) {
-  page { background: #000000; }
   .hero-section { background: #2C2C2E; }
-  .main-card { background: #1C1C1E; }
 
-  .info-block { background: #2C2C2E; }
-  .info-title { color: #FFFFFF; }
-
-  .venue-block { background: #2C2C2E; }
-  .venue-block-name { color: #FFFFFF; }
-  .venue-v-line { background: #38383A; }
-
-  .section--desc { background: #2C2C2E; }
   .section-content { color: #EBEBF5; }
   .section-label { color: #636366; }
 
-  .promo-thumb { background: #2C2C2E; }
-  .package-item { background: #2C2C2E; border-color: #38383A; }
-  .package-name { color: #FFFFFF; }
+  .promo-thumb { background: var(--bg-inset); }
 
-  .action-bar { background: rgba(28,28,30,0.97); border-top-color: #38383A; }
-  .btn-register { background: #0A84FF; }
-  .btn-share { background: #2C2C2E; color: #FFFFFF; }
+  /* action-bar's translucent white needs its own dark value; its border
+     reads as a real divider in dark mode (--border), not the barely-there
+     bg-inset blend it uses in light mode */
+  .action-bar { background: rgba(28,28,30,0.97); border-top-color: var(--border); }
+
   .registered-icon { color: #30D158; }
   .registered-text { color: #30D158; }
 
-  .ticket-modal { background: #1C1C1E; }
   .modal-handle { background: #3A3A3C; }
-  .modal-title { color: #FFFFFF; }
-  .ticket-option { background: #2C2C2E; }
-  .ticket-selected { background: rgba(10,132,255,0.15); border-color: #0A84FF; }
+
+  .ticket-selected { background: rgba(10,132,255,0.15); }
   .ticket-check { border-color: #48484A; }
-  .ticket-name { color: #FFFFFF; }
-  .ticket-desc { color: #8E8E93; }
-  .modal-cancel { color: #8E8E93; }
-  .no-tickets-text { color: #8E8E93; }
-  .register-btn { background: #0A84FF; }
 }
+</content>

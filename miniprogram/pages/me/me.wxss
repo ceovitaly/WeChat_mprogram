@@ -1,7 +1,7 @@
 page {
   height: 100%;
   overflow: hidden;
-  background: #F2F2F7;
+  background: var(--bg);
 }
 
 .page {
@@ -20,12 +20,12 @@ page {
 
 /* Header */
 .header {
-  background: #FFFFFF;
+  background: var(--bg-elevated);
   padding-top: calc(44rpx + env(safe-area-inset-top));
   padding-bottom: 24rpx;
   padding-left: 32rpx;
   padding-right: 32rpx;
-  border-bottom: 0.5px solid #E5E5EA;
+  border-bottom: 0.5px solid var(--border);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -46,7 +46,7 @@ page {
 
 /* Profile card */
 .profile-card {
-  background: #FFFFFF;
+  background: var(--bg-elevated);
   border-radius: 24rpx;
   padding: 40rpx 32rpx;
   display: flex;
@@ -62,14 +62,14 @@ page {
   width: 128rpx;
   height: 128rpx;
   border-radius: 50%;
-  background: #E5E5EA;
+  background: var(--border);
 }
 
 .avatar-placeholder {
   width: 128rpx;
   height: 128rpx;
   border-radius: 50%;
-  background: #007AFF;
+  background: var(--blue);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -96,7 +96,7 @@ page {
 .nickname {
   font-size: 40rpx;
   font-weight: 700;
-  color: #1C1C1E;
+  color: var(--text-primary);
 }
 
 .user-sub-hint {
@@ -106,13 +106,13 @@ page {
 
 .user-phone {
   font-size: 26rpx;
-  color: #8E8E93;
+  color: var(--text-secondary);
   letter-spacing: 0.5rpx;
 }
 
 /* Info list */
 .info-list {
-  background: #FFFFFF;
+  background: var(--bg-elevated);
   border-radius: 24rpx;
   overflow: hidden;
 }
@@ -122,7 +122,7 @@ page {
   justify-content: space-between;
   align-items: center;
   padding: 32rpx;
-  border-bottom: 0.5px solid #F2F2F7;
+  border-bottom: 0.5px solid var(--bg-inset);
 }
 
 .info-row:last-child {
@@ -131,13 +131,13 @@ page {
 
 .info-label {
   font-size: 30rpx;
-  color: #8E8E93;
+  color: var(--text-secondary);
 }
 
 .info-value {
   font-size: 30rpx;
   font-weight: 600;
-  color: #1C1C1E;
+  color: var(--text-primary);
 }
 
 .safe-bottom {
@@ -148,8 +148,8 @@ page {
 .logout-bar {
   padding: 16rpx 24rpx;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  background: #FFFFFF;
-  border-top: 0.5px solid #E5E5EA;
+  background: var(--bg-elevated);
+  border-top: 0.5px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -181,7 +181,7 @@ page {
 
 .edit-pencil {
   font-size: 28rpx;
-  color: #007AFF;
+  color: var(--blue);
   font-weight: 400;
 }
 
@@ -189,7 +189,7 @@ page {
    page-specific card styling for the name-edit sheet's contents. */
 .name-sheet {
   width: 100%;
-  background: #FFFFFF;
+  background: var(--bg-elevated);
   border-radius: 24rpx 24rpx 0 0;
   padding: 12rpx 24rpx 32rpx;
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
@@ -201,7 +201,7 @@ page {
 .name-sheet-handle {
   width: 36rpx;
   height: 8rpx;
-  background: #E5E5EA;
+  background: var(--border);
   border-radius: 4rpx;
   align-self: center;
   margin-bottom: 8rpx;
@@ -210,18 +210,18 @@ page {
 .name-sheet-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #1C1C1E;
+  color: var(--text-primary);
   text-align: center;
   display: block;
 }
 
 .name-input {
   height: 96rpx;
-  background: #F2F2F7;
+  background: var(--bg-inset);
   border-radius: 16rpx;
   padding: 0 24rpx;
   font-size: 32rpx;
-  color: #1C1C1E;
+  color: var(--text-primary);
   box-sizing: border-box;
   width: 100%;
 }
@@ -230,9 +230,10 @@ page {
   color: #C7C7CC;
 }
 
+/* Settings-level utility action (not a funnel CTA) — stays on --blue */
 .name-save-btn {
   height: 96rpx;
-  background: #007AFF;
+  background: var(--blue);
   border-radius: 20rpx;
   display: flex;
   align-items: center;
@@ -256,36 +257,24 @@ page {
 
 .name-cancel-text {
   font-size: 30rpx;
-  color: #8E8E93;
+  color: var(--text-secondary);
 }
 
 /* ===== DARK MODE ===== */
+/* Most colors flip automatically via the tokens above. Only genuinely
+   page-local shades (out of the token palette, or diverging from the
+   token's dark value) are overridden below. */
 @media (prefers-color-scheme: dark) {
-  page { background: #000000; }
-  .page { background: #000000; }
+  .page { background: var(--bg); }
 
-  .header { background: #1C1C1E; border-bottom-color: #38383A; }
-
-  .profile-card { background: #1C1C1E; }
-  .nickname { color: #FFFFFF; }
-  .user-phone { color: #8E8E93; }
   .user-sub-hint { color: #636366; }
-  .edit-pencil { color: #0A84FF; }
-  .avatar-placeholder { background: #0A84FF; }
 
-  .info-list { background: #1C1C1E; }
-  .info-row { border-bottom-color: #2C2C2E; }
-  .info-label { color: #8E8E93; }
-  .info-value { color: #FFFFFF; }
-
-  .logout-bar { background: #1C1C1E; border-top-color: #38383A; }
   .logout-btn { background: #FF453A; }
 
-  .name-sheet { background: #1C1C1E; }
+  /* Handle bar reads slightly lighter than --border against the dark
+     sheet background — matches the equivalent handle in event-detail's
+     ticket-modal */
   .name-sheet-handle { background: #3A3A3C; }
-  .name-sheet-title { color: #FFFFFF; }
-  .name-input { background: #2C2C2E; color: #FFFFFF; }
   .name-input-ph { color: rgba(255,255,255,0.25); }
-  .name-save-btn { background: #0A84FF; }
-  .name-cancel-text { color: #8E8E93; }
 }
+</content>
