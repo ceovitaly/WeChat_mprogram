@@ -34,7 +34,14 @@ App({
           this.globalData.openidReadyCallbacks = []
         }).catch(err => {
           console.error('[App] login error:', err)
-          if (attemptsLeft > 0) setTimeout(() => tryLogin(attemptsLeft - 1), 1500)
+          if (attemptsLeft > 0) {
+            setTimeout(() => tryLogin(attemptsLeft - 1), 1500)
+          } else {
+            // Give up: flush waiters with null so getOpenid()-based flows
+            // (utils/auth.js getAuth) fail gracefully instead of hanging.
+            this.globalData.openidReadyCallbacks.forEach(cb => cb(null))
+            this.globalData.openidReadyCallbacks = []
+          }
         })
       }
       tryLogin(2)
