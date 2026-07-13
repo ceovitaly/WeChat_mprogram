@@ -55,7 +55,9 @@ Page({
   },
 
   goBack: function() {
-    wx.navigateBack();
+    wx.navigateBack({
+      fail: () => wx.reLaunch({ url: '/pages/feed/feed' }),
+    });
   },
 
   goToEvent: function(e) {

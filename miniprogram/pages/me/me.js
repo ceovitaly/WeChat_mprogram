@@ -99,6 +99,8 @@ Page({
   },
 
   goBack() {
-    wx.navigateBack();
+    wx.navigateBack({
+      fail: () => wx.reLaunch({ url: '/pages/feed/feed' }),
+    });
   }
 });
