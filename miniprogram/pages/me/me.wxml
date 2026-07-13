@@ -9,11 +9,7 @@
   <!-- Profile -->
   <block wx:elif="{{userInfo}}">
     <view class="header">
-      <view class="back-btn" bindtap="goBack">
-        <text class="back-icon">‹</text>
-      </view>
-      <text class="header-title">Profile</text>
-      <view class="header-placeholder"></view>
+      <page-header title="Profile" bind:back="goBack" />
     </view>
 
     <scroll-view class="scroll" scroll-y>

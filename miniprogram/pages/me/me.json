@@ -1,5 +1,7 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "page-header": "/components/page-header/index"
+  },
   "navigationBarTitleText": "",
   "navigationStyle": "custom",
   "disableScroll": true

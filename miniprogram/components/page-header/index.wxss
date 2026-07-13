@@ -1,0 +1,43 @@
+.page-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.back-btn {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.back-btn:active {
+  opacity: 0.5;
+}
+
+.back-icon {
+  font-size: 56rpx;
+  color: #1C1C1E;
+  line-height: 1;
+  font-weight: 400;
+}
+
+.header-title {
+  flex: 1;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #1C1C1E;
+  text-align: center;
+}
+
+.header-placeholder {
+  width: 64rpx;
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .header-title { color: #FFFFFF; }
+  .back-icon { color: #FFFFFF; }
+}

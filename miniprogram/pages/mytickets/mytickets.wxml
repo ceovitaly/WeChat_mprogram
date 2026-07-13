@@ -4,11 +4,7 @@
   <!-- Fixed Header -->
   <view class="header">
     <view class="header-top">
-      <view class="back-btn" bindtap="goBack">
-        <text class="back-icon">‹</text>
-      </view>
-      <text class="header-title">My List</text>
-      <view class="header-placeholder"></view>
+      <page-header title="My List" bind:back="goBack" />
     </view>
     <view class="tabs">
       <view

@@ -44,33 +44,6 @@ page {
   align-items: center;
 }
 
-.header-title {
-  flex: 1;
-  font-size: 48rpx;
-  font-weight: 800;
-  color: #1C1C1E;
-  text-align: center;
-}
-
-.back-btn {
-  width: 64rpx;
-  height: 64rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 8rpx;
-}
-
-.back-icon {
-  font-size: 56rpx;
-  color: #1C1C1E;
-  line-height: 1;
-}
-
-.header-placeholder {
-  width: 64rpx;
-}
-
 /* Scroll */
 .scroll {
   flex: 1;
@@ -313,8 +286,6 @@ page {
   .page { background: #000000; }
 
   .header { background: #1C1C1E; border-bottom-color: #38383A; }
-  .header-title { color: #FFFFFF; }
-  .back-icon { color: #FFFFFF; }
 
   .profile-card { background: #1C1C1E; }
   .nickname { color: #FFFFFF; }

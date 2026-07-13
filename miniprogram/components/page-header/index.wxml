@@ -1,0 +1,7 @@
+<view class="page-header">
+  <view class="back-btn" bindtap="onBackTap">
+    <text class="back-icon">‹</text>
+  </view>
+  <text class="header-title">{{title}}</text>
+  <view class="header-placeholder"></view>
+</view>

@@ -26,48 +26,6 @@ page {
   padding: 0 24rpx 20rpx;
 }
 
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 4rpx;
-  padding: 8rpx 16rpx 8rpx 0;
-  flex-shrink: 0;
-  width: 44rpx;
-}
-
-.header-placeholder {
-  width: 44rpx;
-}
-
-.back-btn:active { opacity: 0.5; }
-
-.back-icon {
-  font-size: 60rpx;
-  color: #1c1c1e;
-  line-height: 1;
-  font-weight: 400;
-}
-
-.back-label {
-  font-size: 30rpx;
-  color: #007AFF;
-  font-weight: 400;
-}
-
-.header-title {
-  flex: 1;
-  font-size: 40rpx;
-  font-weight: 800;
-  color: #1C1C1E;
-  text-align: center;
-}
-
-.header-count {
-  font-size: 26rpx;
-  color: #8E8E93;
-  flex-shrink: 0;
-}
-
 /* Tabs */
 .tabs {
   display: flex;
@@ -277,8 +235,6 @@ page {
   .page { background: #000000; }
 
   .header { background: #1C1C1E; border-bottom-color: #38383A; }
-  .header-title { color: #FFFFFF; }
-  .back-icon { color: #FFFFFF; }
 
   .tab { background: transparent; }
   .tab-active { background: #FFFFFF; }
