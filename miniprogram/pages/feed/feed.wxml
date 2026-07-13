@@ -92,6 +92,7 @@
         wx:for="{{filteredEvents}}"
         wx:key="_id"
         class="event-card"
+        style="animation-delay: {{item.animDelay}}ms"
         bindtap="goToDetail"
         data-id="{{item._id}}"
       >

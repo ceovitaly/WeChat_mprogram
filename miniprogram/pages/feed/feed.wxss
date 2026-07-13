@@ -245,11 +245,19 @@ page {
   overflow: hidden;
   box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.08);
   border: 1rpx solid var(--bg-inset);
+  /* Stagger entrance: per-card delay comes from item.animDelay (feed.js),
+     computed alongside the other display fields on each event object. */
+  animation: cardIn 0.4s ease-out both;
 }
 
 .event-card:active {
   transform: scale(0.99);
   opacity: 0.95;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(24rpx); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Venue bar */

@@ -191,6 +191,15 @@ Page({
       return dc !== 0 ? dc : (a.time || '').localeCompare(b.time || '');
     });
 
+    // Per-card stagger delay for the entrance animation (see .event-card
+    // in feed.wxss). Capped so long lists don't keep piling on delay —
+    // cards past the cap all share the same (max) delay.
+    var maxStaggerIndex = 9;
+    var staggerStepMs = 60;
+    filtered.forEach(function(e, i) {
+      e.animDelay = Math.min(i, maxStaggerIndex) * staggerStepMs;
+    });
+
     this.setData({ filteredEvents: filtered });
 
     var regIds = this.data.myRegistrationIds;
