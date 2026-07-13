@@ -493,4 +493,3 @@ button::after { border: none; }
   .ticket-selected { background: rgba(10,132,255,0.15); }
   .ticket-check { border-color: #48484A; }
 }
-</content>

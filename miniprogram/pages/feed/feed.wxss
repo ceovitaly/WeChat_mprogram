@@ -680,4 +680,3 @@ page {
   .calendar-modal { box-shadow: none; }
   .cal-selected:not(.cal-today) { background: rgba(255, 107, 53, 0.18); }
 }
-</content>

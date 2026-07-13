@@ -277,4 +277,3 @@ page {
   .name-sheet-handle { background: #3A3A3C; }
   .name-input-ph { color: rgba(255,255,255,0.25); }
 }
-</content>
