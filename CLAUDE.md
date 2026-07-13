@@ -16,17 +16,24 @@ No build step. Development and deployment are done in **WeChat DevTools**:
 
 ## Architecture
 
+### Auth state (mandatory)
+
+`utils/auth.js` is the single source of truth for "is the user signed in". Always gate personalized UI through `auth.getAuth(callback)` — never read `app.globalData.openid`, `app.globalData.userInfo`, or the `userInfo` storage key directly in pages.
+
+- **Authorized** = a `guests` record exists for this openid AND the `loggedOut` storage flag is not set. Auto-recognition of a returning user (cache cleared, guest record exists) counts as authorized.
+- **Anonymous** = no guest record, or `loggedOut` set. Anonymous users see zero personalized UI (no badges, tickets, or profile) — only sign-in CTAs.
+- The `loggedOut` flag is set only by `auth.logout()` and cleared ONLY by `auth.completeSignIn(profile)` on a successful sign-in — never on read. `completeSignIn` must receive the full guest doc from the DB (with `_id`/`_openid`).
+- `getAuth` memoizes per app session; call `auth.invalidateAuth()` after any sign-in/sign-out transition (`logout`/`completeSignIn` already do).
+
 ### Guest onboarding flow (active)
 
-The canonical registration flow lives in `pages/register/`:
+The canonical registration flow lives in `pages/register/` as one page with in-page steps (`step: 'phone' | 'profile'` — the old separate `pages/register/promo/` page no longer exists):
 
-1. `register.js` — checks if user exists in `guests` collection via `clientAuth` CF (`action: 'getMe'`)
-2. If not registered: privacy agreement → WeChat `getPhoneNumber` button → calls `clientAuth` (`action: 'getPhone'`) to decrypt phone
-3. Navigates to `pages/register/promo/promo` with phone as param
-4. `promo.js` — user enters promoter's promo code → verified via `clientAuth` (`action: 'verifyPromoCode'`) against `promoters` collection
-5. On success: guest profile saved to `guests` collection with phone, promoCode, promoterName
-
-**The old onboarding flow in `me.js`** (WecChat nickname + `promo_codes` collection) is superseded by this flow and should not be extended.
+1. `register.js` `_checkSession` — resolves auth via `auth.getAuth`; authorized users are sent straight to the feed
+2. Phone step: WeChat `getPhoneNumber` button → `clientAuth` (`action: 'getPhone'`) decrypts the phone; if a `guests` record already exists, the user is signed back in via `auth.completeSignIn`
+3. Profile step: name + promoter's promo code → verified via `clientAuth` (`action: 'verifyPromoCode'`) against `promoters` collection
+4. On success: guest profile saved to `guests` (phone, nickName, promoCode, promoterId, promoterName), re-read from the DB, then `auth.completeSignIn`
+5. If the user arrived from an event page (`pendingEventId` storage key, set by event-detail's `goRegister`), they are auto-registered for that event — with a dedup check against `registrations` first — and land on My List
 
 ### Cross-account cloud access
 
@@ -46,7 +53,7 @@ Events store images as `cloud://` URLs. Always resolve them with `cloud.getTempF
 ### Cloud functions
 
 - `login` — returns openid, called on app launch
-- `clientAuth` — multi-action: `getMe`, `getPhone`, `verifyPromoCode`, `completeRegistration`
+- `clientAuth` — multi-action: `getMe`, `getPhone`, `verifyPromoCode`, `completeRegistration`, `resolveImages` (`getMe` and `completeRegistration` are currently unused by the app)
 - `assignPromoter` — assigns a promoter to a guest
 
 ## Database Collections
@@ -61,6 +68,4 @@ Events store images as `cloud://` URLs. Always resolve them with `cloud.getTempF
 
 ## Known Issues
 
-- `app.json` has no `tabBar` but `me.js:128` calls `wx.switchTab` — will throw; needs fixing
-- `register.js:25` redirects to `/pages/feed/index` — wrong path, should be `/pages/feed/feed`
-- `me.js` onboarding flow uses `promo_codes` collection — superseded by `register.js` flow using `promoters`
+- `app.json` has no `tabBar` — never use `wx.switchTab`; navigate with `navigateTo`/`reLaunch`
