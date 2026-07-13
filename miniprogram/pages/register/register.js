@@ -1,5 +1,6 @@
 // pages/register/index.js
 const app = getApp();
+const auth = require('../../utils/auth.js');
 
 Page({
   data: {
@@ -19,43 +20,16 @@ Page({
     this._checkSession();
   },
 
-  async _checkSession() {
-    // If user explicitly logged out, show registration screen
-    try {
-      if (wx.getStorageSync('loggedOut') === '1') {
-        wx.removeStorageSync('loggedOut');
-        this.setData({ checking: false });
-        return;
-      }
-    } catch(e) {}
-
-    // Fast path: storage
-    try {
-      const stored = wx.getStorageSync('userInfo');
-      if (stored && stored._id) {
-        app.globalData.userInfo = stored;
-        wx.reLaunch({ url: '/pages/feed/feed' });
-        return;
-      }
-    } catch(e) {}
-
-    // Fallback: direct DB query (auto-filtered by openid, no CF needed)
+  _checkSession() {
+    // Central auth check: respects the loggedOut flag (without consuming
+    // it) and auto-recognizes a returning user whose guest record exists.
+    // Safety timeout so the spinner can't hang if cloud never initializes.
     const timer = setTimeout(() => this.setData({ checking: false }), 4000);
-    app.getCloud(async (cloud) => {
-      try {
-        const db = cloud.database();
-        const res = await db.collection('guests').limit(1).get();
-        clearTimeout(timer);
-        if (res.data && res.data.length > 0) {
-          app.globalData.userInfo = res.data[0];
-          try { wx.setStorageSync('userInfo', res.data[0]); } catch(e) {}
-          wx.reLaunch({ url: '/pages/feed/feed' });
-        } else {
-          this.setData({ checking: false });
-        }
-      } catch(err) {
-        clearTimeout(timer);
-        console.error('[checkSession]', err);
+    auth.getAuth((profile) => {
+      clearTimeout(timer);
+      if (profile) {
+        wx.reLaunch({ url: '/pages/feed/feed' });
+      } else {
         this.setData({ checking: false });
       }
     });
@@ -95,9 +69,10 @@ Page({
             const db = cloud.database();
             const guestRes = await db.collection('guests').limit(1).get();
             if (guestRes.data && guestRes.data.length > 0) {
-              app.globalData.userInfo = guestRes.data[0];
-              try { wx.setStorageSync('userInfo', guestRes.data[0]); } catch(e) {}
-              wx.reLaunch({ url: '/pages/feed/feed' });
+              // Existing guest signing back in — this clears the
+              // loggedOut flag and refreshes the cached profile.
+              auth.completeSignIn(guestRes.data[0]);
+              this._afterSignIn(cloud, guestRes.data[0]);
               return;
             }
           } catch (e) {
@@ -185,51 +160,21 @@ Page({
           updatedAt: db.serverDate()
         };
 
-        const guestRes = await db.collection('guests').where({ _openid: app.globalData.openid }).get();
+        // Both queries are auto-filtered by _openid server-side.
+        const guestRes = await db.collection('guests').limit(1).get();
         if (guestRes.data.length > 0) {
           await db.collection('guests').doc(guestRes.data[0]._id).update({ data: profileData });
         } else {
           await db.collection('guests').add({ data: { ...profileData, createdAt: db.serverDate() } });
         }
 
-        try { wx.setStorageSync('userInfo', profileData); } catch(e) {}
+        // Re-read the saved doc so the cached profile carries the server
+        // fields (_id/_openid) that queries and fast paths depend on.
+        const savedRes = await db.collection('guests').limit(1).get();
+        const profile = (savedRes.data && savedRes.data.length > 0) ? savedRes.data[0] : profileData;
+        auth.completeSignIn(profile);
 
-        // Auto-register for event if user came from an event page
-        let pendingEventId;
-        try {
-          pendingEventId = wx.getStorageSync('pendingEventId');
-          if (pendingEventId) wx.removeStorageSync('pendingEventId');
-        } catch(e) {}
-
-        if (pendingEventId) {
-          try {
-            const eventRes = await db.collection('events').doc(pendingEventId).get();
-            const event = eventRes.data;
-            await db.collection('registrations').add({
-              data: {
-                eventId: pendingEventId,
-                eventTitle: event.title || '',
-                eventDate: event.date || '',
-                guestName: this.data.nickName || '',
-                promoCode: this.data.promoInput || '',
-                promoterName: this.data.verifiedPromoterName || '',
-                ticketType: 'Free Entry',
-                status: 'confirmed',
-                createdAt: db.serverDate()
-              }
-            });
-            wx.vibrateShort();
-            wx.showToast({ title: "You're in! 🎉", icon: 'success' });
-            setTimeout(() => {
-              wx.reLaunch({ url: '/pages/mytickets/mytickets' });
-            }, 1500);
-          } catch(err) {
-            console.error('[pendingEvent] registration failed:', err);
-            wx.reLaunch({ url: '/pages/feed/feed' });
-          }
-        } else {
-          wx.reLaunch({ url: '/pages/feed/feed' });
-        }
+        await this._afterSignIn(cloud, profile);
       } catch (err) {
         console.error('[_doSubmit] error:', err);
         this.setData({ submitting: false });
@@ -240,6 +185,55 @@ Page({
         });
       }
     });
+  },
+
+  // Shared post-sign-in routing for both the existing-guest sign-in and
+  // the fresh-signup flow. If the user came here from an event page
+  // (pendingEventId), honor that intent: put them on the list — skipping
+  // the add if a registration already exists (registrations queries are
+  // auto-filtered by _openid, so any hit is this user's) — and land on
+  // My List. Otherwise land on the feed.
+  async _afterSignIn(cloud, profile) {
+    let pendingEventId;
+    try {
+      pendingEventId = wx.getStorageSync('pendingEventId');
+      if (pendingEventId) wx.removeStorageSync('pendingEventId');
+    } catch(e) {}
+
+    if (!pendingEventId) {
+      wx.reLaunch({ url: '/pages/feed/feed' });
+      return;
+    }
+
+    try {
+      const db = cloud.database();
+      const dup = await db.collection('registrations').where({ eventId: pendingEventId }).get();
+      if (!dup.data || dup.data.length === 0) {
+        const eventRes = await db.collection('events').doc(pendingEventId).get();
+        const event = eventRes.data;
+        await db.collection('registrations').add({
+          data: {
+            eventId: pendingEventId,
+            eventTitle: event.title || '',
+            eventDate: event.date || '',
+            guestName: profile.nickName || '',
+            promoCode: profile.promoCode || '',
+            promoterName: profile.promoterName || '',
+            ticketType: 'Free Entry',
+            status: 'confirmed',
+            createdAt: db.serverDate()
+          }
+        });
+      }
+      wx.vibrateShort();
+      wx.showToast({ title: "You're in! 🎉", icon: 'success' });
+      setTimeout(() => {
+        wx.reLaunch({ url: '/pages/mytickets/mytickets' });
+      }, 1500);
+    } catch(err) {
+      console.error('[pendingEvent] registration failed:', err);
+      wx.reLaunch({ url: '/pages/feed/feed' });
+    }
   },
 
   onSubmit() {
