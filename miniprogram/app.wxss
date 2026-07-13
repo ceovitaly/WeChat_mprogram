@@ -1,12 +1,37 @@
+/* ── Design tokens ──
+   Mirrors the token pattern used by the admin app's app.wxss: custom
+   properties declared on `page{}` so they cascade into every child
+   component, overridden per-token inside a `page{}` block nested in
+   `@media (prefers-color-scheme: dark)`. */
 page {
-  background: #F2F2F7;
+  --accent: #FF6B35;       /* brand accent — primary CTAs, selected/active states */
+  --blue: #007AFF;         /* system/link/neutral action color */
+  --bg: #F2F2F7;           /* page background */
+  --bg-elevated: #FFFFFF;  /* card / header / sheet surfaces */
+  --bg-inset: #F2F2F7;     /* nested panels inside an elevated surface */
+  --text-primary: #1C1C1E; /* primary text */
+  --text-secondary: #8E8E93; /* secondary text — same value in light & dark */
+  --border: #E5E5EA;       /* borders, dividers, neutral fills/pressed states */
+
+  background: var(--bg);
   font-family: -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
+@media (prefers-color-scheme: dark) {
+  page {
+    --blue: #0A84FF;
+    --bg: #000000;
+    --bg-elevated: #1C1C1E;
+    --bg-inset: #2C2C2E;
+    --text-primary: #FFFFFF;
+    --border: #38383A;
+  }
+}
+
 /* ── Shared nav ── */
 .nav-bar {
-  background: #FFFFFF;
+  background: var(--bg-elevated);
   padding: 16rpx 32rpx;
   display: flex;
   align-items: center;
@@ -19,17 +44,17 @@ page {
 .nav-title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #000;
+  color: var(--text-primary);
 }
 .nav-back-text {
   font-size: 28rpx;
-  color: #007AFF;
+  color: var(--blue);
   min-width: 100rpx;
 }
 
 /* ── Shared card ── */
 .card {
-  background: #FFFFFF;
+  background: var(--bg-elevated);
   border-radius: 20rpx;
   overflow: hidden;
 }
@@ -46,11 +71,11 @@ page {
 .empty-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #000;
+  color: var(--text-primary);
 }
 .empty-sub {
   font-size: 26rpx;
-  color: #8E8E93;
+  color: var(--text-secondary);
   text-align: center;
   line-height: 1.5;
 }
@@ -63,25 +88,12 @@ page {
   width: 60rpx;
   height: 60rpx;
   border-radius: 50%;
-  border: 6rpx solid #E5E5EA;
-  border-top-color: #007AFF;
+  border: 6rpx solid var(--border);
+  border-top-color: var(--blue);
   animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-
-@media (prefers-color-scheme: dark) {
-  page {
-    background: #000000;
-  }
-  .nav-bar {
-    background: #1C1C1E;
-    border-bottom-color: #38383A;
-  }
-  .nav-title { color: #FFFFFF; }
-  .card { background: #1C1C1E; }
-  .empty-title { color: #FFFFFF; }
-  .loading-spinner { border-color: #38383A; border-top-color: #0A84FF; }
-}
+</content>
