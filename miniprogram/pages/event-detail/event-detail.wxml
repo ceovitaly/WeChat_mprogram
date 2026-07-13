@@ -7,9 +7,11 @@
         <image src="{{img}}" class="hero-image" style="height:{{heroHeight}}rpx" mode="aspectFill" catchtap="previewHeroImage" data-url="{{img}}" />
       </swiper-item>
     </swiper>
+    <view class="hero-gradient"></view>
   </block>
   <block wx:elif="{{event.promoImage}}">
     <image src="{{event.promoImage}}" class="hero-image" style="height:{{heroHeight}}rpx" mode="aspectFill" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
+    <view class="hero-gradient"></view>
   </block>
   <view wx:else class="image-placeholder">
     <text class="placeholder-text">No Image</text>
