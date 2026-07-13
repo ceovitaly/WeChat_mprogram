@@ -1,4 +1,5 @@
 const app = getApp();
+const auth = require('../../utils/auth.js');
 const { resolveEventImages } = require('../../utils/cloud.js');
 
 Page({
@@ -95,14 +96,10 @@ Page({
   },
 
   checkProfile: function() {
-    const db = this.cloud.database();
-    db.collection('guests').limit(1).get({
-      success: res => {
-        this.setData({ hasProfile: res.data.length > 0 });
-      },
-      fail: () => {
-        this.setData({ hasProfile: false });
-      }
+    // hasProfile mirrors the central auth state: anonymous (no guest
+    // record, or explicitly logged out) sees the register prompt.
+    auth.getAuth((profile) => {
+      this.setData({ hasProfile: !!profile });
     });
   },
 
@@ -115,19 +112,26 @@ Page({
   },
 
   checkIfRegistered: function(eventId) {
-    const openid = app.globalData.openid;
-    if (!openid) return;
-    const db = this.cloud.database();
-    db.collection('registrations').where({
-      _openid: openid,
-      eventId: eventId
-    }).get({
-      success: res => {
-        if (res.data.length > 0) {
-          this.setData({ isRegistered: true });
-        }
-      },
-      fail: err => console.error('Check registration failed:', err)
+    // Gate on auth state: anonymous users never see "on the list".
+    // Waiting on getAuth (which itself awaits openid) fixes the cold-start
+    // race where a sync globalData.openid read silently skipped the check.
+    auth.getAuth((profile) => {
+      if (!profile) {
+        this.setData({ isRegistered: false });
+        return;
+      }
+      const db = this.cloud.database();
+      db.collection('registrations').where({
+        _openid: profile._openid,
+        eventId: eventId
+      }).get({
+        success: res => {
+          if (res.data.length > 0) {
+            this.setData({ isRegistered: true });
+          }
+        },
+        fail: err => console.error('Check registration failed:', err)
+      });
     });
   },
 
@@ -176,82 +180,80 @@ Page({
       return;
     }
 
-    const openid = app.globalData.openid;
-    if (!openid) {
-      wx.showModal({
-        title: 'Login Required',
-        content: 'Please go to Profile tab and log in first.',
-        showCancel: false
-      });
-      return;
-    }
-
     const type = this.data.selectedTicketId;
     if (!type) {
       wx.showToast({ title: 'Select a ticket type', icon: 'none' });
       return;
     }
 
-    wx.showLoading({ title: 'Registering...', mask: true });
-    const db = this.cloud.database();
-    const eventId = this.data.event._id;
+    auth.getAuth((guest) => {
+      if (!guest) {
+        // Anonymous: route into the existing register flow (which stores
+        // pendingEventId via goRegister) instead of the old dead-end
+        // "go to Profile tab" modal — the app has no tab bar.
+        this.setData({ showTicketModal: false, showRegisterPrompt: true });
+        return;
+      }
 
-    // Берём данные гостя
-    db.collection('guests').limit(1).get({
-      success: userRes => {
-        if (userRes.data.length === 0) {
-          wx.hideLoading();
-          wx.showModal({
-            title: 'Profile Empty',
-            content: 'Please complete your profile in the Profile tab first.',
-            showCancel: false
-          });
-          return;
-        }
+      wx.showLoading({ title: 'Registering...', mask: true });
+      const db = this.cloud.database();
+      const eventId = this.data.event._id;
 
-        const guest = userRes.data[0];
-
-        db.collection('registrations').add({
-          data: {
-            eventId,
-            eventTitle: this.data.event.title,
-            eventDate: this.data.event.date,
-            guestName: guest.nickName || guest.name || guest.phone || '',
-            guestAvatar: guest.avatarUrl || '',
-            promoCode: guest.promoCode || '',
-            promoterName: guest.promoterName || '',
-            ticketType: this.data.selectedTicketName || type,
-            status: 'confirmed',
-            createdAt: db.serverDate()
-          },
-          success: () => {
+      // Just-in-time dedup: re-query right before the add in case the
+      // isRegistered flag was stale (auto-filtered by _openid, so any hit
+      // is this user's registration).
+      db.collection('registrations').where({ eventId }).get({
+        success: dupRes => {
+          if (dupRes.data.length > 0) {
             wx.hideLoading();
             this.setData({ isRegistered: true, showTicketModal: false, selectedTicketId: '' });
-            wx.vibrateShort();
-            const pkgLink = this.data.selectedPackageLink;
-            if (pkgLink) {
-              wx.showToast({ title: "You're in! 🎉", icon: 'success' });
-              setTimeout(() => {
-                wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(pkgLink) });
-              }, 1200);
-            } else {
-              wx.showToast({ title: "You're in! 🎉", icon: 'success' });
-              setTimeout(() => {
-                wx.navigateTo({ url: '/pages/mytickets/mytickets' });
-              }, 1500);
-            }
-          },
-          fail: err => {
-            wx.hideLoading();
-            console.error('Registration failed:', err);
-            wx.showToast({ title: 'Registration failed', icon: 'none' });
+            wx.showToast({ title: 'Already registered!', icon: 'none' });
+            return;
           }
-        });
-      },
-      fail: err => {
-        wx.hideLoading();
-        console.error('Guest lookup failed:', err);
-      }
+
+          db.collection('registrations').add({
+            data: {
+              eventId,
+              eventTitle: this.data.event.title,
+              eventDate: this.data.event.date,
+              guestName: guest.nickName || guest.name || guest.phone || '',
+              guestAvatar: guest.avatarUrl || '',
+              promoCode: guest.promoCode || '',
+              promoterName: guest.promoterName || '',
+              ticketType: this.data.selectedTicketName || type,
+              status: 'confirmed',
+              createdAt: db.serverDate()
+            },
+            success: () => {
+              wx.hideLoading();
+              this.setData({ isRegistered: true, showTicketModal: false, selectedTicketId: '' });
+              wx.vibrateShort();
+              const pkgLink = this.data.selectedPackageLink;
+              if (pkgLink) {
+                wx.showToast({ title: "You're in! 🎉", icon: 'success' });
+                setTimeout(() => {
+                  wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(pkgLink) });
+                }, 1200);
+              } else {
+                wx.showToast({ title: "You're in! 🎉", icon: 'success' });
+                setTimeout(() => {
+                  wx.navigateTo({ url: '/pages/mytickets/mytickets' });
+                }, 1500);
+              }
+            },
+            fail: err => {
+              wx.hideLoading();
+              console.error('Registration failed:', err);
+              wx.showToast({ title: 'Registration failed', icon: 'none' });
+            }
+          });
+        },
+        fail: err => {
+          wx.hideLoading();
+          console.error('Registration dedup check failed:', err);
+          wx.showToast({ title: 'Registration failed', icon: 'none' });
+        }
+      });
     });
   },
 
