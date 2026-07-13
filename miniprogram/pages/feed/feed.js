@@ -1,4 +1,5 @@
 const app = getApp();
+const auth = require('../../utils/auth.js');
 const { resolveEventImages } = require('../../utils/cloud.js');
 
 Page({
@@ -44,12 +45,7 @@ Page({
       todayMonth: monthShort[today.getMonth()]
     });
 
-    var userInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo;
-    if (userInfo) {
-      var initial = (userInfo.nickName || userInfo.name || '')[0] || '?';
-      initial = initial.toUpperCase();
-      this.setData({ userInfo: userInfo, userInitial: initial });
-    }
+    this.refreshAuthUI();
 
     this.initCalendar(today.getFullYear(), today.getMonth());
 
@@ -61,13 +57,23 @@ Page({
   },
 
   onShow: function() {
-    var userInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo;
-    if (userInfo) {
-      var initial = (userInfo.nickName || userInfo.name || '')[0] || '?';
-      initial = initial.toUpperCase();
-      this.setData({ userInfo: userInfo, userInitial: initial });
-    }
-    if (this.cloud) this.loadMyRegistrations();
+    this.refreshAuthUI();
+    this.loadMyRegistrations();
+  },
+
+  // Header identity pill and card badges both derive from the central
+  // auth state so they can never disagree (no more split-brain between
+  // the cached userInfo and openid-based queries).
+  refreshAuthUI: function() {
+    var self = this;
+    auth.getAuth(function(profile) {
+      if (profile) {
+        var initial = ((profile.nickName || profile.name || '')[0] || '?').toUpperCase();
+        self.setData({ userInfo: profile, userInitial: initial });
+      } else {
+        self.setData({ userInfo: null, userInitial: '?' });
+      }
+    });
   },
 
   // ===== CALENDAR =====
@@ -215,10 +221,16 @@ Page({
 
   loadMyRegistrations: function() {
     var self = this;
-    var doLoad = function(openid) {
-      if (!openid || !self.cloud) return;
+    auth.getAuth(function(profile) {
+      if (!profile) {
+        // Anonymous: no "You're on the list" badges anywhere.
+        self.setData({ myRegistrationIds: [] });
+        self.applyFilters();
+        return;
+      }
+      if (!self.cloud) return;
       var db = self.cloud.database();
-      db.collection('registrations').where({ _openid: openid }).field({ eventId: true }).get({
+      db.collection('registrations').where({ _openid: profile._openid }).field({ eventId: true }).get({
         success: function(res) {
           var ids = res.data.map(function(r) { return r.eventId; });
           self.setData({ myRegistrationIds: ids });
@@ -226,12 +238,7 @@ Page({
         },
         fail: function(err) { console.error('[feed] loadMyRegistrations failed:', err); }
       });
-    };
-    if (app.globalData.openid) {
-      doLoad(app.globalData.openid);
-    } else {
-      app.getOpenid(doLoad);
-    }
+    });
   },
 
   // ===== DATA LOADING =====
@@ -379,7 +386,10 @@ Page({
   },
 
   goToProfile: function() {
-    wx.navigateTo({ url: '/pages/me/me' });
+    // Signed-in users get their profile; anonymous users go to sign-in.
+    auth.getAuth(function(profile) {
+      wx.navigateTo({ url: profile ? '/pages/me/me' : '/pages/register/register' });
+    });
   },
 
 stopPropagation: function() {},
