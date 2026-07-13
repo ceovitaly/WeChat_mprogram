@@ -1,4 +1,5 @@
 const app = getApp();
+const { resolveEventImages } = require('../../utils/cloud.js');
 
 Page({
   data: {
@@ -234,9 +235,9 @@ Page({
       var cacheTime = wx.getStorageSync('events_cache_time');
       var age = Date.now() - cacheTime;
       if (cached && cacheTime && age < 10 * 60 * 1000) {
-        var events = JSON.parse(cached);
+        var events = this.normalizeEventImages(JSON.parse(cached));
         var self = this;
-        self.resolveImages(events).then(function(resolvedEvents) {
+        resolveEventImages(events).then(function(resolvedEvents) {
           self.processEvents(resolvedEvents);
           self.setData({ events: resolvedEvents, loading: false });
           self.applyFilters();
@@ -271,8 +272,8 @@ Page({
       .limit(100)
       .get()
       .then(function(res) {
-        var events = res.data;
-        return self.resolveImages(events);
+        var events = self.normalizeEventImages(res.data);
+        return resolveEventImages(events);
       })
       .then(function(events) {
         self.processEvents(events);
@@ -290,12 +291,12 @@ Page({
       });
   },
 
-  resolveImages: function(events) {
-    var self = this;
-    var allCloudUrls = [];
-
+  // Normalize each event's images to a canonical `promoImages` array
+  // (preferring existing promoImages, then images, then promoImage/coverImage)
+  // before cloud:// URLs are resolved. This is feed-specific: the feed card
+  // only ever renders promoImages[0], so other pages don't need this shape.
+  normalizeEventImages: function(events) {
     events.forEach(function(event) {
-      // Normalize: prefer promoImages, fallback to images
       if (!event.promoImages || !Array.isArray(event.promoImages) || event.promoImages.length === 0) {
         if (event.images && Array.isArray(event.images) && event.images.length > 0) {
           event.promoImages = event.images;
@@ -307,34 +308,8 @@ Page({
           event.promoImages = [];
         }
       }
-      event.promoImages.forEach(function(url) {
-        if (url && url.indexOf('cloud://') === 0) allCloudUrls.push(url);
-      });
-      if (event.coverImage && event.coverImage.indexOf('cloud://') === 0) allCloudUrls.push(event.coverImage);
     });
-
-    if (allCloudUrls.length === 0) return Promise.resolve(events);
-
-    console.log('[images] resolving', allCloudUrls.length, 'cloud URLs:', allCloudUrls);
-
-    return self.cloud.callFunction({
-      name: 'clientAuth',
-      data: { action: 'resolveImages', fileList: allCloudUrls }
-    }).then(function(res) {
-        var urlMap = res.result.urlMap || {};
-
-        events.forEach(function(event) {
-          event.promoImages = event.promoImages.map(function(url) {
-            return urlMap[url] || url;
-          });
-        });
-
-        return events;
-      })
-      .catch(function(err) {
-        console.error('resolveImages error:', err);
-        return events;
-      });
+    return events;
   },
 
   processEvents: function(events) {

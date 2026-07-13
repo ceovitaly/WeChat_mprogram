@@ -1,4 +1,5 @@
 const app = getApp();
+const { resolveEventImages } = require('../../utils/cloud.js');
 
 Page({
   data: {
@@ -36,47 +37,10 @@ Page({
     db.collection('events').doc(id).get({
       success: async res => {
         const event = res.data;
-        const cloudUrls = [];
 
-        // Собираем все cloud:// урлы
-        if (event.promoImage && event.promoImage.startsWith('cloud://')) {
-          cloudUrls.push(event.promoImage);
-        }
-        if (event.promoImages && Array.isArray(event.promoImages)) {
-          event.promoImages.forEach(u => {
-            if (u && u.startsWith('cloud://')) cloudUrls.push(u);
-          });
-        }
-        if (event.promoMaterials && Array.isArray(event.promoMaterials)) {
-          event.promoMaterials.forEach(u => {
-            if (u && u.startsWith('cloud://')) cloudUrls.push(u);
-          });
-        }
-        if (event.coverImage && event.coverImage.startsWith('cloud://')) {
-          cloudUrls.push(event.coverImage);
-        }
-
-        // Резолвим все урлы за один запрос
-        if (cloudUrls.length > 0) {
-          try {
-            const cfRes = await this.cloud.callFunction({
-              name: 'clientAuth',
-              data: { action: 'resolveImages', fileList: cloudUrls }
-            });
-            const urlMap = cfRes.result.urlMap || {};
-
-            if (event.promoImage) event.promoImage = urlMap[event.promoImage] || event.promoImage;
-            if (event.coverImage) event.coverImage = urlMap[event.coverImage] || event.coverImage;
-            if (event.promoImages) {
-              event.promoImages = event.promoImages.map(u => urlMap[u] || u);
-            }
-            if (event.promoMaterials) {
-              event.promoMaterials = event.promoMaterials.map(u => urlMap[u] || u);
-            }
-          } catch (err) {
-            console.error('getTempFileURL error:', err);
-          }
-        }
+        // Resolve every cloud:// URL (promoImage/coverImage/promoImages/
+        // promoMaterials) in one batched call; mutates `event` in place.
+        await resolveEventImages([event]);
 
         // Главное фото — берём первое доступное
         if (!event.promoImage) {
