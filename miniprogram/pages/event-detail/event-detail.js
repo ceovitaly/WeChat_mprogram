@@ -169,8 +169,6 @@ Page({
     this.setData({ showRegisterPrompt: false });
   },
 
-  noop: function() {},
-
   handleJoin: function() {
     if (this.data.isRegistered) {
       this.setData({ showTicketModal: false });

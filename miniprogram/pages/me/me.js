@@ -43,8 +43,6 @@ Page({
     });
   },
 
-  noop() {},
-
   openNameEdit() {
     const name = this.data.userInfo.nickName || this.data.userInfo.name || '';
     this.setData({ showNameEdit: true, editingName: name });

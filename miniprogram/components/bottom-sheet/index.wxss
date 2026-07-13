@@ -1,0 +1,42 @@
+.bottom-sheet-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.bottom-sheet-mask--center {
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-sheet-shell {
+  width: 100%;
+  box-sizing: border-box;
+  animation: slideUp 0.25s ease-out;
+}
+
+.bottom-sheet-shell--center {
+  width: auto;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(48rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-color-scheme: dark) {
+  .bottom-sheet-mask { background: rgba(0, 0, 0, 0.65); }
+}

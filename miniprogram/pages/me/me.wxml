@@ -53,8 +53,8 @@
   </block>
 
   <!-- Name edit sheet -->
-  <view wx:if="{{showNameEdit}}" class="name-overlay" bindtap="closeNameEdit">
-    <view class="name-sheet" catchtap="noop">
+  <bottom-sheet show="{{showNameEdit}}" bind:close="closeNameEdit">
+    <view class="name-sheet">
       <view class="name-sheet-handle"></view>
       <text class="name-sheet-title">Edit Name</text>
       <input
@@ -75,6 +75,6 @@
         <text class="name-cancel-text">Cancel</text>
       </view>
     </view>
-  </view>
+  </bottom-sheet>
 
 </view>

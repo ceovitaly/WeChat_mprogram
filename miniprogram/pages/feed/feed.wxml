@@ -161,8 +161,8 @@
 </scroll-view>
 
 <!-- Calendar Modal -->
-<view wx:if="{{showCalendar}}" class="modal-overlay" bindtap="toggleCalendar">
-  <view class="calendar-modal" catchtap="noop">
+<bottom-sheet show="{{showCalendar}}" position="center" bind:close="toggleCalendar">
+  <view class="calendar-modal">
     <view class="calendar-header">
       <view class="cal-nav-btn" bindtap="prevMonth">
         <text class="cal-nav-txt">‹</text>
@@ -194,6 +194,6 @@
       </view>
     </view>
   </view>
-</view>
+</bottom-sheet>
 
 </view>

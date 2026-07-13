@@ -90,8 +90,8 @@
 </view>
 
 <!-- Ticket modal -->
-<view wx:if="{{showTicketModal}}" class="ticket-mask" bindtap="closeTicketModal">
-  <view class="ticket-modal" catchtap="noop">
+<bottom-sheet show="{{showTicketModal}}" bind:close="closeTicketModal">
+  <view class="ticket-modal">
     <view class="modal-handle"></view>
     <text class="modal-title">Get on list</text>
     <text class="modal-subtitle">SELECT TICKET TYPE</text>
@@ -174,11 +174,11 @@
       <text>Cancel</text>
     </view>
   </view>
-</view>
+</bottom-sheet>
 
 <!-- Register prompt for users without profile -->
-<view wx:if="{{showRegisterPrompt}}" class="ticket-mask" bindtap="closeRegisterPrompt">
-  <view class="ticket-modal" catchtap="noop">
+<bottom-sheet show="{{showRegisterPrompt}}" bind:close="closeRegisterPrompt">
+  <view class="ticket-modal">
     <view class="modal-handle"></view>
     <text class="modal-title">Not registered</text>
     <text class="prompt-desc">To get on the list, you need to register in the app first.</text>
@@ -187,4 +187,4 @@
       <text>Cancel</text>
     </view>
   </view>
-</view>
+</bottom-sheet>

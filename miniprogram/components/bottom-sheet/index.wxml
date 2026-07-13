@@ -1,0 +1,12 @@
+<view
+  wx:if="{{show}}"
+  class="bottom-sheet-mask {{position === 'center' ? 'bottom-sheet-mask--center' : ''}}"
+  bindtap="onMaskTap"
+>
+  <view
+    class="bottom-sheet-shell {{position === 'center' ? 'bottom-sheet-shell--center' : ''}}"
+    catchtap="noop"
+  >
+    <slot></slot>
+  </view>
+</view>

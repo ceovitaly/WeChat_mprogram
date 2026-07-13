@@ -142,8 +142,6 @@ Page({
     this.applyFilters();
   },
 
-  noop: function() {},
-
   // ===== SEARCH =====
 
   onSearchInput: function(e) {

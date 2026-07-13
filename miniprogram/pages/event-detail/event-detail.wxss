@@ -303,16 +303,8 @@ button::after { border: none; }
   color: #34c759;
 }
 
-/* Ticket modal */
-.ticket-mask {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
+/* Ticket modal — mask/shell now provided by <bottom-sheet>; this stays
+   page-specific card styling for the ticket sheet's contents. */
 .ticket-modal {
   width: 100%;
   background: #ffffff;

@@ -479,27 +479,14 @@ page {
 }
 
 /* ===== CALENDAR MODAL ===== */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.2s ease-out;
-}
-
+/* Mask + slide-up/fade-in shell now provided by <bottom-sheet position="center">;
+   this stays page-specific card styling for the calendar dialog's contents. */
 .calendar-modal {
   width: 640rpx;
   background: #ffffff;
   border-radius: 32rpx;
   padding: 40rpx 32rpx 32rpx;
   box-shadow: 0 24rpx 64rpx rgba(0, 0, 0, 0.18);
-  animation: slideUp 0.25s ease-out;
 }
 
 .calendar-header {
@@ -646,17 +633,6 @@ page {
 
 .cal-action-done-txt {
   color: #ffffff;
-}
-
-/* ===== ANIMATIONS ===== */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(48rpx); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ===== REGISTERED BADGE ===== */
