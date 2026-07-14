@@ -30,8 +30,6 @@ page {
   gap: 16rpx;
 }
 
-.empty-icon { font-size: 80rpx; }
-
 .empty-title {
   font-size: 36rpx;
   font-weight: 700;
@@ -222,9 +220,9 @@ page {
 }
 
 .edit-pencil {
-  font-size: 28rpx;
-  color: var(--blue);
-  font-weight: 400;
+  width: 26rpx;
+  height: 26rpx;
+  background-color: var(--blue);
 }
 
 /* Name edit sheet — mask/shell now provided by <bottom-sheet>; this stays

@@ -84,7 +84,10 @@
     <button class="btn-share" open-type="share">Share</button>
   </view>
   <view wx:else class="action-row">
-    <button class="btn-register" bindtap="openTicketModal">📋 Get on list</button>
+    <button class="btn-register" bindtap="openTicketModal">
+      <view class="icon icon--list btn-register-icon"></view>
+      <text>Get on list</text>
+    </button>
     <button class="btn-share" open-type="share">Share</button>
   </view>
 </view>

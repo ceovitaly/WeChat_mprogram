@@ -83,8 +83,6 @@ page {
   gap: 16rpx;
 }
 
-.empty-icon { font-size: 80rpx; }
-
 .empty-title {
   font-size: 36rpx;
   font-weight: 700;
@@ -228,11 +226,9 @@ page {
 .ticket-remove-btn:active { opacity: 0.6; }
 
 .ticket-remove-icon {
-  font-size: 44rpx;
-  color: #FF3B30;
-  line-height: 1;
-  font-weight: 300;
-  margin-top: -4rpx;
+  width: 28rpx;
+  height: 28rpx;
+  background-color: #FF3B30;
 }
 
 /* ===== DARK MODE ===== */
@@ -253,4 +249,5 @@ page {
   .badge-past { background: rgba(255,255,255,0.06); }
 
   .ticket-remove-btn { background: rgba(255, 69, 58, 0.15); }
+  .ticket-remove-icon { background-color: #FF453A; }
 }

@@ -248,7 +248,10 @@ page {
 .btn-register {
   flex: 1;
   height: 100rpx;
-  line-height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
   background: var(--accent);
   color: #ffffff;
   font-size: 32rpx;
@@ -258,6 +261,12 @@ page {
   text-align: center;
   margin: 0;
   padding: 0;
+}
+
+/* Leading icon inside the CTA — tinted by the button's white text color */
+.btn-register-icon {
+  width: 32rpx;
+  height: 32rpx;
 }
 .btn-share {
   width: 100rpx;

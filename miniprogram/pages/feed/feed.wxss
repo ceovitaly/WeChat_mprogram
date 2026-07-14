@@ -83,8 +83,9 @@ page {
 }
 
 .pill-icon {
-  font-size: 30rpx;
-  line-height: 1;
+  width: 30rpx;
+  height: 30rpx;
+  background-color: var(--text-primary);
 }
 
 .pill-label {
@@ -160,10 +161,10 @@ page {
   gap: 12rpx;
 }
 
-.search-icon-txt {
-  font-size: 34rpx;
-  opacity: 0.5;
-  flex-shrink: 0;
+.search-icon {
+  width: 34rpx;
+  height: 34rpx;
+  background-color: var(--text-secondary);
 }
 
 .search-input {
@@ -188,10 +189,10 @@ page {
   flex-shrink: 0;
 }
 
-.search-clear-txt {
-  font-size: 22rpx;
-  color: #ffffff;
-  font-weight: 700;
+.search-clear-icon {
+  width: 26rpx;
+  height: 26rpx;
+  background-color: #ffffff;
 }
 
 /* Active Filter Pill — same "date filter active" state as .calendar-btn-active */
@@ -209,6 +210,12 @@ page {
   padding: 8rpx 20rpx;
 }
 
+.filter-pill-icon {
+  width: 26rpx;
+  height: 26rpx;
+  background-color: var(--accent);
+}
+
 .filter-pill-txt {
   font-size: 26rpx;
   color: var(--accent);
@@ -216,9 +223,10 @@ page {
 }
 
 .filter-pill-remove {
-  font-size: 22rpx;
-  color: var(--accent);
-  font-weight: 700;
+  width: 24rpx;
+  height: 24rpx;
+  background-color: var(--accent);
+  margin-left: 4rpx;
 }
 
 /* ===== FEED SCROLL ===== */
@@ -311,12 +319,21 @@ page {
   background: rgba(0, 0, 0, 0.55);
   border-radius: 20rpx;
   padding: 6rpx 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
 }
 
 .img-count-txt {
   font-size: 22rpx;
   color: #ffffff;
   font-weight: 600;
+}
+
+.img-count-icon {
+  width: 24rpx;
+  height: 24rpx;
+  background-color: #ffffff;
 }
 
 /* Card info */
@@ -351,7 +368,10 @@ page {
 
 .get-ticket-btn {
   flex: 1;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
   height: 88rpx;
   background: var(--accent);
   color: #ffffff;
@@ -360,11 +380,16 @@ page {
   font-size: 30rpx;
   font-weight: 600;
   text-align: center;
-  line-height: 88rpx;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   letter-spacing: 0.5rpx;
+}
+
+/* Leading icon inside the CTA — tinted by the button's white text color */
+.btn-list-icon {
+  width: 30rpx;
+  height: 30rpx;
 }
 
 .get-ticket-btn::after {
@@ -455,10 +480,6 @@ page {
   align-items: center;
   padding: 120rpx 32rpx;
   gap: 20rpx;
-}
-
-.empty-icon {
-  font-size: 96rpx;
 }
 
 .empty-title {

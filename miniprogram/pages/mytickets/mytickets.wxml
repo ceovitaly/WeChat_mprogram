@@ -33,7 +33,7 @@
 
     <!-- Signed-out state -->
     <view wx:elif="{{isAnonymous}}" class="empty-state">
-      <text class="empty-icon">📋</text>
+      <view class="icon icon--list icon-empty"></view>
       <text class="empty-title">Sign in to see your list</text>
       <text class="empty-sub">Your event registrations will appear here once you sign in</text>
       <view class="signin-btn" bindtap="goSignIn">
@@ -44,7 +44,7 @@
     <!-- Active tickets -->
     <block wx:elif="{{activeTab === 'active'}}">
       <view wx:if="{{activeTickets.length === 0}}" class="empty-state">
-        <text class="empty-icon">📋</text>
+        <view class="icon icon--list icon-empty"></view>
         <text class="empty-title">No active tickets</text>
         <text class="empty-sub">Register for an event to see your tickets here</text>
       </view>
@@ -65,7 +65,7 @@
             </view>
           </view>
           <view class="ticket-remove-btn" catchtap="removeFromList" data-id="{{item._id}}">
-            <text class="ticket-remove-icon">×</text>
+            <view class="icon icon--close ticket-remove-icon"></view>
           </view>
         </view>
       </view>
@@ -74,7 +74,7 @@
     <!-- Past tickets -->
     <block wx:elif="{{activeTab === 'past'}}">
       <view wx:if="{{pastTickets.length === 0}}" class="empty-state">
-        <text class="empty-icon">📅</text>
+        <view class="icon icon--calendar icon-empty"></view>
         <text class="empty-title">No past events</text>
         <text class="empty-sub">Attended events will appear here</text>
       </view>

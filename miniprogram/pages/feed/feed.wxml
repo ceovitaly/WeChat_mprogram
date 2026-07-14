@@ -19,7 +19,7 @@
       </view>
       <view class="nav-pill" bindtap="goToTickets">
         <view class="pill-icon-wrap">
-          <text class="pill-icon">📋</text>
+          <view class="icon icon--list pill-icon"></view>
         </view>
         <text class="pill-label">My List</text>
       </view>
@@ -33,7 +33,7 @@
       <text class="calendar-label">{{selectedDate ? selectedDateMonth : todayMonth}}</text>
     </view>
     <view class="search-bar">
-      <text class="search-icon-txt">🔍</text>
+      <view class="icon icon--search search-icon"></view>
       <input
         class="search-input"
         placeholder="Search events..."
@@ -44,7 +44,7 @@
         value="{{searchKeyword}}"
       />
       <view wx:if="{{searchKeyword}}" class="search-clear" bindtap="clearSearch">
-        <text class="search-clear-txt">x</text>
+        <view class="icon icon--close search-clear-icon"></view>
       </view>
     </view>
   </view>
@@ -52,8 +52,9 @@
   <!-- Active filter pill -->
   <view wx:if="{{selectedDate}}" class="filter-row">
     <view class="filter-pill" bindtap="clearDateFilter">
-      <text class="filter-pill-txt">📅 {{selectedDate}}</text>
-      <text class="filter-pill-remove">  x</text>
+      <view class="icon icon--calendar filter-pill-icon"></view>
+      <text class="filter-pill-txt">{{selectedDate}}</text>
+      <view class="icon icon--close filter-pill-remove"></view>
     </view>
   </view>
 </view>
@@ -111,7 +112,8 @@
             lazy-load="{{true}}"
           />
           <view wx:if="{{item.promoImages.length > 1}}" class="img-count-badge">
-            <text class="img-count-txt">{{item.promoImages.length}} 📷</text>
+            <text class="img-count-txt">{{item.promoImages.length}}</text>
+            <view class="icon icon--camera img-count-icon"></view>
           </view>
         </view>
 
@@ -127,7 +129,8 @@
             catchtap="goToTicketDirect"
             data-id="{{item._id}}"
           >
-            📋 Get on list
+            <view class="icon icon--list btn-list-icon"></view>
+            <text>Get on list</text>
           </button>
           <view
             wx:else
@@ -149,7 +152,7 @@
 
     <!-- Empty State -->
     <view wx:if="{{filteredEvents.length === 0 && !loading}}" class="empty-state">
-      <text class="empty-icon">📋</text>
+      <view class="icon icon--list icon-empty"></view>
       <text class="empty-title">No events found</text>
       <text class="empty-sub">Try adjusting your search or date filter</text>
       <view wx:if="{{selectedDate || searchKeyword}}" class="empty-clear-btn" bindtap="clearAllFilters">

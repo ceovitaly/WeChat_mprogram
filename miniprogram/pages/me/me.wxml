@@ -12,7 +12,7 @@
       <page-header title="Profile" bind:back="goBack" />
     </view>
     <view class="signed-out-wrap">
-      <text class="empty-icon">👤</text>
+      <view class="icon icon--user icon-empty"></view>
       <text class="empty-title">You're signed out</text>
       <text class="empty-sub">Sign in to see your profile and manage your events</text>
       <view class="signin-btn" bindtap="goSignIn">
@@ -41,7 +41,7 @@
             <view class="user-info" bindtap="openNameEdit">
               <view class="nickname-row">
                 <text class="nickname">{{userInfo.nickName || userInfo.name || 'Set name'}}</text>
-                <text class="edit-pencil">✎</text>
+                <view class="icon icon--edit edit-pencil"></view>
               </view>
               <text class="user-sub-hint">Tap to edit</text>
             </view>
