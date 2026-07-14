@@ -16,13 +16,25 @@
   <view wx:else class="image-placeholder">
     <text class="placeholder-text">No Image</text>
   </view>
+
+  <!-- Date/time + title over the hero. Sibling of the image/swiper blocks
+       so it never swipes away with slides. event.promoImage is guaranteed
+       set (from promoImages[0]/coverImage) whenever any image exists, so
+       it doubles as the "has hero image" flag. Bottom padding keeps the
+       text above the swiper's indicator dots and the main-card overlap. -->
+  <view wx:if="{{event.promoImage}}" class="hero-overlay">
+    <text class="hero-datetime">{{event.displayDatetime || event.displayDate || event.date}}</text>
+    <text class="hero-title">{{event.title}}</text>
+  </view>
 </view>
 
 <scroll-view class="content-scroll" scroll-y enhanced show-scrollbar="false">
 <view class="main-card">
 
-    <!-- Block 1: date/time + title -->
-    <view class="info-block">
+    <!-- Block 1: date/time + title — only when there is no hero image to
+         carry the overlay (a title floating on the gray placeholder reads
+         as broken) -->
+    <view class="info-block" wx:if="{{event && !event.promoImage}}">
       <text class="info-datetime">{{event.displayDatetime || event.displayDate || event.date}}</text>
       <text class="info-title">{{event.title}}</text>
     </view>
@@ -63,12 +75,23 @@
 
     <view class="section" wx:if="{{event.paidPackages && event.paidPackages.length > 0}}">
       <text class="section-label">PACKAGES</text>
+      <!-- Each row opens the ticket sheet with this package preselected -->
       <view
         wx:for="{{event.paidPackages}}"
         wx:key="index"
-        class="package-item"
+        class="package-item pressable"
+        hover-class="pressed-soft"
+        hover-start-time="20"
+        hover-stay-time="80"
+        bindtap="openPackageFromList"
+        data-idx="{{index}}"
       >
-        <text class="package-name">{{item.name}}</text>
+        <view class="package-left">
+          <text class="package-name">{{item.name}}</text>
+          <text class="package-desc">{{item.description || 'Paid package'}}</text>
+        </view>
+        <text wx:if="{{item.price}}" class="package-price">¥ {{item.price}}</text>
+        <view class="icon icon--chevron package-chevron"></view>
       </view>
     </view>
 

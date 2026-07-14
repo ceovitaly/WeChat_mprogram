@@ -167,6 +167,27 @@ Page({
     });
   },
 
+  // PACKAGES section rows: open the ticket sheet with the tapped package
+  // preselected — same anonymous-user gate as openTicketModal, same
+  // selection shape as selectPackage.
+  openPackageFromList: function(e) {
+    if (this.data.hasProfile === false) {
+      this.setData({ showRegisterPrompt: true });
+      return;
+    }
+    var idx = e.currentTarget.dataset.idx;
+    var pkgs = (this.data.event && this.data.event.paidPackages) || [];
+    var pkg = pkgs[idx];
+    if (!pkg) return;
+    this.setData({
+      showTicketModal: true,
+      selectedTicketId: 'pkg_' + idx,
+      selectedTicketName: pkg.name,
+      selectedTicketPrice: 0,
+      selectedPackageLink: pkg.paymentLink || ''
+    });
+  },
+
   closeTicketModal: function() {
     this.setData({ showTicketModal: false, joinSuccess: false, selectedTicketId: '', selectedTicketName: '', selectedTicketPrice: 0, selectedPackageLink: '' });
   },

@@ -44,18 +44,57 @@ page {
 .hero-image--loaded {
   opacity: 1;
 }
-/* Bottom-darkening vignette so the swiper's indicator dots (and the hero
-   photo generally) stay legible against bright/busy images. Non-interactive
-   so it never blocks the image's own tap-to-preview or the swiper's swipe
-   gesture. Only rendered over an actual photo, not the placeholder. */
+/* Bottom-darkening vignette so the title/datetime overlay and the
+   swiper's indicator dots stay legible against bright/busy images.
+   Non-interactive so it never blocks the image's own tap-to-preview or
+   the swiper's swipe gesture. Only rendered over an actual photo, not
+   the placeholder. */
 .hero-gradient {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 45%;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.5) 100%);
+  height: 55%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.65) 100%);
   pointer-events: none;
+}
+
+/* Date/time + title over the hero's bottom. pointer-events:none keeps
+   tap-to-preview and swiping working through the text. The big bottom
+   padding clears the main-card's -40rpx overlap AND the swiper's
+   indicator dots (which can't be repositioned), so the text always sits
+   above them. */
+.hero-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 0 40rpx 120rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  pointer-events: none;
+}
+
+.hero-datetime {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.5rpx;
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.4);
+}
+
+.hero-title {
+  font-size: 52rpx;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.15;
+  text-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.45);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .image-placeholder {
   width: 100%;
@@ -534,20 +573,44 @@ button::after { border: none; }
   padding: 0 8rpx 24rpx;
 }
 
+/* Package rows — tappable: open the ticket sheet preselected (see
+   openPackageFromList in event-detail.js) */
 .package-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16rpx;
   background: var(--bg-inset);
   border-radius: 20rpx;
   padding: 28rpx 32rpx;
   margin-bottom: 16rpx;
   border: 2rpx solid var(--border);
 }
+.package-left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
 .package-name {
   font-size: 30rpx;
   font-weight: 600;
   color: var(--text-primary);
+}
+.package-desc {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+.package-price {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+.package-chevron {
+  width: 28rpx;
+  height: 28rpx;
+  background-color: var(--text-secondary);
 }
 
 /* ===== DARK MODE ===== */
