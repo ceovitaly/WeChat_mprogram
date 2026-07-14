@@ -1,5 +1,6 @@
 const { callFunction, collection } = require('../../../utils/request')
 const { CLOUD_FUNCTIONS, COLLECTIONS } = require('../../../utils/constants')
+const { buildInternalRoleMap, annotateInternalRole } = require('../../../utils/phoneMatch')
 
 Page({
   data: {
@@ -10,6 +11,7 @@ Page({
     totalCount: 0,
 
     promoters: [],
+    staffList: [],
     selectedPromoter: '',
 
     showPromoterSheet: false,
@@ -19,11 +21,13 @@ Page({
   onLoad() {
     this._fetchGuests()
     this._fetchPromoters()
+    this._fetchStaff()
   },
 
   onPullDownRefresh() {
     this._fetchGuests()
     this._fetchPromoters()
+    this._fetchStaff()
   },
 
   async _fetchGuests() {
@@ -40,7 +44,7 @@ Page({
         totalCount: allGuests.length,
         isLoading: false
       })
-      this._applyFilters()
+      this._annotateInternalRoles()
     } catch (err) {
       console.error('[Guests] fetch error:', err)
       this.setData({ isLoading: false })
@@ -54,9 +58,30 @@ Page({
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getPromoters' })
       this.setData({ promoters: res && res.data ? res.data : [] })
+      this._annotateInternalRoles()
     } catch (err) {
       console.error('[Guests] promoters error:', err)
     }
+  },
+
+  async _fetchStaff() {
+    try {
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_STAFF, { action: 'getAll' })
+      this.setData({ staffList: res && res.data ? res.data : [] })
+      this._annotateInternalRoles()
+    } catch (err) {
+      console.error('[Guests] staff error:', err)
+    }
+  },
+
+  // Annotates allGuests with internalRole/internalLabel by matching phone numbers
+  // against staff/promoters, then reapplies the active filters. Never touches the
+  // guest's real phone or other fields — just adds two badge-only fields.
+  _annotateInternalRoles() {
+    const { allGuests, staffList, promoters } = this.data
+    const roleMap = buildInternalRoleMap(staffList, promoters)
+    const annotated = allGuests.map(g => annotateInternalRole(g, roleMap))
+    this.setData({ allGuests: annotated }, () => this._applyFilters())
   },
 
   _applyFilters() {

@@ -53,6 +53,7 @@
       <text class="guest-avatar-text">{{item.nickName ? item.nickName[0] : '?'}}</text>
     </view>
     <text class="guest-name">{{item.nickName || '—'}}</text>
+    <text wx:if="{{item.internalRole}}" class="badge {{item.internalRole === 'staff' ? 'badge-blue' : 'badge-orange'}} internal-badge">{{item.internalRole === 'staff' ? 'STAFF' : 'PROMOTER'}}</text>
     <text class="guest-promoter">{{item.promoterName || 'No promoter'}}</text>
   </view>
 </view>
