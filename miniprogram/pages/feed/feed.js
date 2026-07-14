@@ -24,7 +24,11 @@ Page({
     selectedDateMonth: '',
     eventDates: [],
     myRegistrationIds: [],
-    cardImgHeight: 600
+    cardImgHeight: 600,
+    headerPadTop: 96,      // px; corrected from the capsule rect in onLoad
+    refresherThreshold: 90, // px; corrected from the status bar in onLoad
+    headerHidden: false,
+    scrolled: false
   },
 
   onLoad: function() {
@@ -33,15 +37,41 @@ Page({
     // reset the flags (which would re-fade already-visible images).
     this._imgLoaded = {};
 
-    // Calculate card image height so the full card fits on screen.
-    // Header ~130px + WeChat bars ~56px + card extras (venue+info+buttons+padding) ~200px
     var info = wx.getWindowInfo();
-    var availPx = info.windowHeight - 56 - 130 - 200;
+
+    // The header is one full-width row now, so it must start below the
+    // floating WeChat capsule (custom navigation) — measure it, with a
+    // status-bar fallback.
+    var padTop = 0;
+    try {
+      var menu = wx.getMenuButtonBoundingClientRect();
+      if (menu && menu.bottom) padTop = menu.bottom + 12;
+    } catch (e) {}
+    if (!padTop) padTop = (info.statusBarHeight || 44) + 48;
+
+    // Header total height: capsule clearance + 40px row + 8px bottom pad.
+    // Used by the collapse logic (never hide while the header's own slot
+    // is still on screen) and the card-height math below.
+    var headerPx = padTop + 48;
+    this._hideMinTop = headerPx + 24;
+    this._lastTop = 0;
+    this._scrollDir = 0;
+    this._dirAnchor = 0;
+
+    // Calculate card image height so the full card fits on screen.
+    // Header + card extras (title + CTA + padding) ~190px
+    var availPx = info.windowHeight - headerPx - 190;
     var maxPx = Math.max(availPx, 220); // never smaller than 220px
     // Convert px → rpx (750rpx = screen width)
     var maxRpx = Math.round(maxPx * 750 / info.windowWidth);
     // Cap at 4:5 ratio (937rpx at 750rpx width) so large screens keep portrait look
-    this.setData({ cardImgHeight: Math.min(maxRpx, 937) });
+    this.setData({
+      cardImgHeight: Math.min(maxRpx, 937),
+      headerPadTop: padTop,
+      // Pull-to-refresh spinner sits at the bottom of this area, i.e.
+      // just below the status bar / notch.
+      refresherThreshold: (info.statusBarHeight || 20) + 56
+    });
 
     var today = new Date();
     var monthShort = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -386,6 +416,37 @@ Page({
   },
 
   onReachBottom: function() {},
+
+  // Collapse-on-scroll for the sticky header. Fires on every scroll frame,
+  // so it must stay cheap: setData happens ONLY when one of the two
+  // booleans actually flips. Hysteresis: direction changes are tracked
+  // against an anchor point, and the header only reacts after ~10px of
+  // travel in one direction (so slow creeping scrolls still count, but
+  // jitter doesn't). It never hides while its own slot could still be on
+  // screen (scrollTop < header height + margin), and any scroll-up
+  // reveals it.
+  onFeedScroll: function(e) {
+    var top = e.detail.scrollTop;
+
+    var scrolled = top > 8;
+    if (scrolled !== this.data.scrolled) this.setData({ scrolled: scrolled });
+
+    var delta = top - this._lastTop;
+    this._lastTop = top;
+    if (delta === 0) return;
+
+    var dir = delta > 0 ? 1 : -1;
+    if (dir !== this._scrollDir) {
+      this._scrollDir = dir;
+      this._dirAnchor = top - delta;
+    }
+    if (Math.abs(top - this._dirAnchor) < 10) return;
+
+    var hidden;
+    if (top < this._hideMinTop) hidden = false;
+    else hidden = dir === 1;
+    if (hidden !== this.data.headerHidden) this.setData({ headerHidden: hidden });
+  },
 
   // ===== NAVIGATION =====
 

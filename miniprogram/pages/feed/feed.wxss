@@ -13,47 +13,60 @@ page {
 }
 
 /* ===== HEADER ===== */
+/* Lives INSIDE the scroll-view, stuck to its top. position:sticky keeps
+   the header's layout slot, so collapsing it (translateY + fade below)
+   never reflows the list — no content jump — and pull-to-refresh still
+   works because the header travels down with the pulled content.
+   padding-top is set inline from feed.js (clears the WeChat capsule). */
 .header {
-  background: var(--bg-elevated);
-  padding-top: calc(44rpx + env(safe-area-inset-top));
-  padding-bottom: 20rpx;
-  border-bottom: 1rpx solid var(--border);
-  flex-shrink: 0;
+  position: sticky;
+  top: 0;
   z-index: 100;
+  background: var(--bg-elevated);
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid var(--border);
+  transition: transform 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
 }
 
-.header-top {
-  padding: 0 32rpx 20rpx;
+/* Collapsed on scroll-down (headerHidden flag, flip-only setData) */
+.header--hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
 }
 
-/* Nav Pills */
-.header-nav-pills {
+/* Subtle lift once the list is scrolled at all (scrolled flag) */
+.header--scrolled {
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.08);
+}
+
+/* Single compact row: avatar / search / calendar / my list */
+.header-row {
   display: flex;
-  flex-direction: row;
-  gap: 16rpx;
-}
-
-.nav-pill {
-  display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 12rpx;
-  background: var(--bg-inset);
-  border-radius: 48rpx;
-  padding: 10rpx 24rpx 10rpx 10rpx;
-  border: 1rpx solid var(--border);
+  gap: 16rpx;
+  padding: 0 24rpx;
+}
+
+/* Avatar button (Profile) — round avatar only, no label */
+.avatar-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .pill-avatar {
-  width: 56rpx;
-  height: 56rpx;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 50%;
   background: var(--border);
+  display: block;
 }
 
 .pill-avatar-placeholder {
-  width: 56rpx;
-  height: 56rpx;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 50%;
   background: var(--blue);
   display: flex;
@@ -63,44 +76,33 @@ page {
 
 .pill-avatar-text {
   color: #ffffff;
-  font-size: 26rpx;
+  font-size: 30rpx;
   font-weight: 700;
 }
 
-.pill-icon-wrap {
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 50%;
-  background: var(--border);
+/* My List — icon-only square button, same family as .calendar-btn */
+.mylist-btn {
+  width: 80rpx;
+  height: 80rpx;
+  flex-shrink: 0;
+  border-radius: 20rpx;
+  background: var(--bg-inset);
+  border: 1rpx solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.pill-icon {
-  width: 30rpx;
-  height: 30rpx;
+.mylist-icon {
+  width: 36rpx;
+  height: 36rpx;
   background-color: var(--text-primary);
 }
 
-.pill-label {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-/* Search + Calendar Row */
-.search-row {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  padding: 0 32rpx;
-}
-
-/* Calendar Button */
+/* Calendar Button — compact day+month mini-block */
 .calendar-btn {
-  width: 96rpx;
-  height: 96rpx;
+  width: 80rpx;
+  height: 80rpx;
   flex-shrink: 0;
   border-radius: 20rpx;
   background: var(--bg-inset);
@@ -124,14 +126,14 @@ page {
 }
 
 .calendar-day-num {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1;
 }
 
 .calendar-label {
-  font-size: 20rpx;
+  font-size: 18rpx;
   font-weight: 500;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -141,7 +143,8 @@ page {
 /* Search Bar */
 .search-bar {
   flex: 1;
-  height: 96rpx;
+  min-width: 0;
+  height: 80rpx;
   background: var(--bg-inset);
   border-radius: 20rpx;
   border: 1rpx solid var(--border);
@@ -187,7 +190,7 @@ page {
 
 /* Active Filter Pill — same "date filter active" state as .calendar-btn-active */
 .filter-row {
-  padding: 16rpx 32rpx 0;
+  padding: 16rpx 24rpx 0;
 }
 
 .filter-pill {
@@ -223,6 +226,24 @@ page {
 .feed-scroll {
   flex: 1;
   height: 0;
+}
+
+/* Custom pull-to-refresh area (slot="refresher"): the scroll-view starts
+   at the physical top of the screen now, so the spinner is bottom-aligned
+   inside a status-bar-tall area to stay clear of the notch. Height comes
+   inline from refresherThreshold (feed.js). */
+.feed-refresher {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-sizing: border-box;
+  padding-bottom: 16rpx;
+}
+
+.feed-refresher-spinner {
+  width: 48rpx;
+  height: 48rpx;
+  border-width: 5rpx;
 }
 
 .event-list-container {
@@ -683,6 +704,10 @@ page {
    page-local shades (out of the token palette, or diverging from the
    token's dark value) are overridden below. */
 @media (prefers-color-scheme: dark) {
+  /* Shadows don't read on a black page; the --border bottom line stays
+     as the header's divider */
+  .header--scrolled { box-shadow: none; }
+
   .search-placeholder { color: rgba(255,255,255,0.25); }
   .search-clear { background: #48484A; }
 
