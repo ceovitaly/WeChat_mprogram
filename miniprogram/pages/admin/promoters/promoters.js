@@ -10,12 +10,14 @@ Page({
     showAddModal: false,
     newName: '',
     newPromoCode: '',
+    newPhone: '',
 
     // Action sheet
     showActionSheet: false,
     selectedPromoter: null,
     editPromoCode: '',
-    editName: ''
+    editName: '',
+    editPhone: ''
   },
 
   onShow() {
@@ -51,7 +53,7 @@ Page({
   // ─── Add modal ───────────────────────────────────────────
 
   openAddModal() {
-    this.setData({ showAddModal: true, newName: '', newPromoCode: '' })
+    this.setData({ showAddModal: true, newName: '', newPromoCode: '', newPhone: '' })
   },
 
   closeAddModal() {
@@ -66,8 +68,10 @@ Page({
     this.setData({ newPromoCode: e.detail.value.toUpperCase() })
   },
 
+  onPhoneInput(e) { this.setData({ newPhone: e.detail.value }) },
+
   async createPromoter() {
-    const { newName, newPromoCode } = this.data
+    const { newName, newPromoCode, newPhone } = this.data
 
     if (!newName.trim()) {
       wx.showToast({ title: 'Enter name', icon: 'none' })
@@ -83,7 +87,8 @@ Page({
       const res = await callFunction('manageApplications', {
         action: 'createPromoter',
         name: newName.trim(),
-        promoCode: newPromoCode.trim()
+        promoCode: newPromoCode.trim(),
+        phone: newPhone.trim()
       })
 
       if (res.success) {
@@ -94,6 +99,7 @@ Page({
           _id: res.promoterId,
           name: newName.trim(),
           promoCode: newPromoCode.trim(),
+          phone: newPhone.trim(),
           status: 'approved',
           joinDate: formatDate(new Date()),
           avatarLetter: newName.trim()[0].toUpperCase()
@@ -119,12 +125,13 @@ Page({
       selectedPromoter: promoter,
       showActionSheet: true,
       editPromoCode: promoter.promoCode || '',
-      editName: promoter.name || ''
+      editName: promoter.name || '',
+      editPhone: promoter.phone || ''
     })
   },
 
   closeActions() {
-    this.setData({ showActionSheet: false, selectedPromoter: null, editName: '' })
+    this.setData({ showActionSheet: false, selectedPromoter: null, editName: '', editPhone: '' })
   },
 
   onEditPromoCodeInput(e) {
@@ -135,8 +142,12 @@ Page({
     this.setData({ editName: e.detail.value })
   },
 
+  onEditPhoneInput(e) {
+    this.setData({ editPhone: e.detail.value })
+  },
+
   async savePromoterInfo() {
-    const { selectedPromoter, editName, editPromoCode } = this.data
+    const { selectedPromoter, editName, editPromoCode, editPhone } = this.data
 
     if (!editName.trim()) {
       wx.showToast({ title: 'Enter name', icon: 'none' })
@@ -153,7 +164,8 @@ Page({
         action: 'updatePromoter',
         id: selectedPromoter._id,
         name: editName.trim(),
-        promoCode: editPromoCode.trim()
+        promoCode: editPromoCode.trim(),
+        phone: editPhone.trim()
       })
       if (!res.success) {
         wx.showToast({ title: res.message || 'Error', icon: 'none' })
@@ -164,7 +176,7 @@ Page({
       this.closeActions()
       const updated = this.data.promoters.map(p =>
         p._id === selectedPromoter._id
-          ? { ...p, name: editName.trim(), promoCode: editPromoCode.trim(), avatarLetter: editName.trim()[0].toUpperCase() }
+          ? { ...p, name: editName.trim(), promoCode: editPromoCode.trim(), phone: editPhone.trim(), avatarLetter: editName.trim()[0].toUpperCase() }
           : p
       )
       this.setData({ promoters: updated })

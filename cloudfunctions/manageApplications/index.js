@@ -118,11 +118,11 @@ exports.main = async (event, context) => {
     }
   }
 
-  // UPDATE PROMOTER (name and/or code)
+  // UPDATE PROMOTER (name and/or code and/or phone)
   if (action === 'updatePromoter') {
     try {
-      const { name, promoCode } = event;
-      if (!name && !promoCode) return { success: false, message: 'Nothing to update' };
+      const { name, promoCode, phone } = event;
+      if (!name && !promoCode && phone === undefined) return { success: false, message: 'Nothing to update' };
       if (promoCode) {
         const existing = await db.collection('promoters').where({ promoCode }).get();
         const taken = existing.data.filter(p => p._id !== id);
@@ -131,6 +131,7 @@ exports.main = async (event, context) => {
       const data = { updatedAt: db.serverDate() };
       if (name) data.name = name;
       if (promoCode) data.promoCode = promoCode;
+      if (phone !== undefined) data.phone = phone;
       await db.collection('promoters').doc(id).update({ data });
       return { success: true };
     } catch (e) {
@@ -196,7 +197,7 @@ exports.main = async (event, context) => {
   // CREATE PROMOTER
   if (action === 'createPromoter') {
     try {
-      const { name, promoCode } = event;
+      const { name, promoCode, phone } = event;
       if (!name || !promoCode) {
         return { success: false, message: 'Name and promo code required' };
       }
@@ -208,6 +209,7 @@ exports.main = async (event, context) => {
         data: {
           name,
           promoCode,
+          phone: (phone || '').trim(),
           avatarUrl: '',
           status: 'approved',
           totalGuests: 0,

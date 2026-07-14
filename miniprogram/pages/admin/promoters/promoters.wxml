@@ -75,6 +75,17 @@
           bindinput="onPromoCodeInput"
         />
       </view>
+      <view class="field-row">
+        <text class="field-label">Phone</text>
+        <input
+          class="field-input"
+          type="number"
+          placeholder="Phone number"
+          placeholder-class="field-placeholder"
+          value="{{newPhone}}"
+          bindinput="onPhoneInput"
+        />
+      </view>
     </view>
 
     <view class="modal-footer">
@@ -121,6 +132,17 @@
           value="{{editPromoCode}}"
           bindinput="onEditPromoCodeInput"
           placeholder="CODE"
+          placeholder-class="field-placeholder"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Phone</text>
+        <input
+          class="field-input"
+          type="number"
+          value="{{editPhone}}"
+          bindinput="onEditPhoneInput"
+          placeholder="Phone number"
           placeholder-class="field-placeholder"
         />
       </view>
