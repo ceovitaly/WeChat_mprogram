@@ -9,6 +9,7 @@ Page({
     hasProfile: null,
     showTicketModal: false,
     showRegisterPrompt: false,
+    joinSuccess: false,
     selectedTicketId: '',
     selectedTicketName: '',
     selectedTicketPrice: 0,
@@ -167,7 +168,7 @@ Page({
   },
 
   closeTicketModal: function() {
-    this.setData({ showTicketModal: false, selectedTicketId: '', selectedTicketName: '', selectedTicketPrice: 0, selectedPackageLink: '' });
+    this.setData({ showTicketModal: false, joinSuccess: false, selectedTicketId: '', selectedTicketName: '', selectedTicketPrice: 0, selectedPackageLink: '' });
   },
 
   closeRegisterPrompt: function() {
@@ -227,20 +228,21 @@ Page({
             },
             success: () => {
               wx.hideLoading();
-              this.setData({ isRegistered: true, showTicketModal: false, selectedTicketId: '' });
+              // Presentation change only: the sheet's content swaps to an
+              // animated "You're on the list" state (see .join-success in
+              // the wxss) for ~1.2s instead of a toast, then the sheet
+              // closes and the same navigation as before happens.
+              this.setData({ isRegistered: true, joinSuccess: true, selectedTicketId: '' });
               wx.vibrateShort();
               const pkgLink = this.data.selectedPackageLink;
-              if (pkgLink) {
-                wx.showToast({ title: "You're in! 🎉", icon: 'success' });
-                setTimeout(() => {
+              setTimeout(() => {
+                this.setData({ showTicketModal: false, joinSuccess: false });
+                if (pkgLink) {
                   wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(pkgLink) });
-                }, 1200);
-              } else {
-                wx.showToast({ title: "You're in! 🎉", icon: 'success' });
-                setTimeout(() => {
+                } else {
                   wx.navigateTo({ url: '/pages/mytickets/mytickets' });
-                }, 1500);
-              }
+                }
+              }, 1200);
             },
             fail: err => {
               wx.hideLoading();

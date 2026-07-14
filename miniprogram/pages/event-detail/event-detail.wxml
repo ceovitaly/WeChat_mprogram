@@ -98,6 +98,17 @@
 <bottom-sheet show="{{showTicketModal}}" bind:close="closeTicketModal">
   <view class="ticket-modal">
     <view class="modal-handle"></view>
+
+    <!-- Success moment: shown in place of the ticket list for ~1.2s
+         after a successful registration, then the sheet closes -->
+    <view wx:if="{{joinSuccess}}" class="join-success">
+      <view class="join-success-circle">
+        <view class="join-success-check"></view>
+      </view>
+      <text class="join-success-text">You're on the list</text>
+    </view>
+
+    <block wx:else>
     <text class="modal-title">Get on list</text>
     <text class="modal-subtitle">SELECT TICKET TYPE</text>
 
@@ -190,6 +201,7 @@
     <view class="modal-cancel pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="closeTicketModal">
       <text>Cancel</text>
     </view>
+    </block>
   </view>
 </bottom-sheet>
 
