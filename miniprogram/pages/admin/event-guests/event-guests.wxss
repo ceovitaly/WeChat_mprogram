@@ -191,6 +191,12 @@
   gap: 4rpx;
 }
 
+.guest-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
 .guest-name {
   font-size: 30rpx;
   font-weight: 500;
@@ -199,6 +205,11 @@
 
 .guest-name--arrived { color: #1D9E75; }
 .guest-name--duty { color: #007AFF; }
+
+/* Internal (staff/promoter) badge — colors reused from app.wxss .badge-blue/.badge-orange */
+.internal-badge {
+  flex-shrink: 0;
+}
 
 .guest-sub {
   font-size: 22rpx;

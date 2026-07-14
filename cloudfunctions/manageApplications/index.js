@@ -69,7 +69,24 @@ exports.main = async (event, context) => {
           .get(),
         db.collection('events').doc(event.eventId).get()
       ]);
-      return { success: true, data: regsRes.data, event: eventRes.data };
+
+      const regs = regsRes.data || [];
+
+      // Attach phone from the guests collection (keyed by _openid) so the admin
+      // page can badge registrations that are actually staff/promoters testing
+      // the guest flow. Never written back — read-only annotation.
+      const openids = [...new Set(regs.map(r => r._openid).filter(Boolean))];
+      const phoneByOpenid = {};
+      if (openids.length > 0) {
+        const guestsRes = await db.collection('guests')
+          .where({ _openid: db.command.in(openids) })
+          .field({ _openid: true, phone: true })
+          .get();
+        (guestsRes.data || []).forEach(g => { phoneByOpenid[g._openid] = g.phone || ''; });
+      }
+      const data = regs.map(r => Object.assign({}, r, { phone: phoneByOpenid[r._openid] || '' }));
+
+      return { success: true, data, event: eventRes.data };
     } catch (e) {
       return { success: false, error: e.message };
     }

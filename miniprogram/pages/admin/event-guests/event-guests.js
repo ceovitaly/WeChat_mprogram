@@ -1,5 +1,6 @@
 const { callFunction } = require('../../../utils/request')
 const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { buildInternalRoleMap, annotateInternalRole } = require('../../../utils/phoneMatch')
 
 Page({
   data: {
@@ -16,7 +17,8 @@ Page({
     lastUpdated: '',
     isClosed: false,
     isAdmin: false,
-    promoters: []
+    promoters: [],
+    staffList: []
   },
 
   onLoad(options) {
@@ -29,6 +31,7 @@ Page({
     })
     this._fetch()
     this._fetchPromoters()
+    this._fetchStaff()
     this._timer = setInterval(() => this._fetch(), 10000)
   },
 
@@ -40,6 +43,15 @@ Page({
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getPromoters' })
       this.setData({ promoters: (res && res.data) || [] })
+    } catch (_) {}
+  },
+
+  // Full staff roster (for phone-matching guests against internal people) — distinct
+  // from `dutyStaff` below, which is who's clocked in to work *this* event.
+  async _fetchStaff() {
+    try {
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_STAFF, { action: 'getAll' })
+      this.setData({ staffList: (res && res.data) || [] })
     } catch (_) {}
   },
 
@@ -80,6 +92,7 @@ Page({
       const ap = Number(ev.afterPartyCapacity) || 0
       const lap = Number(ev.lateAfterPartyCapacity) || 0
       const groupOrder = { 'P': 0, 'AP': 1, 'LAP': 2, '': 3 }
+      const roleMap = buildInternalRoleMap(this.data.staffList, this.data.promoters)
       const arrived = regs
         .filter(g => g.arrivedAt)
         .sort((a, b) => (a.arrivedAt < b.arrivedAt ? -1 : 1))
@@ -92,7 +105,8 @@ Page({
           return { ...g, position: num, group }
         })
         .sort((a, b) => (groupOrder[a.group] ?? 3) - (groupOrder[b.group] ?? 3))
-      const pending = regs.filter(g => !g.arrivedAt)
+        .map(g => annotateInternalRole(g, roleMap))
+      const pending = regs.filter(g => !g.arrivedAt).map(g => annotateInternalRole(g, roleMap))
 
       const arrivedSections = this._buildSections(arrived, p, ap, lap)
 

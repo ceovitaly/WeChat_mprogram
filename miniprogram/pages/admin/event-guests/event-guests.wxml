@@ -78,7 +78,10 @@
             >
               <text class="position-num">{{guest.position}}</text>
               <view class="guest-info">
-                <text class="guest-name guest-name--arrived">{{guest.guestName}}</text>
+                <view class="guest-name-row">
+                  <text class="guest-name guest-name--arrived">{{guest.guestName}}</text>
+                  <text wx:if="{{guest.internalRole}}" class="badge {{guest.internalRole === 'staff' ? 'badge-blue' : 'badge-orange'}} internal-badge">{{guest.internalRole === 'staff' ? 'STAFF' : 'PROMOTER'}}</text>
+                </view>
                 <text class="guest-sub">{{guest.promoterName || '—'}}</text>
               </view>
               <view class="tier-badge tier-badge--{{guest.group === 'P' ? 'p' : guest.group === 'AP' ? 'ap' : guest.group === 'LAP' ? 'lap' : 'e'}}">
@@ -101,7 +104,10 @@
           >
             <view class="pending-dot"></view>
             <view class="guest-info">
-              <text class="guest-name">{{item.guestName}}</text>
+              <view class="guest-name-row">
+                <text class="guest-name">{{item.guestName}}</text>
+                <text wx:if="{{item.internalRole}}" class="badge {{item.internalRole === 'staff' ? 'badge-blue' : 'badge-orange'}} internal-badge">{{item.internalRole === 'staff' ? 'STAFF' : 'PROMOTER'}}</text>
+              </view>
               <text class="guest-sub">{{item.promoterName || '—'}}</text>
             </view>
           </view>
