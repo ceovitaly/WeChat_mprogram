@@ -6,6 +6,7 @@ Page({
     loading: false,
     showModal: false,
     tempName: '',
+    tempPhone: '',
     tempPassword: '',
     tempRole: 'counter',
     editingId: null
@@ -38,6 +39,7 @@ Page({
     this.setData({
       showModal: true,
       tempName: '',
+      tempPhone: '',
       tempPassword: '',
       tempRole: 'counter',
       editingId: null
@@ -51,6 +53,7 @@ Page({
     this.setData({
       showModal: true,
       tempName: item.name,
+      tempPhone: item.phone || '',
       tempPassword: item.password || '',
       tempRole: item.role || 'counter',
       editingId: item._id
@@ -64,6 +67,7 @@ Page({
   stopPropagation() {},
 
   onInputName(e) { this.setData({ tempName: e.detail.value }) },
+  onInputPhone(e) { this.setData({ tempPhone: e.detail.value }) },
   onInputPassword(e) { this.setData({ tempPassword: e.detail.value }) },
 
   selectRole(e) {
@@ -71,7 +75,7 @@ Page({
   },
 
   async confirmSave() {
-    const { tempName, tempPassword, tempRole, editingId } = this.data
+    const { tempName, tempPhone, tempPassword, tempRole, editingId } = this.data
 
     if (!tempName.trim()) {
       wx.showToast({ title: 'Enter name', icon: 'none' })
@@ -86,6 +90,7 @@ Page({
           action: 'update',
           id: editingId,
           name: tempName.trim(),
+          phone: tempPhone.trim(),
           password: tempPassword,
           role: tempRole
         })
@@ -93,13 +98,14 @@ Page({
         wx.showToast({ title: 'Saved!', icon: 'success' })
         this.closeModal()
         const updated = this.data.staffList.map(s =>
-          s._id === editingId ? { ...s, name: tempName.trim(), role: tempRole, ...(tempPassword ? { password: tempPassword } : {}) } : s
+          s._id === editingId ? { ...s, name: tempName.trim(), phone: tempPhone.trim(), role: tempRole, ...(tempPassword ? { password: tempPassword } : {}) } : s
         )
         this.setData({ staffList: updated })
       } else {
         await callFunction('manageStaff', {
           action: 'add',
           name: tempName.trim(),
+          phone: tempPhone.trim(),
           password: tempPassword,
           role: tempRole
         })

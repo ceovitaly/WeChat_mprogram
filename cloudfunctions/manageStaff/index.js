@@ -12,7 +12,7 @@ const generatePassword = (length = 6) => {
 };
 
 exports.main = async (event, context) => {
-  const { action, id, name, password, role } = event;
+  const { action, id, name, password, role, phone } = event;
 
   // GET ALL STAFF
   if (action === 'getAll') {
@@ -33,6 +33,7 @@ exports.main = async (event, context) => {
           name: name.trim(),
           password: finalPassword,
           role: role || 'counter',
+          phone: (phone || '').trim(),
           createdAt: db.serverDate(),
           updatedAt: db.serverDate()
         }
@@ -49,6 +50,7 @@ exports.main = async (event, context) => {
       const updateData = {
         name: name.trim(),
         role: role || 'counter',
+        phone: (phone || '').trim(),
         updatedAt: db.serverDate()
       };
       if (password) updateData.password = password;

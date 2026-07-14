@@ -29,6 +29,7 @@
             </view>
           </view>
           <text class="item-sub">Pass: {{item.password || '—'}}</text>
+          <text wx:if="{{item.phone}}" class="item-sub">{{item.phone}}</text>
         </view>
       </view>
     </view>
@@ -58,6 +59,18 @@
           placeholder-class="field-placeholder"
           value="{{tempName}}"
           bindinput="onInputName"
+          confirm-type="next"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Phone</text>
+        <input
+          class="field-input"
+          type="number"
+          placeholder="Phone number"
+          placeholder-class="field-placeholder"
+          value="{{tempPhone}}"
+          bindinput="onInputPhone"
           confirm-type="next"
         />
       </view>
