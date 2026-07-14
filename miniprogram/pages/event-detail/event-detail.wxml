@@ -27,16 +27,34 @@
       <text class="info-title">{{event.title}}</text>
     </view>
 
-    <!-- Block 2: venue + map -->
-    <view class="venue-block" bindtap="openMap">
-      <view class="venue-loc-icon">
-        <view class="venue-loc-ring"></view>
-        <view class="venue-loc-dot"></view>
+    <!-- Block 2: venue card — name + full address, with an embedded
+         static mini-map preview when coordinates are known. The whole
+         card opens the system map (openMap). The map is display-only:
+         all gestures are disabled and a transparent cover (which also
+         hosts the CSS center pin) keeps taps bubbling to the card. -->
+    <view class="venue-card pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openMap">
+      <view class="venue-info">
+        <view class="venue-name-row">
+          <view class="icon icon--pin venue-pin"></view>
+          <text class="venue-name">{{event.venueName || 'TBA'}}</text>
+        </view>
+        <text wx:if="{{event.venueAddress}}" class="venue-address">{{event.venueAddress}}</text>
       </view>
-      <text class="venue-block-name">{{event.venueName || 'TBA'}}</text>
-      <view class="venue-v-line"></view>
-      <view class="map-icon-btn">
-        <view class="map-pin-body"></view>
+      <view wx:if="{{event.venueLatitude && event.venueLongitude}}" class="venue-map-wrap">
+        <map
+          class="venue-map"
+          latitude="{{event.venueLatitude}}"
+          longitude="{{event.venueLongitude}}"
+          scale="15"
+          enable-zoom="{{false}}"
+          enable-scroll="{{false}}"
+          enable-rotate="{{false}}"
+          show-compass="{{false}}"
+          show-scale="{{false}}"
+        ></map>
+        <view class="venue-map-cover">
+          <view class="venue-map-pin"></view>
+        </view>
       </view>
     </view>
 

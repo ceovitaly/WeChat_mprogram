@@ -72,23 +72,7 @@ Page({
         this.setData({ event });
         wx.setNavigationBarTitle({ title: event.title || '' });
 
-        if (event.venueId) {
-          db.collection('venues').doc(event.venueId).get({
-            success: function(venueRes) {
-              var v = venueRes.data;
-              var lat = v.latitude || (v.coordinates && v.coordinates.lat) || 0;
-              var lng = v.longitude || (v.coordinates && v.coordinates.lng) || 0;
-              if (lat && lng) {
-                this.setData({
-                  'event.venueLatitude': lat,
-                  'event.venueLongitude': lng,
-                  'event.venueAddress': v.address || ''
-                });
-              }
-            }.bind(this),
-            fail: function() {}
-          });
-        }
+        this.loadVenueInfo(event);
 
         wx.hideLoading();
         this.checkIfRegistered(id);
@@ -102,6 +86,42 @@ Page({
         console.error(err);
       }
     });
+  },
+
+  // Venue address + coordinates live in the venues collection. Prefer the
+  // venueId reference (what the admin app writes today); fall back to a
+  // name lookup for older events that only carry the venueName string
+  // (events reference venues by venueName in the shared data model).
+  loadVenueInfo: function(event) {
+    var db = this.cloud.database();
+    var apply = this.applyVenue.bind(this);
+    if (event.venueId) {
+      db.collection('venues').doc(event.venueId).get({
+        success: function(res) { apply(res.data); },
+        fail: function() {}
+      });
+    } else if (event.venueName) {
+      db.collection('venues').where({ name: event.venueName }).limit(1).get({
+        success: function(res) { if (res.data && res.data.length > 0) apply(res.data[0]); },
+        fail: function() {}
+      });
+    }
+  },
+
+  // Older venue docs store coordinates as coordinates.lat/lng instead of
+  // latitude/longitude — same fallback the admin app's venue-edit reads.
+  // The address is applied even without coordinates (the mini-map hides
+  // itself via wx:if, the address still shows).
+  applyVenue: function(v) {
+    if (!v) return;
+    var lat = v.latitude || (v.coordinates && v.coordinates.lat) || 0;
+    var lng = v.longitude || (v.coordinates && v.coordinates.lng) || 0;
+    var patch = { 'event.venueAddress': v.address || '' };
+    if (lat && lng) {
+      patch['event.venueLatitude'] = lat;
+      patch['event.venueLongitude'] = lng;
+    }
+    this.setData(patch);
   },
 
   checkProfile: function() {
