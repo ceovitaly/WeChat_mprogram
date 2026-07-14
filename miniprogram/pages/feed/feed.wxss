@@ -276,31 +276,6 @@ page {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Venue bar */
-.card-venue-bar {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  padding: 20rpx 28rpx;
-  background: var(--bg-inset);
-  border-bottom: 1rpx solid var(--bg-inset);
-}
-
-.venue-dot {
-  width: 16rpx;
-  height: 16rpx;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
-.card-venue-bar-name {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #3A3A3C;
-  letter-spacing: 0.3rpx;
-}
-
 /* Media — portrait ratio, height set dynamically via JS */
 .card-media-wrap {
   position: relative;
@@ -328,6 +303,82 @@ page {
   opacity: 1;
 }
 
+/* Bottom vignette on the card image so the white venue chip text stays
+   legible over bright photos (fixed dark rgba — works in both themes) */
+.card-media-gradient {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 35%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+/* Date chip — top-left over the image. Plain translucent fill, no
+   backdrop blur (inconsistent on Android in the classic engine). */
+.card-date-chip {
+  position: absolute;
+  top: 16rpx;
+  left: 16rpx;
+  min-width: 84rpx;
+  padding: 10rpx 16rpx;
+  border-radius: 16rpx;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  box-sizing: border-box;
+}
+
+.chip-day {
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.chip-month {
+  font-size: 18rpx;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 1.5rpx;
+  line-height: 1;
+}
+
+/* Venue chip — bottom-left over the gradient */
+.card-venue-chip {
+  position: absolute;
+  left: 16rpx;
+  bottom: 16rpx;
+  max-width: calc(100% - 32rpx);
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 32rpx;
+  padding: 10rpx 20rpx 10rpx 14rpx;
+  box-sizing: border-box;
+}
+
+.venue-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.card-venue-chip-name {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.3rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .img-count-badge {
   position: absolute;
   top: 16rpx;
@@ -352,33 +403,26 @@ page {
   background-color: #ffffff;
 }
 
-/* Card info */
+/* Card info — title only; date/venue moved onto the image chips */
 .card-info {
-  padding: 28rpx 32rpx 20rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.card-datetime {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: var(--text-secondary);
-  letter-spacing: 0.3rpx;
+  padding: 24rpx 32rpx 4rpx;
 }
 
 .card-title {
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 1.3;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Get Ticket Button — primary brand CTA */
+/* Get Ticket Button — primary brand CTA, full width under the title */
 .card-btn-wrap {
-  padding: 0 32rpx 32rpx;
+  padding: 20rpx 32rpx 32rpx;
   display: flex;
-  gap: 16rpx;
   align-items: center;
 }
 
@@ -413,25 +457,6 @@ page {
   display: none;
 }
 
-.more-btn {
-  flex-shrink: 0;
-  height: 88rpx;
-  line-height: 88rpx;
-  padding: 0 32rpx;
-  background: var(--bg-inset);
-  color: var(--text-primary);
-  font-size: 28rpx;
-  font-weight: 600;
-  border-radius: 18rpx;
-  border: none;
-  text-align: center;
-  margin: 0;
-}
-
-.more-btn::after {
-  border: none;
-}
-
 /* ===== SKELETON LOADING ===== */
 .skeleton-card {
   background: var(--bg-elevated);
@@ -462,17 +487,9 @@ page {
   animation: shimmer 1.4s infinite;
 }
 
-.skeleton-line-sm {
-  width: 40%;
-}
-
 .skeleton-line-lg {
   width: 75%;
-  height: 36rpx;
-}
-
-.skeleton-line-md {
-  width: 55%;
+  height: 40rpx;
 }
 
 .skeleton-btn {
@@ -715,9 +732,6 @@ page {
   .filter-pill { background: rgba(255, 107, 53, 0.18); }
 
   .event-card { box-shadow: none; }
-  /* card-venue-bar's border reads as a real divider in dark mode (--border),
-     not the barely-there bg-inset blend it uses in light mode */
-  .card-venue-bar { border-bottom-color: var(--border); }
 
   .skeleton-img,
   .skeleton-line,

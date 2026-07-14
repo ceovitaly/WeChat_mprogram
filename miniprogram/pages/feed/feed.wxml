@@ -86,9 +86,7 @@
       <view wx:for="{{[1,2,3]}}" wx:key="*this" class="skeleton-card">
         <view class="skeleton-img"></view>
         <view class="skeleton-body">
-          <view class="skeleton-line skeleton-line-sm"></view>
           <view class="skeleton-line skeleton-line-lg"></view>
-          <view class="skeleton-line skeleton-line-md"></view>
           <view class="skeleton-btn"></view>
         </view>
       </view>
@@ -107,13 +105,7 @@
         bindtap="goToDetail"
         data-id="{{item._id}}"
       >
-        <!-- Venue bar (top) -->
-        <view class="card-venue-bar">
-          <view class="venue-dot"></view>
-          <text class="card-venue-bar-name">{{item.venueName || 'Venue'}}</text>
-        </view>
-
-        <!-- Image -->
+        <!-- Image with chip overlays -->
         <view class="card-media-wrap" style="height:{{cardImgHeight}}rpx">
           <image
             src="{{item.promoImages[0] || '/images/placeholder.png'}}"
@@ -124,15 +116,23 @@
             data-id="{{item._id}}"
             data-index="{{index}}"
           />
+          <view class="card-media-gradient"></view>
+          <view wx:if="{{item.chipDay}}" class="card-date-chip">
+            <text class="chip-day">{{item.chipDay}}</text>
+            <text class="chip-month">{{item.chipMonth}}</text>
+          </view>
           <view wx:if="{{item.promoImages.length > 1}}" class="img-count-badge">
             <text class="img-count-txt">{{item.promoImages.length}}</text>
             <view class="icon icon--camera img-count-icon"></view>
           </view>
+          <view class="card-venue-chip">
+            <view class="venue-dot"></view>
+            <text class="card-venue-chip-name">{{item.venueName || 'Venue'}}</text>
+          </view>
         </view>
 
-        <!-- Event info -->
+        <!-- Title + CTA -->
         <view class="card-info">
-          <text class="card-datetime">{{item.displayDatetime}}</text>
           <text class="card-title">{{item.title}}</text>
         </view>
         <view class="card-btn-wrap">
@@ -154,16 +154,6 @@
           >
             <text class="registered-badge-txt">✓ You're on the list</text>
           </view>
-          <button
-            class="more-btn pressable"
-            hover-class="pressed"
-            hover-start-time="20"
-            hover-stay-time="80"
-            catchtap="goToDetail"
-            data-id="{{item._id}}"
-          >
-            More
-          </button>
         </view>
 
       </view>

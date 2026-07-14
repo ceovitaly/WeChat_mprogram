@@ -366,15 +366,23 @@ Page({
 
   processEvents: function(events) {
     var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var monthShort = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
     var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     var eventDates = [];
 
     events.forEach(function(event) {
+      // Chip fields default empty: the card's date chip hides via wx:if
+      // when the date is missing/unparseable.
+      event.chipDay = '';
+      event.chipMonth = '';
       if (event.date) {
         var parts = event.date.split('-');
         if (parts.length === 3) {
           var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
           event.displayDate = dayNames[d.getDay()] + ', ' + d.getDate() + ' ' + monthNames[d.getMonth()];
+          // Compact form for the card's date chip (image overlay)
+          event.chipDay = d.getDate();
+          event.chipMonth = monthShort[d.getMonth()];
         } else {
           event.displayDate = event.date;
         }
