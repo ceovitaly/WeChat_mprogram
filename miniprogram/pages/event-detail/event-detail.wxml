@@ -11,31 +11,19 @@
   </block>
   <block wx:elif="{{event.promoImage}}">
     <image src="{{event.promoImage}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
-    <view class="hero-gradient"></view>
   </block>
   <view wx:else class="image-placeholder">
     <text class="placeholder-text">No Image</text>
-  </view>
-
-  <!-- Date/time + title over the hero. Sibling of the image/swiper blocks
-       so it never swipes away with slides. event.promoImage is guaranteed
-       set (from promoImages[0]/coverImage) whenever any image exists, so
-       it doubles as the "has hero image" flag. Bottom padding keeps the
-       text above the swiper's indicator dots and the main-card overlap. -->
-  <view wx:if="{{event.promoImage}}" class="hero-overlay">
-    <text class="hero-datetime">{{event.displayDatetime || event.displayDate || event.date}}</text>
-    <text class="hero-title">{{event.title}}</text>
   </view>
 </view>
 
 <scroll-view class="content-scroll" scroll-y enhanced show-scrollbar="false">
 <view class="main-card">
 
-    <!-- Block 1: date/time + title — only when there is no hero image to
-         carry the overlay (a title floating on the gray placeholder reads
-         as broken) -->
-    <view class="info-block" wx:if="{{event && !event.promoImage}}">
-      <text class="info-datetime">{{event.displayDatetime || event.displayDate || event.date}}</text>
+    <!-- Block 1: date/time + title — the hero stays clean (image only);
+         this block opens the scroll content for every event. -->
+    <view class="info-block" wx:if="{{event}}">
+      <text wx:if="{{event.displayDatetimeShort || event.date}}" class="info-datetime">{{event.displayDatetimeShort || event.date}}</text>
       <text class="info-title">{{event.title}}</text>
     </view>
 

@@ -2,6 +2,20 @@ const app = getApp();
 const auth = require('../../utils/auth.js');
 const { resolveEventImages } = require('../../utils/cloud.js');
 
+// Short competitor-style datetime line ("Sat, Jul 18 • 22:00") for the
+// info block and the related-events cards. Rendered uppercase via CSS
+// (text-transform), so the string itself stays mixed-case.
+var DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+var MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function formatShortDatetime(dateStr, startTime) {
+  if (!dateStr) return '';
+  var parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr + (startTime ? ' • ' + startTime : '');
+  var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  var s = DAYS_SHORT[d.getDay()] + ', ' + MONTHS_SHORT[d.getMonth()] + ' ' + d.getDate();
+  return s + (startTime ? ' • ' + startTime : '');
+}
+
 Page({
   data: {
     event: null,
@@ -54,14 +68,7 @@ Page({
           }
         }
 
-        if (event.date) {
-          const _parts = event.date.split('-');
-          const _d = new Date(parseInt(_parts[0], 10), parseInt(_parts[1], 10) - 1, parseInt(_parts[2], 10));
-          const _days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-          const _months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-          event.displayDate = _days[_d.getDay()] + ', ' + _d.getDate() + ' ' + _months[_d.getMonth()];
-          event.displayDatetime = event.displayDate + (event.startTime ? '  ·  ' + event.startTime : '');
-        }
+        event.displayDatetimeShort = formatShortDatetime(event.date, event.startTime);
         this.setData({ event });
         wx.setNavigationBarTitle({ title: event.title || '' });
 
