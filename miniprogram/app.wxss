@@ -82,6 +82,23 @@ page {
   background-color: var(--text-secondary);
 }
 
+/* ── Press feedback ──
+   WeChat applies hover-class as a class swap (not a pseudo-class), so
+   the transition must live on the base element for a smooth release.
+   Usage: class="... pressable" hover-class="pressed" (cards/buttons)
+   or hover-class="pressed-soft" (list rows / text rows). Pair with
+   hover-start-time="20" hover-stay-time="80" for a snappy feel. */
+.pressable {
+  transition: transform 0.16s ease, opacity 0.16s ease;
+}
+.pressed {
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+.pressed-soft {
+  opacity: 0.7;
+}
+
 /* ── Shared nav ── */
 .nav-bar {
   background: var(--bg-elevated);

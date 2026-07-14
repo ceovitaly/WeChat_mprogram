@@ -52,7 +52,10 @@
         <view
           wx:for="{{activeTickets}}"
           wx:key="_id"
-          class="ticket-card"
+          class="ticket-card pressable"
+          hover-class="pressed"
+          hover-start-time="20"
+          hover-stay-time="80"
           bindtap="goToEvent"
           data-id="{{item.eventId}}"
         >
@@ -82,7 +85,10 @@
         <view
           wx:for="{{pastTickets}}"
           wx:key="_id"
-          class="ticket-card ticket-card-past"
+          class="ticket-card ticket-card-past pressable"
+          hover-class="pressed"
+          hover-start-time="20"
+          hover-stay-time="80"
           bindtap="goToEvent"
           data-id="{{item.eventId}}"
         >

@@ -86,7 +86,7 @@
       <view class="name-save-btn" bindtap="saveNameEdit">
         <text class="name-save-text">Save</text>
       </view>
-      <view class="name-cancel-btn" bindtap="closeNameEdit">
+      <view class="name-cancel-btn pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="closeNameEdit">
         <text class="name-cancel-text">Cancel</text>
       </view>
     </view>

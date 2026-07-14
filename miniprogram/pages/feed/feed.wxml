@@ -5,7 +5,7 @@
 <view class="header">
   <view class="header-top">
     <view class="header-nav-pills">
-      <view class="nav-pill" bindtap="goToProfile">
+      <view class="nav-pill pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToProfile">
         <image
           wx:if="{{userInfo && userInfo.avatarUrl}}"
           src="{{userInfo.avatarUrl}}"
@@ -17,7 +17,7 @@
         </view>
         <text class="pill-label">Profile</text>
       </view>
-      <view class="nav-pill" bindtap="goToTickets">
+      <view class="nav-pill pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToTickets">
         <view class="pill-icon-wrap">
           <view class="icon icon--list pill-icon"></view>
         </view>
@@ -28,7 +28,7 @@
 
   <!-- Search + Calendar row -->
   <view class="search-row">
-    <view class="calendar-btn {{selectedDate ? 'calendar-btn-active' : ''}}" bindtap="toggleCalendar">
+    <view class="calendar-btn pressable {{selectedDate ? 'calendar-btn-active' : ''}}" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="toggleCalendar">
       <text class="calendar-day-num">{{selectedDate ? selectedDateNum : todayNum}}</text>
       <text class="calendar-label">{{selectedDate ? selectedDateMonth : todayMonth}}</text>
     </view>
@@ -51,7 +51,7 @@
 
   <!-- Active filter pill -->
   <view wx:if="{{selectedDate}}" class="filter-row">
-    <view class="filter-pill" bindtap="clearDateFilter">
+    <view class="filter-pill pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="clearDateFilter">
       <view class="icon icon--calendar filter-pill-icon"></view>
       <text class="filter-pill-txt">{{selectedDate}}</text>
       <view class="icon icon--close filter-pill-remove"></view>
@@ -92,7 +92,10 @@
       <view
         wx:for="{{filteredEvents}}"
         wx:key="_id"
-        class="event-card"
+        class="event-card pressable"
+        hover-class="pressed"
+        hover-start-time="20"
+        hover-stay-time="80"
         style="animation-delay: {{item.animDelay}}ms"
         bindtap="goToDetail"
         data-id="{{item._id}}"
@@ -108,8 +111,11 @@
           <image
             src="{{item.promoImages[0] || '/images/placeholder.png'}}"
             mode="aspectFill"
-            class="card-img"
+            class="card-img {{item.imgLoaded ? 'card-img--loaded' : ''}}"
             lazy-load="{{true}}"
+            bindload="onCardImgLoad"
+            data-id="{{item._id}}"
+            data-index="{{index}}"
           />
           <view wx:if="{{item.promoImages.length > 1}}" class="img-count-badge">
             <text class="img-count-txt">{{item.promoImages.length}}</text>
@@ -125,7 +131,10 @@
         <view class="card-btn-wrap">
           <button
             wx:if="{{!item.isRegistered}}"
-            class="get-ticket-btn"
+            class="get-ticket-btn pressable"
+            hover-class="pressed"
+            hover-start-time="20"
+            hover-stay-time="80"
             catchtap="goToTicketDirect"
             data-id="{{item._id}}"
           >
@@ -139,7 +148,10 @@
             <text class="registered-badge-txt">✓ You're on the list</text>
           </view>
           <button
-            class="more-btn"
+            class="more-btn pressable"
+            hover-class="pressed"
+            hover-start-time="20"
+            hover-stay-time="80"
             catchtap="goToDetail"
             data-id="{{item._id}}"
           >

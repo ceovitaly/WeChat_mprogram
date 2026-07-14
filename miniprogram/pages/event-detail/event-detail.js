@@ -13,7 +13,8 @@ Page({
     selectedTicketName: '',
     selectedTicketPrice: 0,
     selectedPackageLink: '',
-    heroHeight: 560
+    heroHeight: 560,
+    heroLoaded: false
   },
 
   onLoad: function(options) {
@@ -255,6 +256,13 @@ Page({
         }
       });
     });
+  },
+
+  // Fade the hero in on first load (see .hero-image in event-detail.wxss).
+  // One shared flag: only the initially-visible image's pop-in is user-
+  // visible; later swiper slides load offscreen.
+  onHeroLoad: function() {
+    if (!this.data.heroLoaded) this.setData({ heroLoaded: true });
   },
 
   previewHeroImage: function(e) {

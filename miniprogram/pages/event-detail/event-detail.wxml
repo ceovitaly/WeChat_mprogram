@@ -4,13 +4,13 @@
   <block wx:if="{{event.promoImages && event.promoImages.length > 1}}">
     <swiper class="hero-swiper" style="height:{{heroHeight}}rpx" indicator-dots="{{true}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#ffffff" circular="{{true}}">
       <swiper-item wx:for="{{event.promoImages}}" wx:for-item="img" wx:key="*this">
-        <image src="{{img}}" class="hero-image" style="height:{{heroHeight}}rpx" mode="aspectFill" catchtap="previewHeroImage" data-url="{{img}}" />
+        <image src="{{img}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{img}}" />
       </swiper-item>
     </swiper>
     <view class="hero-gradient"></view>
   </block>
   <block wx:elif="{{event.promoImage}}">
-    <image src="{{event.promoImage}}" class="hero-image" style="height:{{heroHeight}}rpx" mode="aspectFill" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
+    <image src="{{event.promoImage}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
     <view class="hero-gradient"></view>
   </block>
   <view wx:else class="image-placeholder">
@@ -81,14 +81,14 @@
       <text class="registered-icon">✓</text>
       <text class="registered-text">You're on the list</text>
     </view>
-    <button class="btn-share" open-type="share">Share</button>
+    <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">Share</button>
   </view>
   <view wx:else class="action-row">
-    <button class="btn-register" bindtap="openTicketModal">
+    <button class="btn-register pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="openTicketModal">
       <view class="icon icon--list btn-register-icon"></view>
       <text>Get on list</text>
     </button>
-    <button class="btn-share" open-type="share">Share</button>
+    <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">Share</button>
   </view>
 </view>
 
@@ -104,7 +104,10 @@
     <!-- Free entry option -->
     <view
       wx:if="{{event.isFree}}"
-      class="ticket-option {{selectedTicketId === 'free' ? 'ticket-selected' : ''}}"
+      class="ticket-option pressable {{selectedTicketId === 'free' ? 'ticket-selected' : ''}}"
+      hover-class="pressed-soft"
+      hover-start-time="20"
+      hover-stay-time="80"
       bindtap="selectTicket"
       data-id="free"
       data-name="Free Entry"
@@ -124,7 +127,10 @@
     <view
       wx:for="{{event.tickets}}"
       wx:key="id"
-      class="ticket-option {{selectedTicketId === item.id ? 'ticket-selected' : ''}}"
+      class="ticket-option pressable {{selectedTicketId === item.id ? 'ticket-selected' : ''}}"
+      hover-class="pressed-soft"
+      hover-start-time="20"
+      hover-stay-time="80"
       bindtap="selectTicket"
       data-id="{{item.id}}"
       data-name="{{item.name}}"
@@ -146,7 +152,10 @@
       wx:for="{{event.paidPackages}}"
       wx:for-index="idx"
       wx:key="idx"
-      class="ticket-option {{selectedTicketId === 'pkg_' + idx ? 'ticket-selected' : ''}}"
+      class="ticket-option pressable {{selectedTicketId === 'pkg_' + idx ? 'ticket-selected' : ''}}"
+      hover-class="pressed-soft"
+      hover-start-time="20"
+      hover-stay-time="80"
       bindtap="selectPackage"
       data-idx="{{idx}}"
       data-name="{{item.name}}"
@@ -168,14 +177,17 @@
 
     <button
       wx:if="{{selectedTicketId}}"
-      class="register-btn"
+      class="register-btn pressable"
+      hover-class="pressed"
+      hover-start-time="20"
+      hover-stay-time="80"
       style="width:100%;margin:0;box-sizing:border-box;"
       bindtap="handleJoin"
     >
       Join
     </button>
 
-    <view class="modal-cancel" bindtap="closeTicketModal">
+    <view class="modal-cancel pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="closeTicketModal">
       <text>Cancel</text>
     </view>
   </view>
@@ -187,8 +199,8 @@
     <view class="modal-handle"></view>
     <text class="modal-title">Not registered</text>
     <text class="prompt-desc">To get on the list, you need to register in the app first.</text>
-    <button class="register-btn" style="width:100%;margin:0;box-sizing:border-box;" bindtap="goRegister">Join</button>
-    <view class="modal-cancel" bindtap="closeRegisterPrompt">
+    <button class="register-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" style="width:100%;margin:0;box-sizing:border-box;" bindtap="goRegister">Join</button>
+    <view class="modal-cancel pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="closeRegisterPrompt">
       <text>Cancel</text>
     </view>
   </view>

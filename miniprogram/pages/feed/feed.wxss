@@ -44,11 +44,6 @@ page {
   border: 1rpx solid var(--border);
 }
 
-.nav-pill:active {
-  background: var(--border);
-  transform: scale(0.97);
-}
-
 .pill-avatar {
   width: 56rpx;
   height: 56rpx;
@@ -115,11 +110,6 @@ page {
   align-items: center;
   justify-content: center;
   gap: 2rpx;
-}
-
-.calendar-btn:active {
-  background: var(--border);
-  transform: scale(0.95);
 }
 
 /* Active date filter — brand emphasis, not a system action */
@@ -254,13 +244,10 @@ page {
   box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.08);
   border: 1rpx solid var(--bg-inset);
   /* Stagger entrance: per-card delay comes from item.animDelay (feed.js),
-     computed alongside the other display fields on each event object. */
-  animation: cardIn 0.4s ease-out both;
-}
-
-.event-card:active {
-  transform: scale(0.99);
-  opacity: 0.95;
+     computed alongside the other display fields on each event object.
+     `backwards` (not `both`): a forwards fill would keep the keyframe's
+     transform applied forever and override the hover-class press scale. */
+  animation: cardIn 0.4s ease-out backwards;
 }
 
 @keyframes cardIn {
@@ -306,10 +293,18 @@ page {
   height: 100%;
 }
 
+/* Images fade in over the dark media-wrap placeholder once loaded
+   (imgLoaded flag set by bindload in feed.js) instead of popping in */
 .card-img {
   width: 100%;
   height: 100%;
   display: block;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card-img--loaded {
+  opacity: 1;
 }
 
 .img-count-badge {

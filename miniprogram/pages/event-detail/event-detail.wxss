@@ -31,10 +31,18 @@ page {
   width: 100%;
   height: 560rpx;
 }
+/* Hero fades in over the .hero-section placeholder once loaded
+   (heroLoaded flag set by bindload in event-detail.js) */
 .hero-image {
   width: 100%;
   height: 560rpx;
   display: block;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.hero-image--loaded {
+  opacity: 1;
 }
 /* Bottom-darkening vignette so the swiper's indicator dots (and the hero
    photo generally) stay legible against bright/busy images. Non-interactive
