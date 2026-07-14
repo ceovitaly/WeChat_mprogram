@@ -255,6 +255,84 @@ page {
   flex-shrink: 0;
 }
 
+/* "You May Also Like" — horizontal strip of mini event cards. The strip
+   bleeds edge-to-edge past the main-card's 40rpx padding (negative
+   margins on the scroll, matching padding on the list) so cards scroll
+   under the screen edges. */
+.related-scroll {
+  width: auto;
+  margin: 0 -40rpx;
+  white-space: nowrap;
+}
+
+.related-list {
+  display: flex;
+  gap: 20rpx;
+  padding: 0 40rpx;
+}
+
+.related-card {
+  width: 320rpx;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.related-img {
+  width: 320rpx;
+  height: 180rpx;
+  border-radius: 16rpx;
+  background: var(--bg-inset);
+  flex-shrink: 0;
+  margin-bottom: 6rpx;
+}
+
+.related-datetime {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 1.5rpx;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.related-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.related-venue {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.related-venue-pin {
+  width: 24rpx;
+  height: 24rpx;
+  background-color: var(--text-secondary);
+}
+
+.related-venue-name {
+  min-width: 0;
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Action bar */
 .action-bar {
   flex-shrink: 0;

@@ -101,6 +101,35 @@
       </view>
     </view>
 
+    <!-- Other upcoming events (loaded after the main event renders;
+         hidden entirely when there's nothing else upcoming) -->
+    <view class="section section--related" wx:if="{{relatedEvents.length > 0}}">
+      <text class="section-label">YOU MAY ALSO LIKE</text>
+      <scroll-view scroll-x class="related-scroll" enhanced show-scrollbar="{{false}}">
+        <view class="related-list">
+          <view
+            wx:for="{{relatedEvents}}"
+            wx:key="_id"
+            class="related-card pressable"
+            hover-class="pressed"
+            hover-start-time="20"
+            hover-stay-time="80"
+            bindtap="goToRelated"
+            data-id="{{item._id}}"
+          >
+            <image wx:if="{{item.cardImage}}" src="{{item.cardImage}}" class="related-img" mode="aspectFill" lazy-load />
+            <view wx:else class="related-img"></view>
+            <text class="related-datetime">{{item.displayDatetimeShort}}</text>
+            <text class="related-title">{{item.title}}</text>
+            <view class="related-venue" wx:if="{{item.venueName}}">
+              <view class="icon icon--pin related-venue-pin"></view>
+              <text class="related-venue-name">{{item.venueName}}</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
   </view>
 </scroll-view>
 

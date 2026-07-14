@@ -29,7 +29,8 @@ Page({
     selectedTicketPrice: 0,
     selectedPackageLink: '',
     heroHeight: 560,
-    heroLoaded: false
+    heroLoaded: false,
+    relatedEvents: []
   },
 
   onLoad: function(options) {
@@ -76,6 +77,9 @@ Page({
 
         wx.hideLoading();
         this.checkIfRegistered(id);
+        // Deferred: the main event has rendered; this only fills the
+        // "You May Also Like" strip at the bottom of the scroll.
+        this.loadRelatedEvents(id);
         if (this._autoTicket) {
           this._autoTicket = false;
           this.openTicketModal();
@@ -306,6 +310,69 @@ Page({
         }
       });
     });
+  },
+
+  // "You May Also Like": other upcoming events from the same source as
+  // the feed — the events collection with a date-only filter (the feed
+  // applies no status/visibility filters either, see feed.js
+  // fetchEvents/applyFilters), same 5 AM cutoff so night events count as
+  // "today" until the morning. Sorted date-then-time ascending like the
+  // feed, current event excluded, capped at 8. Images resolved in one
+  // batched resolveEventImages call after the feed's promoImages
+  // normalization (promoImages -> images -> promoImage -> coverImage).
+  loadRelatedEvents: function(currentId) {
+    var self = this;
+    var db = this.cloud.database();
+    var _ = db.command;
+
+    var now = new Date();
+    if (now.getHours() < 5) now.setDate(now.getDate() - 1);
+    var todayStr = now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0');
+
+    db.collection('events')
+      .where({ date: _.gte(todayStr) })
+      .orderBy('date', 'asc')
+      .limit(9)
+      .get()
+      .then(function(res) {
+        var events = (res.data || [])
+          .filter(function(e) { return e._id !== currentId; })
+          .slice(0, 8);
+        if (events.length === 0) return;
+
+        events.sort(function(a, b) {
+          var dc = (a.date || '').localeCompare(b.date || '');
+          return dc !== 0 ? dc : (a.startTime || '').localeCompare(b.startTime || '');
+        });
+
+        events.forEach(function(e) {
+          if (!Array.isArray(e.promoImages) || e.promoImages.length === 0) {
+            if (Array.isArray(e.images) && e.images.length > 0) e.promoImages = e.images;
+            else if (e.promoImage) e.promoImages = [e.promoImage];
+            else if (e.coverImage) e.promoImages = [e.coverImage];
+            else e.promoImages = [];
+          }
+        });
+
+        return resolveEventImages(events).then(function(list) {
+          list.forEach(function(e) {
+            e.cardImage = e.promoImages[0] || '';
+            e.displayDatetimeShort = formatShortDatetime(e.date, e.startTime);
+          });
+          self.setData({ relatedEvents: list });
+        });
+      })
+      .catch(function(err) {
+        console.error('[event-detail] loadRelatedEvents failed:', err);
+      });
+  },
+
+  goToRelated: function(e) {
+    var id = e.currentTarget.dataset.id;
+    if (!id) return;
+    wx.navigateTo({ url: '/pages/event-detail/event-detail?id=' + id });
   },
 
   // Fade the hero in on first load (see .hero-image in event-detail.wxss).
