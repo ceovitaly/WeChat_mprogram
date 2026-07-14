@@ -7,24 +7,12 @@
       <text class="nav-btn-text {{isProcessing ? 'nav-btn-text--dim' : ''}}">Save</text>
     </view>
   </view>
-  <view class="tab-bar">
-    <view class="tab {{activeTab === 0 ? 'tab--active' : ''}}" bindtap="switchTab" data-index="0">
-      <text>General</text>
-    </view>
-    <view class="tab {{activeTab === 1 ? 'tab--active' : ''}}" bindtap="switchTab" data-index="1">
-      <text>Packages</text>
-    </view>
-    <view class="tab {{activeTab === 2 ? 'tab--active' : ''}}" bindtap="switchTab" data-index="2">
-      <text>Entry Limits</text>
-    </view>
-  </view>
 </view>
 
 <scroll-view class="content-area" scroll-y show-scrollbar="{{false}}">
+<view class="tab-content">
 
-<!-- ── General Tab ── -->
-<view wx:if="{{activeTab === 0}}" class="tab-content">
-
+  <!-- ── Photos ── -->
   <view class="section">
     <text class="section-title">Photos ({{images.length}}/10)</text>
     <view class="media-grid">
@@ -41,6 +29,7 @@
     </view>
   </view>
 
+  <!-- ── Event info ── -->
   <view class="section">
     <text class="section-title">Event info</text>
     <view class="card">
@@ -70,6 +59,7 @@
     </view>
   </view>
 
+  <!-- ── Date & time ── -->
   <view class="section">
     <text class="section-title">Date & time</text>
     <view class="card">
@@ -94,6 +84,7 @@
     </view>
   </view>
 
+  <!-- ── Venue ── -->
   <view class="section">
     <text class="section-title">Venue</text>
     <view class="card">
@@ -106,28 +97,7 @@
     </view>
   </view>
 
-  <view class="section">
-    <view class="save-btn {{isProcessing ? 'save-btn--dim' : ''}}" bindtap="onSave">
-      <text class="save-btn-text">{{isProcessing ? 'Saving...' : 'Save Event'}}</text>
-    </view>
-  </view>
-</view>
-
-<!-- ── Packages Tab ── -->
-<view wx:if="{{activeTab === 1}}" class="tab-content">
-
-  <!-- Free Entry -->
-  <view class="section">
-    <text class="section-title">Free Entry</text>
-    <view class="card">
-      <view class="field-row">
-        <text class="field-label">Enable free entry</text>
-        <switch checked="{{hasFreeEntry}}" bindchange="toggleFreeEntry" color="#007AFF" />
-      </view>
-    </view>
-  </view>
-
-  <!-- Paid Packages -->
+  <!-- ── Paid Packages (disabled — uncomment when payment is ready) ──
   <view class="section">
     <text class="section-title">Paid Packages</text>
     <view class="card">
@@ -184,17 +154,9 @@
       </view>
     </block>
   </view>
+  ── -->
 
-  <view class="section">
-    <view class="save-btn {{isProcessing ? 'save-btn--dim' : ''}}" bindtap="onSave">
-      <text class="save-btn-text">{{isProcessing ? 'Saving...' : 'Save Event'}}</text>
-    </view>
-  </view>
-</view>
-
-<!-- ── Entry Limits Tab ── -->
-<view wx:if="{{activeTab === 2}}" class="tab-content">
-
+  <!-- ── Entry Limits ── -->
   <view class="section">
     <text class="section-title">Guest groups</text>
     <view class="card">
@@ -237,13 +199,14 @@
     </view>
   </view>
 
+  <!-- ── Save ── -->
   <view class="section">
     <view class="save-btn {{isProcessing ? 'save-btn--dim' : ''}}" bindtap="onSave">
       <text class="save-btn-text">{{isProcessing ? 'Saving...' : 'Save Event'}}</text>
     </view>
   </view>
-</view>
 
+</view>
 <view class="safe-area-bottom" />
 </scroll-view>
 </view>

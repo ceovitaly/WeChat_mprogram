@@ -433,5 +433,12 @@ Page({
       confirmText: 'Log out', confirmColor: '#FF3B30', cancelText: 'Cancel',
       success: ({ confirm }) => { if (confirm) getApp().logout() }
     })
+  },
+
+  onShareAppMessage() {
+    return {
+      title: 'Yue! Admin',
+      path: '/pages/counter/work/work'
+    }
   }
 })

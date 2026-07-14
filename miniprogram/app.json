@@ -30,7 +30,7 @@
   "window": {
     "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "YUE! ADMIN",
+    "navigationBarTitleText": "THE LIST",
     "backgroundColor": "#F2F2F7",
     "enablePullDownRefresh": false
   },

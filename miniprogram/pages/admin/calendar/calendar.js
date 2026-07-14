@@ -212,5 +212,12 @@ Page({
         }
       }
     })
+  },
+
+  onShareAppMessage() {
+    return {
+      title: 'Yue! Admin',
+      path: '/pages/admin/calendar/calendar'
+    }
   }
 })

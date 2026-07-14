@@ -24,7 +24,7 @@ Page({
     selectedVenueName: '',
 
     // Free entry toggle
-    hasFreeEntry: false,
+    hasFreeEntry: true,
 
     // Paid packages
     hasPaidPackages: false,

@@ -4,7 +4,7 @@
 <view wx:if="{{step === 'venue'}}" class="step-venue">
   <view class="venue-bg-gradient" />
   <view class="venue-hero">
-    <text class="venue-app-name">YUE!</text>
+    <text class="venue-app-name">THE LIST</text>
     <text class="venue-greeting">{{staffName ? 'Hi, ' + staffName + '!' : 'Welcome'}}</text>
     <text class="venue-hint">Enter venue password to start your shift</text>
   </view>

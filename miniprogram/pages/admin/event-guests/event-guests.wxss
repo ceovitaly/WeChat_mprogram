@@ -131,7 +131,7 @@
 
 .scroll {
   flex: 1;
-  overflow: hidden;
+  height: 0;
 }
 
 .body {

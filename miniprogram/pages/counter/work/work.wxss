@@ -21,6 +21,7 @@ page {
   padding: 0 32rpx;
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 10;
+  overflow-y: auto;
 }
 
 .venue-bg-gradient {
@@ -43,12 +44,12 @@ page {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  padding-top: 120rpx;
-  padding-bottom: 56rpx;
+  padding-top: 80rpx;
+  padding-bottom: 40rpx;
 }
 
 .venue-app-name {
-  font-size: 96rpx;
+  font-size: 80rpx;
   font-weight: 800;
   color: #FFFFFF;
   letter-spacing: -3rpx;
@@ -56,7 +57,7 @@ page {
 }
 
 .venue-greeting {
-  font-size: 56rpx;
+  font-size: 48rpx;
   font-weight: 700;
   color: #FFFFFF;
   letter-spacing: -1rpx;
