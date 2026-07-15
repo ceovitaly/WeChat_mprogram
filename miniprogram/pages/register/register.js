@@ -18,7 +18,7 @@ Page({
   },
 
   onInputUser(e) {
-    this.setData({ username: e.detail.value })
+    this.setData({ username: e.detail.value.toUpperCase() })
   },
 
   onInputPass(e) {
