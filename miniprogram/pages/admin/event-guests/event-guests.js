@@ -151,29 +151,16 @@ Page({
   },
 
   exportCSV() {
-    const { eventTitle, venueName, eventDate, arrivedGuests, dutyStaff, promoters } = this.data
+    const { eventId, eventTitle, venueName, eventDate, arrivedGuests, dutyStaff, promoters } = this.data
 
-    // Build map: promoCode (normalized) → promoter name (normalized)
-    const codeToPromoter = {}
-    promoters.forEach(p => {
-      if (p.promoCode) codeToPromoter[p.promoCode.toLowerCase().trim()] = (p.name || '').toLowerCase().trim()
-    })
-
-    // Find which promoters physically attended (first match wins)
-    // Match: guest's promoCode == promoter's promoCode AND guestName == promoterName
-    // Fallback: no promoCode stored but guestName == promoterName (self-referencing group)
-    const presentPromoters = new Set()
-    arrivedGuests.forEach(g => {
-      const gNameLower = (g.guestName || '').toLowerCase().trim()
-      const gCodeLower = (g.promoCode || '').toLowerCase().trim()
-      const gPromoterLower = (g.promoterName || '').toLowerCase().trim()
-      if (presentPromoters.has(gNameLower)) return
-      if (gCodeLower && codeToPromoter[gCodeLower] === gNameLower) {
-        presentPromoters.add(gNameLower)
-      } else if (!gCodeLower && gNameLower === gPromoterLower && codeToPromoter[Object.keys(codeToPromoter).find(k => codeToPromoter[k] === gNameLower) || ''] === gNameLower) {
-        presentPromoters.add(gNameLower)
-      }
-    })
+    // Promoters who physically attended this event, per their own attendedEventIds field
+    // (written by the counter's guest-list attendance-marking button) — authoritative,
+    // replaces the old name/promoCode guesswork against arrivedGuests.
+    const presentPromoters = new Set(
+      promoters
+        .filter(p => (p.attendedEventIds || []).includes(eventId))
+        .map(p => (p.name || '').toLowerCase().trim())
+    )
 
     // Group guests by promoter name, sorted by count desc
     const groupByPromoter = (guests) => {
