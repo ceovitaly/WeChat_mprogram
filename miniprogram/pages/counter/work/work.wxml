@@ -75,7 +75,7 @@
 <!-- ══ STEP 3: GUESTS ══ -->
 <view wx:if="{{step === 'guests'}}" class="step-guests">
 
-  <!-- Fixed header with back arrow and duty toggle -->
+  <!-- Fixed header with back arrow -->
   <view class="guest-header">
     <view class="header-back" bindtap="backToEvents">
       <text class="header-back-arrow">‹</text>
@@ -83,10 +83,6 @@
     <view class="header-info">
       <text class="header-name">{{staffName}}</text>
       <text class="header-venue">{{venueName}} · {{currentEvent.title}}</text>
-    </view>
-    <view class="duty-pill {{isOnDuty ? 'duty-pill--on' : 'duty-pill--off'}}" bindtap="toggleDuty">
-      <view class="duty-dot"></view>
-      <text class="duty-label">{{isOnDuty ? 'On duty' : 'Off duty'}}</text>
     </view>
   </view>
 
@@ -165,6 +161,17 @@
                 <text class="tier-badge-text">{{guest.group || 'E'}}</text>
               </view>
               <text class="arrival-time">{{guest.arrivedAt}}</text>
+              <view
+                wx:if="{{guest.internalRole}}"
+                class="attend-btn {{guest.attendancePresent ? 'attend-btn--marked' : ''}}"
+                catchtap="toggleAttendance"
+                data-type="{{guest.internalRole}}"
+                data-id="{{guest.internalId}}"
+                data-gid="{{guest._id}}"
+                data-present="{{guest.attendancePresent}}"
+              >
+                <text class="attend-btn-icon">{{guest.attendancePresent ? '✓' : ''}}</text>
+              </view>
             </view>
           </view>
         </block>
@@ -205,6 +212,17 @@
               <text class="checkbox-empty">○</text>
             </view>
             <text class="guest-name">{{guest.guestName}}</text>
+            <view
+              wx:if="{{guest.internalRole}}"
+              class="attend-btn {{guest.attendancePresent ? 'attend-btn--marked' : ''}}"
+              catchtap="toggleAttendance"
+              data-type="{{guest.internalRole}}"
+              data-id="{{guest.internalId}}"
+              data-gid="{{guest._id}}"
+              data-present="{{guest.attendancePresent}}"
+            >
+              <text class="attend-btn-icon">{{guest.attendancePresent ? '✓' : ''}}</text>
+            </view>
           </view>
         </view>
       </view>

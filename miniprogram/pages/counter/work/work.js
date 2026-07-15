@@ -1,6 +1,7 @@
 const app = getApp()
 const { callFunction, collection } = require('../../../utils/request')
 const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const phoneMatch = require('../../../utils/phoneMatch')
 
 Page({
   data: {
@@ -22,12 +23,13 @@ Page({
     selectedPromoter: '',
     isLoading: false,
     staffName: '',
-    staffId: '',
-    isOnDuty: false
+    staffId: ''
   },
 
   onLoad() {
     this._checkingIn = new Set()
+    this._roleMap = {}
+    this._lastRawGuests = null
   },
 
   onShow() {
@@ -51,9 +53,9 @@ Page({
     const savedEvent = wx.getStorageSync('currentEvent')
     this.setData({ staffName, staffId })
     if (savedId && savedEvent) {
-      const savedDuty = !!wx.getStorageSync('isOnDuty')
-      this.setData({ step: 'guests', venueName: savedName, currentVenueId: savedId, currentEvent: savedEvent, isOnDuty: savedDuty })
+      this.setData({ step: 'guests', venueName: savedName, currentVenueId: savedId, currentEvent: savedEvent })
       this._fetchGuests(savedEvent._id)
+      this._fetchStaffAndPromoters()
       if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: true })
     } else if (savedId) {
       this.setData({ step: 'event', venueName: savedName, currentVenueId: savedId })
@@ -96,39 +98,13 @@ Page({
         wx.removeStorageSync('currentVenueId')
         wx.removeStorageSync('currentVenueName')
         wx.removeStorageSync('currentEvent')
-        wx.removeStorageSync('isOnDuty')
         if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: false })
-        const { staffId } = this.data
-        if (staffId) {
-          callFunction(CLOUD_FUNCTIONS.MANAGE_STAFF, { action: 'setDutyStatus', staffId, isOnDuty: false }).catch(() => {})
-        }
         this.setData({
           step: 'venue', venueName: '', currentVenueId: '', currentEvent: null,
-          events: [], guests: [], filteredGuests: [], arrivedGuests: [], totalExpected: 0, isOnDuty: false
+          events: [], guests: [], filteredGuests: [], arrivedGuests: [], totalExpected: 0
         })
       }
     })
-  },
-
-  async toggleDuty() {
-    const { isOnDuty, staffId, currentEvent } = this.data
-    const newDuty = !isOnDuty
-    this.setData({ isOnDuty: newDuty })
-    if (newDuty) {
-      wx.setStorageSync('isOnDuty', true)
-    } else {
-      wx.removeStorageSync('isOnDuty')
-    }
-    if (!staffId) return
-    try {
-      await callFunction(CLOUD_FUNCTIONS.MANAGE_STAFF, {
-        action: 'setDutyStatus',
-        staffId,
-        isOnDuty: newDuty,
-        eventId: currentEvent ? currentEvent._id : '',
-        eventTitle: currentEvent ? currentEvent.title : ''
-      })
-    } catch (e) {}
   },
 
   // ─── Step 2 ───────────────────────────────────────────────
@@ -151,17 +127,10 @@ Page({
   selectEvent(e) {
     const { event } = e.currentTarget.dataset
     wx.setStorageSync('currentEvent', event)
-    const isOnDuty = !!wx.getStorageSync('isOnDuty')
-    this.setData({ step: 'guests', currentEvent: event, searchQuery: '', selectedPromoter: '', isOnDuty })
+    this.setData({ step: 'guests', currentEvent: event, searchQuery: '', selectedPromoter: '' })
     this._fetchGuests(event._id)
+    this._fetchStaffAndPromoters()
     if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: true })
-    const { staffId } = this.data
-    if (isOnDuty && staffId) {
-      callFunction(CLOUD_FUNCTIONS.MANAGE_STAFF, {
-        action: 'setDutyStatus', staffId, isOnDuty: true,
-        eventId: event._id, eventTitle: event.title
-      }).catch(() => {})
-    }
   },
 
   backToEvents() {
@@ -177,10 +146,32 @@ Page({
     this.setData({ isLoading: true })
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getRegistrations', eventId })
-      this._buildState(res.data || [])
+      this._lastRawGuests = res.data || []
+      this._buildState(this._lastRawGuests)
     } catch (e) {
       this.setData({ isLoading: false })
     }
+  },
+
+  // Fetches the full staff + promoter rosters and builds the phone -> role lookup used to
+  // badge/mark internal people hiding in the guest list. Independent of _fetchGuests — may
+  // resolve before or after it. Whichever finishes last re-runs _buildState so the guest
+  // list ends up correctly annotated either way (annotation never changes grouping/sorting,
+  // it only adds fields, so re-running is safe/idempotent).
+  async _fetchStaffAndPromoters() {
+    try {
+      const [staffRes, promoterRes] = await Promise.all([
+        callFunction(CLOUD_FUNCTIONS.MANAGE_STAFF, { action: 'getAll' }),
+        callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getPromoters' })
+      ])
+      this._roleMap = phoneMatch.buildInternalRoleMap(
+        (staffRes && staffRes.data) || [],
+        (promoterRes && promoterRes.data) || []
+      )
+    } catch (e) {
+      // keep whatever role map we already had (possibly empty) — annotation just no-ops
+    }
+    if (this._lastRawGuests) this._buildState(this._lastRawGuests)
   },
 
   _buildSections(arrivedList, p, ap, lap) {
@@ -208,11 +199,14 @@ Page({
 
   _buildState(raw) {
     const ev = this.data.currentEvent || {}
+    const eventId = ev._id
+    const roleMap = this._roleMap || {}
+    const annotated = raw.map(g => phoneMatch.annotateAttendance(g, roleMap, eventId))
     const p = Number(ev.partyCapacity) || 0
     const ap = Number(ev.afterPartyCapacity) || 0
     const lap = Number(ev.lateAfterPartyCapacity) || 0
     const groupOrder = { 'P': 0, 'AP': 1, 'LAP': 2, '': 3 }
-    const arrivedGuests = raw
+    const arrivedGuests = annotated
       .filter(g => g.arrivedAt)
       .sort((a, b) => (a.arrivedAt < b.arrivedAt ? -1 : 1))
       .map((g, i) => {
@@ -227,7 +221,7 @@ Page({
 
     const arrivedSections = this._buildSections(arrivedGuests, p, ap, lap)
 
-    const pending = raw.filter(g => !g.arrivedAt)
+    const pending = annotated.filter(g => !g.arrivedAt)
     const map = {}
     pending.forEach(g => {
       const key = g.promoterName || '__none__'
@@ -240,7 +234,7 @@ Page({
       return a.promoterName.localeCompare(b.promoterName)
     })
 
-    const names = [...new Set(raw.filter(g => g.promoterName).map(g => g.promoterName))].sort()
+    const names = [...new Set(annotated.filter(g => g.promoterName).map(g => g.promoterName))].sort()
 
     this.setData({ guests, filteredGuests: guests, arrivedGuests, filteredArrivedGuests: arrivedGuests, arrivedSections, filteredArrivedSections: arrivedSections, totalExpected: raw.length, promoterNames: names, isLoading: false })
   },
@@ -309,6 +303,12 @@ Page({
       const res = await callFunction(CLOUD_FUNCTIONS.CHECK_IN_GUEST, { registrationId: id, arrivedAt })
       if (!res || !res.success) { wx.showToast({ title: 'Error', icon: 'none' }); return }
 
+      // Keep the raw cache in sync so a late-resolving _fetchStaffAndPromoters rebuilding
+      // via _buildState(this._lastRawGuests) doesn't revert this optimistic check-in.
+      if (this._lastRawGuests) {
+        this._lastRawGuests = this._lastRawGuests.map(g => g._id === id ? { ...g, arrivedAt } : g)
+      }
+
       const remove = arr => arr.map(g => ({ ...g, guests: g.guests.filter(gg => gg._id !== id) })).filter(g => g.guests.length > 0)
 
       const ev = this.data.currentEvent || {}
@@ -355,7 +355,22 @@ Page({
       const guest = this.data.arrivedGuests.find(g => g._id === id)
       if (!guest) return
 
-      const pendingGuest = { _id: guest._id, guestName: guest.guestName, promoterName: guest.promoterName || null }
+      // Same sync as checkIn — keep the raw cache consistent for any late _buildState rebuild.
+      if (this._lastRawGuests) {
+        this._lastRawGuests = this._lastRawGuests.map(g => g._id === id ? { ...g, arrivedAt: null } : g)
+      }
+
+      // Preserve internalRole/internalLabel/internalId/attendancePresent across the
+      // arrived -> pending transition so the attendance button doesn't disappear.
+      const pendingGuest = {
+        _id: guest._id,
+        guestName: guest.guestName,
+        promoterName: guest.promoterName || null,
+        internalRole: guest.internalRole || null,
+        internalLabel: guest.internalLabel || '',
+        internalId: guest.internalId || '',
+        attendancePresent: guest.attendancePresent || false
+      }
 
       const ev = this.data.currentEvent || {}
       const p = Number(ev.partyCapacity) || 0
@@ -389,6 +404,49 @@ Page({
       this._applyFilter(this.data.searchQuery, this.data.selectedPromoter)
       wx.showToast({ title: 'Removed', icon: 'none' })
     } catch (e) {
+      wx.showToast({ title: 'Error', icon: 'none' })
+    }
+  },
+
+  // Toggles "physically present at this event" for a staff/promoter row found phone-matched
+  // inside the guest list. gid is the registration's own _id (used to find/patch the guest
+  // wherever it currently lives — pending `guests` nested groups or flat `arrivedGuests`);
+  // id/type identify the staff or promoter doc to write to.
+  async toggleAttendance(e) {
+    const { type, id, present, gid } = e.currentTarget.dataset
+    const eventId = this.data.currentEvent && this.data.currentEvent._id
+    if (!type || !id || !eventId) return
+    const nextPresent = !present
+    try {
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+        action: 'markAttendance', targetType: type, targetId: id, eventId, present: nextPresent
+      })
+      if (!res || !res.success) { wx.showToast({ title: 'Error', icon: 'none' }); return }
+
+      let foundInPending = false
+      const guests = this.data.guests.map(grp => {
+        const idx = grp.guests.findIndex(gg => gg._id === gid)
+        if (idx === -1) return grp
+        foundInPending = true
+        const groupGuests = grp.guests.slice()
+        groupGuests[idx] = { ...groupGuests[idx], attendancePresent: nextPresent }
+        return { ...grp, guests: groupGuests }
+      })
+
+      const arrivedGuests = foundInPending
+        ? this.data.arrivedGuests
+        : this.data.arrivedGuests.map(g => g._id === gid ? { ...g, attendancePresent: nextPresent } : g)
+
+      const ev = this.data.currentEvent || {}
+      const p = Number(ev.partyCapacity) || 0
+      const ap = Number(ev.afterPartyCapacity) || 0
+      const lap = Number(ev.lateAfterPartyCapacity) || 0
+      const arrivedSections = this._buildSections(arrivedGuests, p, ap, lap)
+
+      this.setData({ guests, arrivedGuests, arrivedSections })
+      this._applyFilter(this.data.searchQuery, this.data.selectedPromoter)
+      wx.vibrateShort({ type: 'light' })
+    } catch (err) {
       wx.showToast({ title: 'Error', icon: 'none' })
     }
   },

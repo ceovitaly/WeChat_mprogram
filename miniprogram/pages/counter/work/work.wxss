@@ -271,26 +271,6 @@ page {
 .header-name { font-size: 30rpx; font-weight: 700; color: var(--text); }
 .header-venue { font-size: 24rpx; color: var(--text-2); }
 
-.duty-pill {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-  padding: 12rpx 20rpx;
-  border-radius: 20rpx;
-  flex-shrink: 0;
-}
-
-.duty-pill--on { background: #E8F8F0; }
-.duty-pill--off { background: #FFEBE9; }
-
-.duty-dot { width: 14rpx; height: 14rpx; border-radius: 50%; }
-.duty-pill--on .duty-dot { background: #34C759; }
-.duty-pill--off .duty-dot { background: #FF3B30; }
-
-.duty-label { font-size: 24rpx; font-weight: 600; }
-.duty-pill--on .duty-label { color: #1D9E75; }
-.duty-pill--off .duty-label { color: #FF3B30; }
-
 .header-actions {
   display: flex;
   flex-direction: column;
@@ -452,6 +432,21 @@ page {
   flex-shrink: 0;
 }
 
+.attend-btn {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  border: 2rpx solid var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.attend-btn--marked { background: var(--blue); }
+.attend-btn-icon { font-size: 26rpx; color: var(--blue); font-weight: 700; }
+.attend-btn--marked .attend-btn-icon { color: #FFFFFF; }
+
 .safe-area-bottom { height: calc(32rpx + env(safe-area-inset-bottom)); }
 .tab-bar-spacer { height: calc(100rpx + env(safe-area-inset-bottom)); }
 
@@ -530,9 +525,5 @@ page {
   .group-badge--p   { background: rgba(48, 209, 88, 0.15);  color: #30D158; }
   .group-badge--ap  { background: rgba(10, 132, 255, 0.15); color: #0A84FF; }
   .group-badge--lap { background: rgba(255, 149, 0, 0.15);  color: #FF9500; }
-
-  .duty-pill--on  { background: rgba(48, 209, 88, 0.15); }
-  .duty-pill--off { background: rgba(255, 69, 58, 0.15); }
-  .duty-pill--on .duty-label  { color: #30D158; }
 }
 
