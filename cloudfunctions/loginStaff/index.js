@@ -6,6 +6,8 @@ cloud.init({
 
 const db = cloud.database();
 
+const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
  * Функция авторизации персонала
  * @param {string} username - Имя пользователя из инпута
@@ -14,11 +16,13 @@ const db = cloud.database();
 exports.main = async (event, context) => {
   const { username, password } = event;
   const wxContext = cloud.getWXContext();
+  const cleanUsername = (username || '').trim();
 
   try {
     // Поиск пользователя в коллекции staff по имени и паролю
+    // Имя ищем без учёта регистра (whole-string regex, спецсимволы экранированы), пароль — строго как есть
     const staffRes = await db.collection('staff').where({
-      name: username,
+      name: db.RegExp({ regexp: '^' + escapeRegExp(cleanUsername) + '$', options: 'i' }),
       password: password
     }).get();
 
@@ -29,6 +33,8 @@ exports.main = async (event, context) => {
       };
     }
 
+    // Небольшой штат сотрудников — считаем, что двух аккаунтов, отличающихся
+    // только регистром имени, не заводят; при совпадении берём первого, как раньше
     const user = staffRes.data[0];
 
     // ЛОГИКА ОПРЕДЕЛЕНИЯ РОЛИ:
