@@ -1,9 +1,19 @@
 // Cross-reference helper: identify staff/promoters hiding inside a guest list by phone number.
 // Guest phone numbers come from the guest app's WeChat-verified getPhoneNumber flow (real numbers);
 // staff/promoter phone numbers are entered manually by admins, so formatting may differ.
-// Normalize conservatively by stripping everything except digits before comparing.
+// Normalize by stripping everything except digits, then collapsing to the last 11 digits so a
+// country-code prefix on the guest-app side (e.g. "+86") doesn't prevent a match against an
+// admin-entered plain local number.
 
-const normalizePhone = (phone) => String(phone || '').replace(/\D/g, '')
+// Chinese mobile numbers are always 11 digits. Guest-app phones may carry a
+// country-code prefix (WeChat's getPhoneNumber prefers the `phoneNumber` field,
+// e.g. "+8613812345678") while admin-entered staff/promoter phones are typically
+// the plain local 11-digit form ("13812345678") — collapsing to the last 11
+// digits reconciles both regardless of prefix formatting (+86/0086/86/none).
+const normalizePhone = (phone) => {
+  const digits = String(phone || '').replace(/\D/g, '')
+  return digits.length > 11 ? digits.slice(-11) : digits
+}
 
 // Builds a normalized-phone -> { type: 'staff' | 'promoter', label, id, eventIds } lookup
 // from the staff and promoter lists. If the same phone appears in both, staff wins.
