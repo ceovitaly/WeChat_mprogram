@@ -167,6 +167,30 @@ exports.main = async (event, context) => {
     }
   }
 
+  // MARK ATTENDANCE — unified staff/promoter "physically present at this event" toggle,
+  // used by the counter's guest-list view. Read-then-write (not db.command.push/pull)
+  // deliberately, to avoid edge cases with a field that may not exist yet on older docs.
+  if (action === 'markAttendance') {
+    try {
+      const { targetType, targetId, eventId, present } = event;
+      if (!targetType || !targetId || !eventId) return { success: false, message: 'Missing params' };
+      const collectionName = targetType === 'staff' ? 'staff' : 'promoters';
+      const fieldName = targetType === 'staff' ? 'workedEventIds' : 'attendedEventIds';
+      const doc = await db.collection(collectionName).doc(targetId).get();
+      const current = (doc.data && doc.data[fieldName]) || [];
+      let next;
+      if (present) {
+        next = current.includes(eventId) ? current : [...current, eventId];
+      } else {
+        next = current.filter(id => id !== eventId);
+      }
+      await db.collection(collectionName).doc(targetId).update({ data: { [fieldName]: next } });
+      return { success: true };
+    } catch (e) {
+      return { success: false, message: e.message };
+    }
+  }
+
   // SAVE EVENT (create or update)
   if (action === 'saveEvent') {
     try {
