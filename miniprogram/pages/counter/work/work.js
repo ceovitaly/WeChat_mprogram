@@ -3,6 +3,32 @@ const { callFunction, collection } = require('../../../utils/request')
 const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
 const phoneMatch = require('../../../utils/phoneMatch')
 
+// checkedInAt normalizer: the server value (db.serverDate()) crosses the cloud-function
+// JSON boundary as an ISO string or a {$date: <ms>} object depending on SDK serialization;
+// optimistic local inserts carry a plain ISO string. Normalize any of those shapes to
+// epoch milliseconds, NaN when absent/unparseable.
+const checkedInMs = (g) => {
+  const v = g && g.checkedInAt
+  if (!v) return NaN
+  const raw = (typeof v === 'object' && v.$date !== undefined) ? v.$date : v
+  return new Date(raw).getTime()
+}
+
+// Arrival-order comparator. checkedInAt (a server timestamp) is the primary key: unlike
+// the bare "HH:MM" arrivedAt string it survives midnight (00:10 must sort after 23:50).
+// Legacy rows checked in before checkedInAt existed lack the field, so unless BOTH sides
+// have a valid timestamp we fall back to the old arrivedAt string comparison — within an
+// all-legacy list HH:MM order is the best information available, and mixed lists only
+// occur for the one night this fix ships mid-event.
+const compareArrival = (a, b) => {
+  const ta = checkedInMs(a)
+  const tb = checkedInMs(b)
+  if (!isNaN(ta) && !isNaN(tb)) return ta - tb
+  const sa = (a && a.arrivedAt) || ''
+  const sb = (b && b.arrivedAt) || ''
+  return sa < sb ? -1 : (sa > sb ? 1 : 0)
+}
+
 Page({
   data: {
     step: 'venue',
@@ -208,7 +234,7 @@ Page({
     const groupOrder = { 'P': 0, 'AP': 1, 'LAP': 2, '': 3 }
     const arrivedGuests = annotated
       .filter(g => g.arrivedAt)
-      .sort((a, b) => (a.arrivedAt < b.arrivedAt ? -1 : 1))
+      .sort(compareArrival)
       .map((g, i) => {
         const num = i + 1
         let group = ''
@@ -298,6 +324,10 @@ Page({
     this._checkingIn.add(id)
     const now = new Date()
     const arrivedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    // Local stand-in for the server's checkedInAt so the new sort key exists immediately;
+    // the authoritative server timestamp replaces it on the next full fetch (minor clock
+    // skew between phone and server is acceptable for ordering).
+    const checkedInAt = now.toISOString()
 
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.CHECK_IN_GUEST, { registrationId: id, arrivedAt })
@@ -306,7 +336,7 @@ Page({
       // Keep the raw cache in sync so a late-resolving _fetchStaffAndPromoters rebuilding
       // via _buildState(this._lastRawGuests) doesn't revert this optimistic check-in.
       if (this._lastRawGuests) {
-        this._lastRawGuests = this._lastRawGuests.map(g => g._id === id ? { ...g, arrivedAt } : g)
+        this._lastRawGuests = this._lastRawGuests.map(g => g._id === id ? { ...g, arrivedAt, checkedInAt } : g)
       }
 
       const remove = arr => arr.map(g => ({ ...g, guests: g.guests.filter(gg => gg._id !== id) })).filter(g => g.guests.length > 0)
@@ -316,8 +346,8 @@ Page({
       const ap = Number(ev.afterPartyCapacity) || 0
       const lap = Number(ev.lateAfterPartyCapacity) || 0
 
-      const newArrived = [...this.data.arrivedGuests, { ...guest, arrivedAt }]
-        .sort((a, b) => (a.arrivedAt < b.arrivedAt ? -1 : 1))
+      const newArrived = [...this.data.arrivedGuests, { ...guest, arrivedAt, checkedInAt }]
+        .sort(compareArrival)
         .map((g, i) => {
           const num = i + 1
           let group = ''
@@ -357,7 +387,7 @@ Page({
 
       // Same sync as checkIn — keep the raw cache consistent for any late _buildState rebuild.
       if (this._lastRawGuests) {
-        this._lastRawGuests = this._lastRawGuests.map(g => g._id === id ? { ...g, arrivedAt: null } : g)
+        this._lastRawGuests = this._lastRawGuests.map(g => g._id === id ? { ...g, arrivedAt: null, checkedInAt: null } : g)
       }
 
       // Preserve internalRole/internalLabel/internalId/attendancePresent across the
@@ -379,7 +409,7 @@ Page({
 
       const arrivedGuests = this.data.arrivedGuests
         .filter(g => g._id !== id)
-        .sort((a, b) => (a.arrivedAt < b.arrivedAt ? -1 : 1))
+        .sort(compareArrival)
         .map((g, i) => {
           const num = i + 1
           let group = ''

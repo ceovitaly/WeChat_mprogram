@@ -2,6 +2,29 @@ const { callFunction } = require('../../../utils/request')
 const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
 const { buildInternalRoleMap, annotateInternalRole } = require('../../../utils/phoneMatch')
 
+// checkedInAt normalizer: the server value (db.serverDate()) crosses the cloud-function
+// JSON boundary as an ISO string or a {$date: <ms>} object depending on SDK serialization.
+// Normalize either shape to epoch milliseconds, NaN when absent/unparseable.
+const checkedInMs = (g) => {
+  const v = g && g.checkedInAt
+  if (!v) return NaN
+  const raw = (typeof v === 'object' && v.$date !== undefined) ? v.$date : v
+  return new Date(raw).getTime()
+}
+
+// Arrival-order comparator (same design as counter/work). checkedInAt is the primary key:
+// unlike the bare "HH:MM" arrivedAt string it survives midnight (00:10 sorts after 23:50).
+// Legacy rows lack checkedInAt, so unless BOTH sides have a valid timestamp we fall back
+// to the old arrivedAt string comparison.
+const compareArrival = (a, b) => {
+  const ta = checkedInMs(a)
+  const tb = checkedInMs(b)
+  if (!isNaN(ta) && !isNaN(tb)) return ta - tb
+  const sa = (a && a.arrivedAt) || ''
+  const sb = (b && b.arrivedAt) || ''
+  return sa < sb ? -1 : (sa > sb ? 1 : 0)
+}
+
 Page({
   data: {
     eventId: '',
@@ -95,7 +118,7 @@ Page({
       const roleMap = buildInternalRoleMap(this.data.staffList, this.data.promoters)
       const arrived = regs
         .filter(g => g.arrivedAt)
-        .sort((a, b) => (a.arrivedAt < b.arrivedAt ? -1 : 1))
+        .sort(compareArrival)
         .map((g, i) => {
           const num = i + 1
           let group = ''

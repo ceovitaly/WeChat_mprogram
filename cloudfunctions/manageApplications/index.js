@@ -244,7 +244,7 @@ exports.main = async (event, context) => {
       const { registrationId } = event;
       if (!registrationId) return { success: false, message: 'No registrationId' };
       await db.collection('registrations').doc(registrationId).update({
-        data: { arrivedAt: null }
+        data: { arrivedAt: null, checkedInAt: null }
       });
       return { success: true };
     } catch (e) {
