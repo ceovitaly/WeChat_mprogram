@@ -42,6 +42,19 @@ exports.main = async (event, context) => {
     // 2. Во всех остальных случаях — 'counter' (безопасный дефолт с наименьшими правами).
     let role = user.role || 'counter';
 
+    // Гарантируем, что openid -> staff-документ всегда один-к-одному: снимаем этот
+    // openid с любых ДРУГИХ документов staff перед тем, как проштамповать текущий.
+    // Иначе два аккаунта, использованные с одного WeChat-аккаунта, оба несут один
+    // lastOpenid, и серверный getCallerStaff (where({lastOpenid}).limit(1)) резолвит
+    // произвольный из них — вплоть до эскалации counter -> admin.
+    // Побочный эффект для случая «один общий staff-аккаунт на двух телефонах»:
+    // побеждает последний вход, вызовы с более раннего телефона становятся
+    // Unauthorized — это ожидаемое, задокументированное поведение.
+    const _ = db.command;
+    await db.collection('staff')
+      .where({ lastOpenid: wxContext.OPENID, _id: _.neq(user._id) })
+      .update({ data: { lastOpenid: '' } });
+
     // Обновляем openid пользователя при входе, чтобы привязать устройство
     await db.collection('staff').doc(user._id).update({
       data: {

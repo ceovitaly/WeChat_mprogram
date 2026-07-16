@@ -92,14 +92,26 @@ exports.main = async (event, context) => {
       // Attach phone from the guests collection (keyed by _openid) so the admin
       // page can badge registrations that are actually staff/promoters testing
       // the guest flow. Never written back — read-only annotation.
+      // Chunked: an unbounded .get() silently caps at 100 docs server-side, which
+      // truncated the phone map for events with >100 unique guests.
       const openids = [...new Set(regs.map(r => r._openid).filter(Boolean))];
       const phoneByOpenid = {};
       if (openids.length > 0) {
-        const guestsRes = await db.collection('guests')
-          .where({ _openid: db.command.in(openids) })
-          .field({ _openid: true, phone: true })
-          .get();
-        (guestsRes.data || []).forEach(g => { phoneByOpenid[g._openid] = g.phone || ''; });
+        const BATCH = 500;
+        const batches = [];
+        for (let i = 0; i < openids.length; i += BATCH) {
+          batches.push(openids.slice(i, i + BATCH));
+        }
+        const results = await Promise.all(batches.map(batch =>
+          db.collection('guests')
+            .where({ _openid: db.command.in(batch) })
+            .field({ _openid: true, phone: true })
+            .limit(1000)
+            .get()
+        ));
+        results.forEach(guestsRes => {
+          (guestsRes.data || []).forEach(g => { phoneByOpenid[g._openid] = g.phone || ''; });
+        });
       }
       const data = regs.map(r => Object.assign({}, r, { phone: phoneByOpenid[r._openid] || '' }));
 
