@@ -109,11 +109,16 @@ Page({
           if (timeParts[0] < 12) endDt.setDate(endDt.getDate() + 1)
           if (!isNaN(endDt.getTime()) && new Date() > endDt) {
             isClosed = true
-            callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
-              action: 'closeEvent',
-              eventId: this.data.eventId,
-              closedBy: 'Auto'
-            }).catch(() => {})
+            // _closing guards against duplicate closeEvent calls from consecutive
+            // 10s poll ticks (the event doc only reflects isClosed after a round-trip).
+            if (!this._closing) {
+              this._closing = true
+              callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+                action: 'closeEvent',
+                eventId: this.data.eventId,
+                closedBy: 'Auto'
+              }).catch(() => {})
+            }
           }
         } catch (_) {}
       }

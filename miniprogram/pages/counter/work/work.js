@@ -147,7 +147,12 @@ Page({
       const venueName = this.data.venueName || wx.getStorageSync('currentVenueName')
       const now = new Date()
       if (now.getHours() < 5) now.setDate(now.getDate() - 1)
-      const today = now.toISOString().split('T')[0]
+      // Build the date string from LOCAL components — toISOString() is UTC, which
+      // between 00:00 and 05:00 China time still points at the previous UTC day and
+      // made the 5am night-shift cutoff land on the wrong date.
+      const today = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0')
       const eventRes = await collection(COLLECTIONS.EVENTS).where({ venueName }).orderBy('date', 'asc').get()
       this.setData({ events: eventRes.data.filter(e => e.date >= today), isLoading: false })
     } catch (e) {
