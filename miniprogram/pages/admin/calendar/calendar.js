@@ -1,5 +1,6 @@
 const { collection, callFunction } = require('../../../utils/request')
 const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -200,6 +201,7 @@ Page({
             action: 'deleteEvent',
             eventId: id
           })
+          if (isUnauthorized(res)) { handleAuthFailure(); return }
           if (!res || !res.success) throw new Error(res && res.error || 'Delete failed')
           wx.vibrateShort({ type: 'medium' })
           wx.showToast({ title: 'Deleted', icon: 'success' })

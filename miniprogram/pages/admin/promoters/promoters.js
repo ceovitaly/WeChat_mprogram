@@ -1,5 +1,6 @@
 const { callFunction } = require('../../../utils/request')
 const { formatDate } = require('../../../utils/format')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 
 Page({
   data: {
@@ -34,6 +35,11 @@ Page({
       const res = await callFunction('manageApplications', {
         action: 'getPromoters'
       })
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Load failed', icon: 'none' })
+        return
+      }
       const promoters = (res.data || []).map(p => ({
         ...p,
         joinDate: p.createdAt ? formatDate(new Date(p.createdAt)) : '—',
@@ -105,8 +111,10 @@ Page({
           avatarLetter: newName.trim()[0].toUpperCase()
         }
         this.setData({ promoters: [newPromoter, ...this.data.promoters] })
+      } else if (isUnauthorized(res)) {
+        handleAuthFailure()
       } else {
-        wx.showToast({ title: res.message || 'Error', icon: 'none' })
+        wx.showToast({ title: (res && res.message) || 'Error', icon: 'none' })
       }
     } catch (err) {
       wx.showToast({ title: 'Error', icon: 'none' })
@@ -167,8 +175,9 @@ Page({
         promoCode: editPromoCode.trim(),
         phone: editPhone.trim()
       })
-      if (!res.success) {
-        wx.showToast({ title: res.message || 'Error', icon: 'none' })
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: (res && res.message) || 'Error', icon: 'none' })
         return
       }
       wx.vibrateShort({ type: 'medium' })
@@ -194,11 +203,16 @@ Page({
 
     wx.showLoading({ title: 'Updating...' })
     try {
-      await callFunction('manageApplications', {
+      const res = await callFunction('manageApplications', {
         action: 'updatePromoterStatus',
         id: selectedPromoter._id,
         status
       })
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: (res && res.message) || 'Update failed', icon: 'none' })
+        return
+      }
       wx.vibrateShort({ type: 'medium' })
       wx.showToast({ title: 'Updated!', icon: 'success' })
       this.closeActions()
@@ -227,11 +241,16 @@ Page({
         if (!confirm) return
         wx.showLoading({ title: 'Updating...' })
         try {
-          await callFunction('manageApplications', {
+          const res = await callFunction('manageApplications', {
             action: 'updatePromoterStatus',
             id: selectedPromoter._id,
             status: 'revoked'
           })
+          if (!res || !res.success) {
+            if (isUnauthorized(res)) { handleAuthFailure(); return }
+            wx.showToast({ title: (res && res.message) || 'Error', icon: 'none' })
+            return
+          }
           wx.vibrateShort({ type: 'medium' })
           wx.showToast({ title: 'Revoked!', icon: 'success' })
           this.closeActions()
@@ -262,10 +281,15 @@ Page({
         if (!confirm) return
         wx.showLoading({ title: 'Deleting...', mask: true })
         try {
-          await callFunction('manageApplications', {
+          const res = await callFunction('manageApplications', {
             action: 'deletePromoter',
             id: selectedPromoter._id
           })
+          if (!res || !res.success) {
+            if (isUnauthorized(res)) { handleAuthFailure(); return }
+            wx.showToast({ title: (res && res.message) || 'Error', icon: 'none' })
+            return
+          }
           wx.vibrateShort({ type: 'medium' })
           wx.showToast({ title: 'Deleted', icon: 'success' })
           this.closeActions()

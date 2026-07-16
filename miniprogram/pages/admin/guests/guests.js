@@ -1,5 +1,6 @@
 const { callFunction, collection } = require('../../../utils/request')
 const { CLOUD_FUNCTIONS, COLLECTIONS } = require('../../../utils/constants')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 const { buildInternalRoleMap, annotateInternalRole } = require('../../../utils/phoneMatch')
 
 Page({
@@ -38,7 +39,13 @@ Page({
         CLOUD_FUNCTIONS.MANAGE_APPLICATIONS,
         { action: 'getAllGuests', skip: 0, limit: 1000 }
       )
-      const allGuests = (res && res.data) ? res.data : []
+      if (!res || !res.success) {
+        this.setData({ isLoading: false })
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Load failed', icon: 'none' })
+        return
+      }
+      const allGuests = res.data || []
       this.setData({
         allGuests,
         totalCount: allGuests.length,
@@ -57,7 +64,9 @@ Page({
   async _fetchPromoters() {
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getPromoters' })
-      this.setData({ promoters: res && res.data ? res.data : [] })
+      if (isUnauthorized(res)) { handleAuthFailure(); return }
+      if (!res || !res.success) return // tolerant read — keep current list, badges just no-op
+      this.setData({ promoters: res.data || [] })
       this._annotateInternalRoles()
     } catch (err) {
       console.error('[Guests] promoters error:', err)
@@ -67,7 +76,9 @@ Page({
   async _fetchStaff() {
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_STAFF, { action: 'getAll' })
-      this.setData({ staffList: res && res.data ? res.data : [] })
+      if (isUnauthorized(res)) { handleAuthFailure(); return }
+      if (!res || !res.success) return // tolerant read — keep current list, badges just no-op
+      this.setData({ staffList: res.data || [] })
       this._annotateInternalRoles()
     } catch (err) {
       console.error('[Guests] staff error:', err)
@@ -131,6 +142,7 @@ Page({
         guestId: guest._id,
         promoterName
       })
+      if (isUnauthorized(res)) { handleAuthFailure(); return }
       if (!res || !res.success) throw new Error(res && res.message || 'Failed')
 
       const allGuests = this.data.allGuests.map(g =>

@@ -1,5 +1,6 @@
 const { callFunction } = require('../../../utils/request')
 const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 const { buildInternalRoleMap, annotateInternalRole } = require('../../../utils/phoneMatch')
 
 // checkedInAt normalizer: the server value (db.serverDate()) crosses the cloud-function
@@ -65,7 +66,9 @@ Page({
   async _fetchPromoters() {
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getPromoters' })
-      this.setData({ promoters: (res && res.data) || [] })
+      if (isUnauthorized(res)) { handleAuthFailure(); return }
+      if (!res || !res.success) return // tolerant read — badges just no-op
+      this.setData({ promoters: res.data || [] })
     } catch (_) {}
   },
 
@@ -74,7 +77,9 @@ Page({
   async _fetchStaff() {
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_STAFF, { action: 'getAll' })
-      this.setData({ staffList: (res && res.data) || [] })
+      if (isUnauthorized(res)) { handleAuthFailure(); return }
+      if (!res || !res.success) return // tolerant read — badges just no-op
+      this.setData({ staffList: res.data || [] })
     } catch (_) {}
   },
 
@@ -90,6 +95,12 @@ Page({
           { workedEventIds: eventId }
         ])).get().catch(() => ({ data: [] }))
       ])
+      if (!regRes || !regRes.success) {
+        this.setData({ loading: false })
+        if (isUnauthorized(regRes)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Load failed', icon: 'none' })
+        return
+      }
       const regs = regRes.data || []
       const dutyStaff = (staffRes.data || [])
         .map(s => ({ _id: s._id, guestName: s.name, position: 0 }))
@@ -273,6 +284,8 @@ Page({
         wx.vibrateShort({ type: 'medium' })
         wx.showToast({ title: 'Event closed!', icon: 'success' })
         setTimeout(() => wx.navigateBack(), 1500)
+      } else if (isUnauthorized(res)) {
+        handleAuthFailure()
       } else {
         wx.showToast({ title: (res && res.message) || 'Close failed', icon: 'none', duration: 3000 })
       }

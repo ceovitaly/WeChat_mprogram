@@ -1,5 +1,6 @@
 const { callFunction } = require('../../../utils/request')
 const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 
 Page({
   data: {
@@ -33,6 +34,10 @@ Page({
           pendingCount: res.pendingCount || 0,
           totalGuests: res.totalGuests || 0
         })
+      } else if (isUnauthorized(res)) {
+        handleAuthFailure()
+      } else {
+        wx.showToast({ title: 'Load failed', icon: 'none' })
       }
     } catch (err) {
       console.error('[Team] counts error:', err)

@@ -1,5 +1,6 @@
 const { collection, callFunction } = require('../../../utils/request')
 const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 const { validateEvent } = require('../../../utils/validator')
 
 Page({
@@ -122,7 +123,8 @@ Page({
             action: 'getTempFileURLs',
             fileList: cloudIds
           })
-          const urlMap = resolved.urlMap || {}
+          if (isUnauthorized(resolved)) { handleAuthFailure(); return }
+          const urlMap = (resolved && resolved.urlMap) || {}
           displayUrls = initialImages.map(u => urlMap[u] || u)
         } catch (e2) {
           console.warn('[EventEdit] getTempFileURLs failed:', e2)
@@ -353,6 +355,7 @@ Page({
         id: isEdit ? id : null,
         eventData
       })
+      if (isUnauthorized(res)) { handleAuthFailure(); return }
       if (!res || !res.success) throw new Error(res && res.message || 'Save failed')
 
       wx.vibrateShort({ type: 'medium' })

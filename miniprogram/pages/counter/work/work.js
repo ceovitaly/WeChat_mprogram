@@ -1,6 +1,7 @@
 const app = getApp()
 const { callFunction, collection } = require('../../../utils/request')
 const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 const phoneMatch = require('../../../utils/phoneMatch')
 
 // checkedInAt normalizer: the server value (db.serverDate()) crosses the cloud-function
@@ -172,10 +173,17 @@ Page({
     this.setData({ isLoading: true })
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getRegistrations', eventId })
+      if (!res || !res.success) {
+        this.setData({ isLoading: false })
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Load failed', icon: 'none' })
+        return
+      }
       this._lastRawGuests = res.data || []
       this._buildState(this._lastRawGuests)
     } catch (e) {
       this.setData({ isLoading: false })
+      wx.showToast({ title: 'Load failed', icon: 'none' })
     }
   },
 
@@ -190,10 +198,11 @@ Page({
         callFunction(CLOUD_FUNCTIONS.MANAGE_STAFF, { action: 'getAll' }),
         callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getPromoters' })
       ])
-      this._roleMap = phoneMatch.buildInternalRoleMap(
-        (staffRes && staffRes.data) || [],
-        (promoterRes && promoterRes.data) || []
-      )
+      if (isUnauthorized(staffRes) || isUnauthorized(promoterRes)) { handleAuthFailure(); return }
+      if (staffRes && staffRes.success && promoterRes && promoterRes.success) {
+        this._roleMap = phoneMatch.buildInternalRoleMap(staffRes.data || [], promoterRes.data || [])
+      }
+      // on any other non-success: keep whatever role map we already had — annotation no-ops
     } catch (e) {
       // keep whatever role map we already had (possibly empty) — annotation just no-ops
     }
@@ -331,7 +340,11 @@ Page({
 
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.CHECK_IN_GUEST, { registrationId: id, arrivedAt })
-      if (!res || !res.success) { wx.showToast({ title: 'Error', icon: 'none' }); return }
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Error', icon: 'none' })
+        return
+      }
 
       // Keep the raw cache in sync so a late-resolving _fetchStaffAndPromoters rebuilding
       // via _buildState(this._lastRawGuests) doesn't revert this optimistic check-in.
@@ -381,7 +394,13 @@ Page({
 
   async _doUncheck(id) {
     try {
-      await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'uncheckGuest', registrationId: id })
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'uncheckGuest', registrationId: id })
+      // Only apply the local revert if the server actually uncheck-ed the guest.
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Error', icon: 'none' })
+        return
+      }
       const guest = this.data.arrivedGuests.find(g => g._id === id)
       if (!guest) return
 
@@ -451,7 +470,11 @@ Page({
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
         action: 'markAttendance', targetType: type, targetId: id, eventId, present: nextPresent
       })
-      if (!res || !res.success) { wx.showToast({ title: 'Error', icon: 'none' }); return }
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Error', icon: 'none' })
+        return
+      }
 
       let foundInPending = false
       const guests = this.data.guests.map(grp => {

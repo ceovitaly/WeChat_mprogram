@@ -26,11 +26,32 @@ const getStartPageByRole = (role) => {
   return '/pages/register/register'
 }
 
+// True when a cloud function answered with the standard auth-rejection payload
+// (the caller's openid no longer maps to a staff doc — e.g. someone else logged
+// into the same account, see loginStaff).
+const isUnauthorized = (res) => !!res && res.success === false && res.message === 'Unauthorized'
+
+// Shared handler for Unauthorized cloud-function responses: clears the stale
+// session and returns to the login screen.
+const handleAuthFailure = () => {
+  clearUser()
+  const app = getApp()
+  if (app && app.globalData) {
+    app.globalData.userInfo = null
+    app.globalData.role = null
+    app.globalData.isLogged = false
+  }
+  wx.showToast({ title: 'Session expired', icon: 'none' })
+  wx.reLaunch({ url: '/pages/register/register' })
+}
+
 module.exports = {
   getStoredUser,
   saveUser,
   clearUser,
   isAdmin,
   isCounter,
-  getStartPageByRole
+  getStartPageByRole,
+  isUnauthorized,
+  handleAuthFailure
 }

@@ -1,5 +1,6 @@
 const { callFunction, collection } = require('../../../utils/request')
 const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 
 Page({
   data: {
@@ -93,8 +94,9 @@ Page({
         longitude: this.data.longitude || 0
       })
 
-      if (!res.success) {
-        wx.showToast({ title: res.message || 'Save failed', icon: 'none' })
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: (res && res.message) || 'Save failed', icon: 'none' })
         return
       }
 

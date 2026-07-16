@@ -1,5 +1,6 @@
 const { callFunction } = require('../../../utils/request')
 const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 
 Page({
   data: {
@@ -54,6 +55,11 @@ Page({
         dateFilter: todayStr,
         mode: 'active'
       })
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Load failed', icon: 'none' })
+        return
+      }
       const now = new Date()
       const events = (res.data || []).filter(ev => {
         if (ev.isClosed) return false
@@ -90,6 +96,11 @@ Page({
         dateFilter: todayStr,
         mode: 'past'
       })
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Load failed', icon: 'none' })
+        return
+      }
       const nowTs = new Date()
       const past = (res.data || []).filter(ev => {
         if (ev.isClosed) return true

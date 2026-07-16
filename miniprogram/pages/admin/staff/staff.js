@@ -1,4 +1,5 @@
 const { callFunction } = require('../../../utils/request')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 
 Page({
   data: {
@@ -24,8 +25,12 @@ Page({
     this.setData({ loading: true })
     try {
       const res = await callFunction('manageStaff', { action: 'getAll' })
-      if (res.success) {
+      if (res && res.success) {
         this.setData({ staffList: res.data })
+      } else if (isUnauthorized(res)) {
+        handleAuthFailure()
+      } else {
+        wx.showToast({ title: 'Load failed', icon: 'none' })
       }
     } catch (err) {
       console.error('[Staff] fetch error:', err)
@@ -86,7 +91,7 @@ Page({
 
     try {
       if (editingId) {
-        await callFunction('manageStaff', {
+        const res = await callFunction('manageStaff', {
           action: 'update',
           id: editingId,
           name: tempName.trim(),
@@ -94,6 +99,11 @@ Page({
           password: tempPassword,
           role: tempRole
         })
+        if (!res || !res.success) {
+          if (isUnauthorized(res)) { handleAuthFailure(); return }
+          wx.showToast({ title: (res && res.message) || 'Save failed', icon: 'none' })
+          return
+        }
         wx.vibrateShort({ type: 'medium' })
         wx.showToast({ title: 'Saved!', icon: 'success' })
         this.closeModal()
@@ -102,13 +112,18 @@ Page({
         )
         this.setData({ staffList: updated })
       } else {
-        await callFunction('manageStaff', {
+        const res = await callFunction('manageStaff', {
           action: 'add',
           name: tempName.trim(),
           phone: tempPhone.trim(),
           password: tempPassword,
           role: tempRole
         })
+        if (!res || !res.success) {
+          if (isUnauthorized(res)) { handleAuthFailure(); return }
+          wx.showToast({ title: (res && res.message) || 'Save failed', icon: 'none' })
+          return
+        }
         wx.vibrateShort({ type: 'medium' })
         wx.showToast({ title: 'Saved!', icon: 'success' })
         this.closeModal()
@@ -167,7 +182,12 @@ Page({
   async _deleteById(id) {
     wx.showLoading({ title: 'Deleting...' })
     try {
-      await callFunction('manageStaff', { action: 'delete', id })
+      const res = await callFunction('manageStaff', { action: 'delete', id })
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: (res && res.message) || 'Delete failed', icon: 'none' })
+        return
+      }
       wx.vibrateShort({ type: 'medium' })
       wx.showToast({ title: 'Deleted', icon: 'success' })
       const updated = this.data.staffList.filter(s => s._id !== id)
