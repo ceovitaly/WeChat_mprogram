@@ -86,15 +86,8 @@ Page({
   async _fetch() {
     const { eventId } = this.data
     if (!eventId) return
-    const db = wx.cloud.database()
     try {
-      const [regRes, staffRes] = await Promise.all([
-        callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getRegistrations', eventId }),
-        db.collection('staff').where(db.command.or([
-          { isOnDuty: true, currentEventId: eventId },
-          { workedEventIds: eventId }
-        ])).get().catch(() => ({ data: [] }))
-      ])
+      const regRes = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getRegistrations', eventId })
       if (!regRes || !regRes.success) {
         this.setData({ loading: false })
         if (isUnauthorized(regRes)) { handleAuthFailure(); return }
@@ -102,7 +95,9 @@ Page({
         return
       }
       const regs = regRes.data || []
-      const dutyStaff = (staffRes.data || [])
+      // Duty staff (workedEventIds contains this event) is resolved server-side inside
+      // getRegistrations — the staff collection is not client-readable.
+      const dutyStaff = (regRes.dutyStaff || [])
         .map(s => ({ _id: s._id, guestName: s.name, position: 0 }))
       const ev = regRes.event || {}
       let isClosed = !!ev.isClosed

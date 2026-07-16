@@ -93,7 +93,13 @@ Page({
 
   async _loadVenues() {
     try {
-      const res = await collection(COLLECTIONS.VENUES).get()
+      // Server-side read — the venues collection is not client-readable.
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getVenues' })
+      if (isUnauthorized(res)) { handleAuthFailure(); return }
+      if (!res || !res.success) {
+        wx.showToast({ title: 'Venues load failed', icon: 'none' })
+        return
+      }
       this.setData({ venues: res.data || [] })
     } catch (err) {
       console.error('[EventEdit] venues error:', err)

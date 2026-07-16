@@ -1,5 +1,6 @@
-const { collection } = require('../../../utils/request')
-const { COLLECTIONS } = require('../../../utils/constants')
+const { callFunction } = require('../../../utils/request')
+const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 
 Page({
   data: {
@@ -14,8 +15,14 @@ Page({
   async _fetchVenues() {
     this.setData({ loading: true })
     try {
-      const res = await collection(COLLECTIONS.VENUES).get()
-      this.setData({ venues: res.data })
+      // Server-side read — the venues collection is not client-readable.
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getVenues' })
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Load failed', icon: 'none' })
+        return
+      }
+      this.setData({ venues: res.data || [] })
     } catch (err) {
       console.error('[VenueList] fetch error:', err)
       wx.showToast({ title: 'Load failed', icon: 'none' })
@@ -46,7 +53,12 @@ Page({
         if (!confirm) return
         wx.showLoading({ title: 'Deleting...' })
         try {
-          await collection(COLLECTIONS.VENUES).doc(id).remove()
+          const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'deleteVenue', id })
+          if (!res || !res.success) {
+            if (isUnauthorized(res)) { handleAuthFailure(); return }
+            wx.showToast({ title: (res && res.message) || 'Delete failed', icon: 'none' })
+            return
+          }
           wx.vibrateShort({ type: 'medium' })
           wx.showToast({ title: 'Deleted', icon: 'success' })
           await this._fetchVenues()

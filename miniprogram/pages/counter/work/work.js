@@ -86,7 +86,7 @@ Page({
       if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: true })
     } else if (savedId) {
       this.setData({ step: 'event', venueName: savedName, currentVenueId: savedId })
-      this._fetchEvents(savedId)
+      this._fetchEvents()
     }
   },
 
@@ -99,15 +99,18 @@ Page({
     if (!code) { wx.showToast({ title: 'Enter password', icon: 'none' }); return }
     wx.showLoading({ title: 'Verifying...', mask: true })
     try {
-      const res = await collection(COLLECTIONS.VENUES).where({ password: code }).get()
-      if (res.data && res.data.length > 0) {
-        const venue = res.data[0]
+      // Server-side check — the venues collection (door passwords) is not client-readable.
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'verifyVenuePassword', password: code })
+      if (res && res.success && res.venue) {
+        const venue = res.venue
         wx.setStorageSync('currentVenueId', venue._id)
         wx.setStorageSync('currentVenueName', venue.name)
         this.setData({ step: 'event', venueName: venue.name, currentVenueId: venue._id, clubCode: '' })
-        this._fetchEvents(venue._id)
+        this._fetchEvents()
+      } else if (isUnauthorized(res)) {
+        handleAuthFailure()
       } else {
-        wx.showToast({ title: 'Invalid password', icon: 'none' })
+        wx.showToast({ title: (res && res.message) || 'Invalid password', icon: 'none' })
       }
     } catch (e) {
       wx.showToast({ title: 'Connection error', icon: 'none' })
@@ -136,11 +139,12 @@ Page({
 
   // ─── Step 2 ───────────────────────────────────────────────
 
-  async _fetchEvents(venueId) {
+  async _fetchEvents() {
     this.setData({ isLoading: true })
     try {
-      const venueRes = await collection(COLLECTIONS.VENUES).doc(venueId).get()
-      const venueName = venueRes.data.name
+      // Venue name comes from the login step / storage — events reference venues by
+      // name, and the venues collection itself is not client-readable.
+      const venueName = this.data.venueName || wx.getStorageSync('currentVenueName')
       const now = new Date()
       if (now.getHours() < 5) now.setDate(now.getDate() - 1)
       const today = now.toISOString().split('T')[0]
@@ -164,7 +168,7 @@ Page({
     wx.removeStorageSync('currentEvent')
     if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: false })
     this.setData({ step: 'event', currentEvent: null, guests: [], filteredGuests: [], arrivedGuests: [], totalExpected: 0 })
-    this._fetchEvents(this.data.currentVenueId)
+    this._fetchEvents()
   },
 
   // ─── Step 3 ───────────────────────────────────────────────

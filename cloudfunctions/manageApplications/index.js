@@ -17,7 +17,7 @@ exports.main = async (event, context) => {
   if (!caller) {
     return { success: false, message: 'Unauthorized' };
   }
-  const COUNTER_ALLOWED_ACTIONS = ['getRegistrations', 'getPromoters', 'markAttendance', 'uncheckGuest', 'closeEvent'];
+  const COUNTER_ALLOWED_ACTIONS = ['getRegistrations', 'getPromoters', 'markAttendance', 'uncheckGuest', 'closeEvent', 'verifyVenuePassword'];
   if (caller.role !== 'admin' && !COUNTER_ALLOWED_ACTIONS.includes(action)) {
     return { success: false, message: 'Forbidden' };
   }
@@ -78,13 +78,20 @@ exports.main = async (event, context) => {
   // GET REGISTRATIONS
   if (action === 'getRegistrations') {
     try {
-      const [regsRes, eventRes] = await Promise.all([
+      const [regsRes, eventRes, dutyStaffRes] = await Promise.all([
         db.collection('registrations')
           .where({ eventId: event.eventId })
           .orderBy('promoterName', 'asc')
           .limit(1000)
           .get(),
-        db.collection('events').doc(event.eventId).get()
+        db.collection('events').doc(event.eventId).get(),
+        // Staff who worked this event (workedEventIds is the sole source of truth) —
+        // returned server-side so the client never reads the staff collection directly.
+        db.collection('staff')
+          .where({ workedEventIds: event.eventId })
+          .field({ _id: true, name: true })
+          .get()
+          .catch(() => ({ data: [] }))
       ]);
 
       const regs = regsRes.data || [];
@@ -115,7 +122,7 @@ exports.main = async (event, context) => {
       }
       const data = regs.map(r => Object.assign({}, r, { phone: phoneByOpenid[r._openid] || '' }));
 
-      return { success: true, data, event: eventRes.data };
+      return { success: true, data, event: eventRes.data, dutyStaff: dutyStaffRes.data || [] };
     } catch (e) {
       return { success: false, error: e.message };
     }
@@ -288,6 +295,42 @@ exports.main = async (event, context) => {
         }
       });
       return { success: true, promoterId: res._id };
+    } catch (e) {
+      return { success: false, message: e.message };
+    }
+  }
+
+  // VERIFY VENUE PASSWORD — counter door-login (caller is already a logged-in staff
+  // member, enforced by the getCallerStaff gate above). Returns only id + name;
+  // never echoes the password back to the client.
+  if (action === 'verifyVenuePassword') {
+    try {
+      const { password } = event;
+      const code = (password || '').trim();
+      if (!code) return { success: false, message: 'Invalid password' };
+      const res = await db.collection('venues').where({ password: code }).limit(1).get();
+      if (!res.data || res.data.length === 0) {
+        return { success: false, message: 'Invalid password' };
+      }
+      const venue = res.data[0];
+      return { success: true, venue: { _id: venue._id, name: venue.name } };
+    } catch (e) {
+      return { success: false, message: e.message };
+    }
+  }
+
+  // GET VENUES — admin venue management (venue-list / venue-edit / event-edit).
+  // Admin-only (not in COUNTER_ALLOWED_ACTIONS). Includes the password field because
+  // the admin UI displays and edits it. Replaces direct client reads of the collection
+  // so it can be locked down to no-client-access.
+  if (action === 'getVenues') {
+    try {
+      if (id) {
+        const res = await db.collection('venues').doc(id).get();
+        return { success: true, data: res.data ? [res.data] : [] };
+      }
+      const res = await db.collection('venues').get();
+      return { success: true, data: res.data || [] };
     } catch (e) {
       return { success: false, message: e.message };
     }

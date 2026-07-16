@@ -1,5 +1,5 @@
-const { callFunction, collection } = require('../../../utils/request')
-const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { callFunction } = require('../../../utils/request')
+const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
 const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 
 Page({
@@ -25,8 +25,14 @@ Page({
   async _loadVenue(id) {
     wx.showLoading({ title: 'Loading...', mask: true })
     try {
-      const res = await collection(COLLECTIONS.VENUES).doc(id).get()
-      const v = res.data
+      // Server-side read — the venues collection is not client-readable.
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getVenues', id })
+      if (isUnauthorized(res)) { handleAuthFailure(); return }
+      if (!res || !res.success || !(res.data && res.data.length)) {
+        wx.showToast({ title: 'Load failed', icon: 'none' })
+        return
+      }
+      const v = res.data[0]
       this.setData({
         name: v.name || '',
         password: v.password || '',
