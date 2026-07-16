@@ -2,8 +2,25 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 
+async function getCallerStaff(db) {
+  const wxContext = cloud.getWXContext();
+  const openid = wxContext.OPENID;
+  if (!openid) return null;
+  const res = await db.collection('staff').where({ lastOpenid: openid }).limit(1).get();
+  return (res.data && res.data.length > 0) ? res.data[0] : null;
+}
+
 exports.main = async (event, context) => {
   const { action, id, eventId, status } = event;
+
+  const caller = await getCallerStaff(db);
+  if (!caller) {
+    return { success: false, message: 'Unauthorized' };
+  }
+  const COUNTER_ALLOWED_ACTIONS = ['getRegistrations', 'getPromoters', 'markAttendance', 'uncheckGuest', 'closeEvent'];
+  if (caller.role !== 'admin' && !COUNTER_ALLOWED_ACTIONS.includes(action)) {
+    return { success: false, message: 'Forbidden' };
+  }
 
   // GET STATS
   if (action === 'getStats') {
