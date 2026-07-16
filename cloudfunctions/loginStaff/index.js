@@ -42,11 +42,6 @@ exports.main = async (event, context) => {
     // 2. Если роли нет, но это ваш логин (например, "Beppe"), ставим 'admin'.
     // 3. Во всех остальных случаях — 'counter'.
     let role = user.role || 'counter';
-    
-    // Замените "Beppe" на имя вашего основного аккаунта админа, если в базе нет поля role
-    if (!user.role && user.name === "Beppe") {
-      role = 'admin';
-    }
 
     // Обновляем openid пользователя при входе, чтобы привязать устройство
     await db.collection('staff').doc(user._id).update({
