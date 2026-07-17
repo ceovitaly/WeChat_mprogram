@@ -1,6 +1,6 @@
 const app = getApp();
 const auth = require('../../utils/auth.js');
-const { resolveEventImages } = require('../../utils/cloud.js');
+const { resolveEventImages, callFunction } = require('../../utils/cloud.js');
 
 // Short competitor-style datetime line ("Sat, Jul 18 • 22:00") for the
 // info block and the related-events cards. Rendered uppercase via CSS
@@ -92,24 +92,26 @@ Page({
     });
   },
 
-  // Venue address + coordinates live in the venues collection. Prefer the
-  // venueId reference (what the admin app writes today); fall back to a
-  // name lookup for older events that only carry the venueName string
-  // (events reference venues by venueName in the shared data model).
+  // Venue address + coordinates live in the venues collection, which is
+  // locked to no-client-access (venue docs also carry the door password),
+  // so the lookup goes through the clientAuth cloud function's getVenue
+  // action — it reads server-side in the shared env and returns only the
+  // safe display fields. The server keeps the venueId-first, venueName-
+  // fallback priority (venueId is what the admin app writes today; older
+  // events only carry the venueName string), and on duplicate venue names
+  // the name lookup returns the newest-edited doc (updatedAt desc).
   loadVenueInfo: function(event) {
-    var db = this.cloud.database();
+    if (!event.venueId && !event.venueName) return;
     var apply = this.applyVenue.bind(this);
-    if (event.venueId) {
-      db.collection('venues').doc(event.venueId).get({
-        success: function(res) { apply(res.data); },
-        fail: function() {}
-      });
-    } else if (event.venueName) {
-      db.collection('venues').where({ name: event.venueName }).limit(1).get({
-        success: function(res) { if (res.data && res.data.length > 0) apply(res.data[0]); },
-        fail: function() {}
-      });
-    }
+    callFunction('clientAuth', {
+      action: 'getVenue',
+      venueId: event.venueId || '',
+      venueName: event.venueName || ''
+    }).then(function(res) {
+      if (res && res.success && res.venue) apply(res.venue);
+    }).catch(function(err) {
+      console.error('[event-detail] loadVenueInfo failed:', err);
+    });
   },
 
   // Older venue docs store coordinates as coordinates.lat/lng instead of

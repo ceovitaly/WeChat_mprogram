@@ -58,7 +58,7 @@ async function getPhoneNumber(code) {
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext();
   const openid = wxContext.OPENID;
-  const { action, phoneCode, promoCode, eventId, ticketType } = event;
+  const { action, phoneCode, promoCode, eventId, ticketType, venueId, venueName } = event;
   
   try {
     // Action: get user info
@@ -189,6 +189,44 @@ exports.main = async (event, context) => {
       };
     }
     
+    // Action: venue lookup for the event page. The venues collection is
+    // locked to no-client-access (docs also carry the venue door password),
+    // so guests fetch venue info through this server-side read, which
+    // returns only the safe display fields. venueId wins when present;
+    // the name fallback orders by updatedAt desc so the newest-edited doc
+    // wins when duplicate venue names exist (docs without updatedAt sort
+    // last, i.e. behind any doc the admin has actually edited).
+    if (action === 'getVenue') {
+      let venueDoc = null;
+      if (venueId) {
+        const res = await db.collection('venues').doc(venueId).get();
+        venueDoc = res.data;
+      } else if (venueName) {
+        const res = await db.collection('venues')
+          .where({ name: venueName })
+          .orderBy('updatedAt', 'desc')
+          .limit(1)
+          .get();
+        if (res.data && res.data.length > 0) venueDoc = res.data[0];
+      }
+
+      if (!venueDoc) {
+        return { success: false };
+      }
+
+      // Safe fields ONLY — never the password or anything else.
+      return {
+        success: true,
+        venue: {
+          name: venueDoc.name || '',
+          address: venueDoc.address || '',
+          latitude: venueDoc.latitude || null,
+          longitude: venueDoc.longitude || null,
+          coordinates: venueDoc.coordinates || null
+        }
+      };
+    }
+
     if (action === 'resolveImages') {
       const fileList = event.fileList || [];
       if (fileList.length === 0) return { urlMap: {} };
