@@ -1,19 +1,4 @@
 page {
-  --color-blue: #007AFF;
-  --color-green: #34C759;
-  --color-orange: #FF9500;
-  --color-red: #FF3B30;
-  --color-gray: #8E8E93;
-  --color-separator: #C6C6C8;
-  --color-bg: #F2F2F7;
-  --color-card: #FFFFFF;
-  --color-text-primary: #000000;
-  --color-text-secondary: #8E8E93;
-  --color-text-tertiary: #C7C7CC;
-  --radius-card: 12rpx;
-  --radius-btn: 12rpx;
-  --radius-input: 10rpx;
-
   /* Theme variables */
   --bg: #F2F2F7;
   --bg-card: #FFFFFF;

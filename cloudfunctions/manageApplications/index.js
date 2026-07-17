@@ -17,30 +17,9 @@ exports.main = async (event, context) => {
   if (!caller) {
     return { success: false, message: 'Unauthorized' };
   }
-  const COUNTER_ALLOWED_ACTIONS = ['getRegistrations', 'getPromoters', 'markAttendance', 'uncheckGuest', 'closeEvent', 'verifyVenuePassword'];
+  const COUNTER_ALLOWED_ACTIONS = ['getRegistrations', 'getPromoters', 'markAttendance', 'uncheckGuest', 'verifyVenuePassword'];
   if (caller.role !== 'admin' && !COUNTER_ALLOWED_ACTIONS.includes(action)) {
     return { success: false, message: 'Forbidden' };
-  }
-
-  // GET STATS
-  if (action === 'getStats') {
-    try {
-      const [events, staff, promoters] = await Promise.all([
-        db.collection('events').count(),
-        db.collection('staff').count(),
-        db.collection('promoters').where({ status: 'approved' }).count()
-      ]);
-      return {
-        success: true,
-        stats: {
-          events: events.total,
-          staff: staff.total,
-          promoters: promoters.total
-        }
-      };
-    } catch (e) {
-      return { success: false, error: e };
-    }
   }
 
   // GET TEMP FILE URLS (resolves cloud:// IDs server-side for any user)
@@ -147,27 +126,6 @@ exports.main = async (event, context) => {
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };
-    }
-  }
-
-  // UPDATE PROMOTER CODE
-  if (action === 'updatePromoterCode') {
-    try {
-      const { promoCode } = event;
-      if (!promoCode) return { success: false, message: 'No promo code provided' };
-      const existing = await db.collection('promoters')
-        .where({ promoCode })
-        .get();
-      const taken = existing.data.filter(p => p._id !== id);
-      if (taken.length > 0) {
-        return { success: false, message: 'Promo code already taken' };
-      }
-      await db.collection('promoters').doc(id).update({
-        data: { promoCode, updatedAt: db.serverDate() }
-      });
-      return { success: true };
-    } catch (e) {
-      return { success: false, message: e.message };
     }
   }
 
@@ -386,67 +344,6 @@ exports.main = async (event, context) => {
         }
       });
       return { success: true };
-    } catch (e) {
-      return { success: false, message: e.message };
-    }
-  }
-
-  // GET EVENT REPORTS
-  if (action === 'getEventReports') {
-    try {
-      const res = await db.collection('event_reports')
-        .orderBy('closedAt', 'desc')
-        .limit(100)
-        .get();
-      return { success: true, data: res.data };
-    } catch (e) {
-      return { success: false, message: e.message };
-    }
-  }
-
-  // SEED TEST DATA
-  if (action === 'seedTestData') {
-    try {
-      const { eventId } = event;
-      if (!eventId) return { success: false, message: 'No eventId' };
-
-      const promoters = [
-        { name: 'Aliice', code: 'AISSA' },
-        { name: 'Willy', code: 'WILLY' },
-        { name: 'Mas', code: 'MAS' },
-        { name: 'Vitalii', code: 'VITALII' }
-      ];
-
-      const names = [
-        'Sophia','Liam','Emma','Noah','Olivia','Ethan','Ava','Mason','Isabella','Logan',
-        'Mia','Lucas','Charlotte','Aiden','Amelia','Jackson','Harper','Caden','Evelyn','Grayson',
-        'Abigail','Sebastian','Emily','Mateo','Ella','Jack','Madison','Owen','Scarlett','Theodore',
-        'Victoria','Henry','Aria','Alexander','Grace','Benjamin','Chloe','Samuel','Penelope','Daniel',
-        'Riley','Matthew','Zoey','Elijah','Nora','James','Lily','Michael','Eleanor','David',
-        'Hannah','Joseph','Lillian','Carter','Addison','Owen','Aubrey','Luke','Ellie','Jayden',
-        'Stella','Dylan','Natalie','Ryan','Zoe','Nathan','Leah','Caleb','Hazel','Isaac',
-        'Violet','Hunter','Aurora','Dominic','Savannah','Christian','Audrey','Connor','Brooklyn','Eli',
-        'Bella','Jaxon','Claire','Julian','Skylar','Colton','Lucy','Jordan','Paisley','Angel',
-        'Everly','Charles','Anna','Aaron','Caroline','Landon','Genesis','Adrian','Aaliyah','Cameron'
-      ];
-
-      const now = new Date();
-      for (let i = 0; i < names.length; i++) {
-        const promoter = promoters[Math.floor(Math.random() * promoters.length)];
-        await db.collection('registrations').add({
-          data: {
-            eventId,
-            guestName: names[i],
-            promoterName: promoter.name,
-            promoCode: promoter.code,
-            arrivedAt: null,
-            ticketType: 'Free Entry',
-            createdAt: now
-          }
-        });
-      }
-
-      return { success: true, count: names.length };
     } catch (e) {
       return { success: false, message: e.message };
     }

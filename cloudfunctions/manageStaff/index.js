@@ -27,7 +27,7 @@ exports.main = async (event, context) => {
     return { success: false, message: 'Unauthorized' };
   }
   // Roster mutations are admin-only — counters may only read (getAll, field-restricted below).
-  const ADMIN_ONLY_ACTIONS = ['add', 'update', 'delete', 'setDutyStatus'];
+  const ADMIN_ONLY_ACTIONS = ['add', 'update', 'delete'];
   if (caller.role !== 'admin' && ADMIN_ONLY_ACTIONS.includes(action)) {
     return { success: false, message: 'Forbidden' };
   }
@@ -92,27 +92,6 @@ exports.main = async (event, context) => {
   if (action === 'delete') {
     try {
       await db.collection('staff').doc(id).remove();
-      return { success: true };
-    } catch (e) {
-      return { success: false, error: e.message };
-    }
-  }
-
-  // SET DUTY STATUS
-  if (action === 'setDutyStatus') {
-    try {
-      const { staffId, isOnDuty, eventId, eventTitle } = event;
-      if (!staffId) return { success: false, message: 'No staffId' };
-      const updateData = {
-        isOnDuty: !!isOnDuty,
-        currentEventId: isOnDuty ? (eventId || '') : '',
-        currentEventTitle: isOnDuty ? (eventTitle || '') : '',
-        dutyUpdatedAt: db.serverDate()
-      };
-      if (isOnDuty && eventId) {
-        updateData.workedEventIds = db.command.push(eventId);
-      }
-      await db.collection('staff').doc(staffId).update({ data: updateData });
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };

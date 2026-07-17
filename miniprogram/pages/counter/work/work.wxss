@@ -271,29 +271,6 @@ page {
 .header-name { font-size: 30rpx; font-weight: 700; color: var(--text); }
 .header-venue { font-size: 24rpx; color: var(--text-2); }
 
-.header-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10rpx;
-  flex-shrink: 0;
-}
-
-.header-close-btn {
-  background: rgba(255, 59, 48, 0.1);
-  border: 1rpx solid rgba(255, 59, 48, 0.25);
-  border-radius: 12rpx;
-  padding: 8rpx 16rpx;
-}
-
-.header-close-btn:active { opacity: 0.7; }
-
-.header-close-text {
-  font-size: 22rpx;
-  font-weight: 600;
-  color: #FF3B30;
-}
-
 /* Search */
 .search-wrap {
   background: var(--bg);
@@ -406,9 +383,6 @@ page {
   flex-shrink: 0;
 }
 
-.checkbox--checked { background: #34C759; border-color: #34C759; }
-
-.checkbox-tick { font-size: 26rpx; color: #FFFFFF; font-weight: 700; }
 .checkbox-empty { font-size: 28rpx; color: var(--text-3); }
 
 .guest-info { flex: 1; display: flex; flex-direction: column; gap: 4rpx; }
@@ -449,17 +423,6 @@ page {
 
 .safe-area-bottom { height: calc(32rpx + env(safe-area-inset-bottom)); }
 .tab-bar-spacer { height: calc(100rpx + env(safe-area-inset-bottom)); }
-
-.group-badge {
-  font-size: 22rpx;
-  font-weight: 700;
-  padding: 4rpx 12rpx;
-  border-radius: 20rpx;
-  margin-left: 8rpx;
-}
-.group-badge--p { background: #E8F5E9; color: #2E7D32; }
-.group-badge--ap { background: #E3F2FD; color: #1565C0; }
-.group-badge--lap { background: #FFF3E0; color: #E65100; }
 
 .tier-badge {
   padding: 4rpx 12rpx;
@@ -521,9 +484,5 @@ page {
   .tier-badge--lap .tier-badge-text { color: #FF9500; }
   .tier-badge--e   { background: rgba(255, 255, 255, 0.08); }
   .tier-badge--e .tier-badge-text   { color: #AEAEB2; }
-
-  .group-badge--p   { background: rgba(48, 209, 88, 0.15);  color: #30D158; }
-  .group-badge--ap  { background: rgba(10, 132, 255, 0.15); color: #0A84FF; }
-  .group-badge--lap { background: rgba(255, 149, 0, 0.15);  color: #FF9500; }
 }
 

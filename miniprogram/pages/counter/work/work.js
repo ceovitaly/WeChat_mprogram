@@ -513,40 +513,6 @@ Page({
     }
   },
 
-  confirmCloseEvent() {
-    const { currentEvent, staffName } = this.data;
-    if (!currentEvent) return;
-    wx.showModal({
-      title: 'Close Event',
-      content: `Generate final attendance report for "${currentEvent.title}"?`,
-      confirmText: 'Close Event',
-      confirmColor: '#FF3B30',
-      cancelText: 'Cancel',
-      success: async ({ confirm }) => {
-        if (!confirm) return;
-        wx.showLoading({ title: 'Saving report...', mask: true });
-        try {
-          const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
-            action: 'closeEvent',
-            eventId: currentEvent._id,
-            closedBy: staffName
-          });
-          wx.hideLoading();
-          if (res.success) {
-            wx.vibrateShort({ type: 'medium' });
-            wx.showToast({ title: 'Report saved!', icon: 'success' });
-            setTimeout(() => this.backToEvents(), 1500);
-          } else {
-            wx.showToast({ title: res.message || 'Error', icon: 'none' });
-          }
-        } catch (e) {
-          wx.hideLoading();
-          wx.showToast({ title: 'Error', icon: 'none' });
-        }
-      }
-    });
-  },
-
   confirmLogout() {
     wx.showModal({
       title: 'Log out', content: 'Log out from account?',
