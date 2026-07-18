@@ -146,7 +146,7 @@
             data-id="{{item._id}}"
           >
             <view class="icon icon--list btn-list-icon"></view>
-            <text>Get on list</text>
+            <text>ADD ME ON GUESTS LIST</text>
           </button>
           <view
             wx:else

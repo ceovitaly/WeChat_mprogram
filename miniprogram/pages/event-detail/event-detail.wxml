@@ -144,7 +144,7 @@
   <view wx:else class="action-row">
     <button class="btn-register pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="openTicketModal">
       <view class="icon icon--list btn-register-icon"></view>
-      <text>Get on list</text>
+      <text>ADD ME ON GUESTS LIST</text>
     </button>
     <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">Share</button>
   </view>
