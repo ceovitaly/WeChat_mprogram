@@ -6,7 +6,8 @@ App({
     cloudReadyCallbacks: [],
     openidReadyCallbacks: [],
     userInfo: null,
-    sceneData: null
+    sceneData: null,
+    privacyResolve: null
   },
 
   onLaunch(options) {
@@ -57,6 +58,25 @@ App({
           promoterId: parts[1]
         }
       }
+    }
+  },
+
+  // WeChat's mandatory privacy-authorization gate. Called by the runtime
+  // right before a privacy-sensitive API (here, getPhoneNumber — the only
+  // one this app calls) fires, if the user hasn't agreed yet. We stash the
+  // resolve callback and hand off to whichever page is on top to show a
+  // consent UI; that page must eventually call resolve({event:'agree'|'disagree'}).
+  onNeedPrivacyAuthorization(resolve) {
+    this.globalData.privacyResolve = resolve;
+    const pages = getCurrentPages();
+    const current = pages[pages.length - 1];
+    if (current && typeof current.showPrivacyModal === 'function') {
+      current.showPrivacyModal();
+    } else {
+      // No page is ready to prompt (shouldn't happen given getPhoneNumber
+      // only lives on the register page) — disagree rather than hang the caller.
+      resolve({ event: 'disagree' });
+      this.globalData.privacyResolve = null;
     }
   },
 

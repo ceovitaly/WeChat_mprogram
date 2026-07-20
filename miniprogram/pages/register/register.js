@@ -13,7 +13,8 @@ Page({
     promoError: '',
     submitting: false,
     verifiedPromoterId: '',
-    verifiedPromoterName: ''
+    verifiedPromoterName: '',
+    showPrivacyModal: false
   },
 
   onLoad() {
@@ -39,6 +40,37 @@ Page({
     wx.navigateBack({
       fail: () => wx.reLaunch({ url: '/pages/feed/feed' }),
     });
+  },
+
+  // Privacy-authorization consent gate. app.js's onNeedPrivacyAuthorization
+  // fires before getPhoneNumber (the only privacy-sensitive API this app
+  // calls) and, finding this page on top, calls this to show the sheet.
+  showPrivacyModal() {
+    this.setData({ showPrivacyModal: true });
+  },
+
+  onAgreePrivacyAuthorization() {
+    if (app.globalData.privacyResolve) {
+      app.globalData.privacyResolve({ event: 'agree' });
+      app.globalData.privacyResolve = null;
+    }
+    this.setData({ showPrivacyModal: false });
+  },
+
+  onDisagreePrivacyAuthorization() {
+    if (app.globalData.privacyResolve) {
+      app.globalData.privacyResolve({ event: 'disagree' });
+      app.globalData.privacyResolve = null;
+    }
+    this.setData({ showPrivacyModal: false });
+  },
+
+  openPrivacyPolicy() {
+    wx.navigateTo({ url: '/pages/legal/legal?doc=privacy' });
+  },
+
+  openTermsOfService() {
+    wx.navigateTo({ url: '/pages/legal/legal?doc=terms' });
   },
 
   // WeChat вернул code для получения телефона

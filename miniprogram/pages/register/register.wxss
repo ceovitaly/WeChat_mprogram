@@ -178,6 +178,31 @@ page {
 }
 .btn-phone-main::after { border: none; }
 
+/* ─── Согласие на конфиденциальность (шаг 1) ───
+   Small centered caption below the Sign In CTA; links use --accent per the
+   app's link-affordance convention, plain text uses --text-secondary (the
+   same value in both themes, so it reads fine against this page's
+   always-dark card). */
+.consent-caption {
+  width: 100%;
+  text-align: center;
+  line-height: 1.6;
+  margin-top: 20rpx;
+  padding: 0 12rpx;
+  box-sizing: border-box;
+}
+
+.consent-text {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+
+.consent-link {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--accent);
+}
+
 /* ─── Skip / Back (шаг 1) ─── */
 .btn-skip {
   width: 100%;
@@ -289,4 +314,94 @@ button[disabled].btn-submit {
     background: rgba(28, 28, 30, 0.95);
     border-color: rgba(255,255,255,0.1);
   }
+}
+
+/* ─── Privacy-authorization sheet ───
+   Content for the mandatory consent gate (see app.js
+   onNeedPrivacyAuthorization / register.js showPrivacyModal). This is a
+   standard bottom-sheet overlay, so unlike the page's own always-dark
+   Welcome card above, it follows the same adaptive tokens (--bg-elevated,
+   --text-primary, --border) as every other sheet in the app
+   (event-detail's ticket-modal, me's name-sheet) for visual consistency. */
+.privacy-modal {
+  width: 100%;
+  background: var(--bg-elevated);
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 16rpx 32rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-handle {
+  width: 80rpx;
+  height: 8rpx;
+  background: var(--border);
+  border-radius: 4rpx;
+  margin: 0 auto 32rpx;
+}
+
+.privacy-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 16rpx;
+}
+
+.privacy-desc {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 32rpx;
+}
+
+.privacy-btn-outline {
+  width: 100%;
+  height: 96rpx;
+  line-height: 92rpx;
+  background: transparent;
+  color: var(--accent);
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 24rpx;
+  border: 2rpx solid var(--accent);
+  text-align: center;
+  margin: 0 0 16rpx;
+  padding: 0;
+  box-sizing: border-box;
+}
+.privacy-btn-outline::after { border: none; }
+
+.privacy-btn-primary {
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
+  background: var(--accent);
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 700;
+  border-radius: 24rpx;
+  border: none;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.privacy-btn-primary::after { border: none; }
+
+.privacy-not-now {
+  text-align: center;
+  padding: 28rpx 0 4rpx;
+}
+
+.privacy-not-now text {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+@media (prefers-color-scheme: dark) {
+  .modal-handle { background: #3A3A3C; }
 }
