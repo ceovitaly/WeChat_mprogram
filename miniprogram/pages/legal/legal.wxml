@@ -1,0 +1,43 @@
+<!--pages/legal/legal.wxml-->
+<view class="page">
+
+  <!-- Fixed Header -->
+  <view class="header">
+    <view class="header-top">
+      <page-header title="Legal" bind:back="goBack" />
+    </view>
+    <view class="tabs">
+      <view
+        class="tab {{activeDoc === 'privacy' ? 'tab-active' : ''}}"
+        bindtap="switchTab"
+        data-doc="privacy"
+      >
+        <text class="tab-text">Privacy Policy</text>
+      </view>
+      <view
+        class="tab {{activeDoc === 'terms' ? 'tab-active' : ''}}"
+        bindtap="switchTab"
+        data-doc="terms"
+      >
+        <text class="tab-text">Terms of Service</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Scrollable Content -->
+  <scroll-view class="scroll" scroll-y>
+    <view class="legal-content">
+      <view wx:for="{{sections}}" wx:key="title" class="legal-section">
+        <text class="legal-title">{{item.title}}</text>
+        <text
+          wx:for="{{item.paragraphs}}"
+          wx:for-item="para"
+          wx:key="*this"
+          class="legal-para"
+        >{{para}}</text>
+      </view>
+    </view>
+    <view class="list-bottom-pad"></view>
+  </scroll-view>
+
+</view>

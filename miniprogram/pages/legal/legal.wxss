@@ -1,0 +1,116 @@
+/* pages/legal/legal.wxss */
+
+page {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixed Header — same shape as mytickets' header (page-header + tab row) */
+.header {
+  background: var(--bg-elevated);
+  padding-top: calc(44rpx + env(safe-area-inset-top));
+  padding-bottom: 0;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 24rpx 20rpx;
+}
+
+/* Tabs — same pill shape as mytickets' Active/Past tabs, but the active
+   state is the brand accent rather than the inverted black/white pill,
+   per this page's own design spec. */
+.tabs {
+  display: flex;
+  padding: 0 32rpx 16rpx;
+  gap: 8rpx;
+}
+
+.tab {
+  height: 72rpx;
+  padding: 0 32rpx;
+  border-radius: 18rpx;
+  background: var(--bg-inset);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab:active { opacity: 0.7; }
+
+.tab-active {
+  background: rgba(255, 107, 53, 0.12);
+  border: 1rpx solid var(--accent);
+}
+
+.tab-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tab-active .tab-text {
+  color: var(--accent);
+}
+
+/* Scroll */
+.scroll {
+  flex: 1;
+  height: 0;
+}
+
+/* Content */
+.legal-content {
+  padding: 32rpx 32rpx 0;
+  display: flex;
+  flex-direction: column;
+  gap: 40rpx;
+}
+
+.legal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.legal-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+}
+
+.legal-para {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.legal-para:last-child {
+  margin-bottom: 0;
+}
+
+.list-bottom-pad {
+  height: calc(48rpx + env(safe-area-inset-bottom));
+}
+
+/* ===== DARK MODE ===== */
+/* Most colors flip automatically via the tokens above; the accent tab
+   fill keeps its own rgba wash independent of theme, matching the
+   feed's .filter-pill precedent. */
+@media (prefers-color-scheme: dark) {
+  .page { background: var(--bg); }
+}

@@ -5,7 +5,8 @@
     "pages/mytickets/mytickets",
     "pages/me/me",
     "pages/register/register",
-    "pages/webview/webview"
+    "pages/webview/webview",
+    "pages/legal/legal"
   ],
   "window": {
     "navigationBarBackgroundColor": "@navBgColor",
