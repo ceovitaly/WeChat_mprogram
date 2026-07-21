@@ -256,9 +256,9 @@ Page({
       const eventId = this.data.event._id;
 
       // Just-in-time dedup: re-query right before the add in case the
-      // isRegistered flag was stale (auto-filtered by _openid, so any hit
-      // is this user's registration).
-      db.collection('registrations').where({ eventId }).get({
+      // isRegistered flag was stale (explicitly filtered by this guest's
+      // _openid, so only this user's registration can match).
+      db.collection('registrations').where({ eventId, _openid: guest._openid }).get({
         success: dupRes => {
           if (dupRes.data.length > 0) {
             wx.hideLoading();
