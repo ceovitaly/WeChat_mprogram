@@ -99,7 +99,7 @@ Page({
           const phone = result.phone;
           try {
             const db = cloud.database();
-            const guestRes = await db.collection('guests').limit(1).get();
+            const guestRes = await db.collection('guests').where({ _openid: app.globalData.openid }).limit(1).get();
             if (guestRes.data && guestRes.data.length > 0) {
               // Existing guest signing back in — this clears the
               // loggedOut flag and refreshes the cached profile.
@@ -192,8 +192,8 @@ Page({
           updatedAt: db.serverDate()
         };
 
-        // Both queries are auto-filtered by _openid server-side.
-        const guestRes = await db.collection('guests').limit(1).get();
+        // Both queries are explicitly filtered by this session's openid.
+        const guestRes = await db.collection('guests').where({ _openid: app.globalData.openid }).limit(1).get();
         if (guestRes.data.length > 0) {
           await db.collection('guests').doc(guestRes.data[0]._id).update({ data: profileData });
         } else {
@@ -202,7 +202,7 @@ Page({
 
         // Re-read the saved doc so the cached profile carries the server
         // fields (_id/_openid) that queries and fast paths depend on.
-        const savedRes = await db.collection('guests').limit(1).get();
+        const savedRes = await db.collection('guests').where({ _openid: app.globalData.openid }).limit(1).get();
         const profile = (savedRes.data && savedRes.data.length > 0) ? savedRes.data[0] : profileData;
         auth.completeSignIn(profile);
 
@@ -222,9 +222,9 @@ Page({
   // Shared post-sign-in routing for both the existing-guest sign-in and
   // the fresh-signup flow. If the user came here from an event page
   // (pendingEventId), honor that intent: put them on the list — skipping
-  // the add if a registration already exists (registrations queries are
-  // auto-filtered by _openid, so any hit is this user's) — and land on
-  // My List. Otherwise land on the feed.
+  // the add if a registration already exists (explicitly filtered by this
+  // session's openid so only this user's registration can match) — and
+  // land on My List. Otherwise land on the feed.
   async _afterSignIn(cloud, profile) {
     let pendingEventId;
     try {
@@ -239,7 +239,7 @@ Page({
 
     try {
       const db = cloud.database();
-      const dup = await db.collection('registrations').where({ eventId: pendingEventId }).get();
+      const dup = await db.collection('registrations').where({ eventId: pendingEventId, _openid: app.globalData.openid }).get();
       if (!dup.data || dup.data.length === 0) {
         const eventRes = await db.collection('events').doc(pendingEventId).get();
         const event = eventRes.data;
