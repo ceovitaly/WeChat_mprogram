@@ -69,11 +69,10 @@ function getAuth(callback) {
   }
 
   // Wait for login (openid) so we don't query mid-startup, then look for
-  // this user's guest record. The query is auto-filtered by _openid
-  // server-side, so no explicit openid is needed in the where clause.
-  app.getOpenid(() => {
+  // this user's guest record, explicitly filtered by that openid.
+  app.getOpenid((openid) => {
     app.getCloud((cloud) => {
-      cloud.database().collection('guests').limit(1).get()
+      cloud.database().collection('guests').where({ _openid: openid }).limit(1).get()
         .then(res => {
           const profile = (res.data && res.data.length > 0) ? res.data[0] : null
           if (profile && (gd.authGen || 0) === gen) {
