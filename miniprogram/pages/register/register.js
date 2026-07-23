@@ -14,7 +14,8 @@ Page({
     submitting: false,
     verifiedPromoterId: '',
     verifiedPromoterName: '',
-    showPrivacyModal: false
+    showPrivacyModal: false,
+    consentChecked: false
   },
 
   onLoad() {
@@ -71,6 +72,10 @@ Page({
 
   openTermsOfService() {
     wx.navigateTo({ url: '/pages/legal/legal?doc=terms' });
+  },
+
+  toggleConsent() {
+    this.setData({ consentChecked: !this.data.consentChecked });
   },
 
   // WeChat вернул code для получения телефона

@@ -29,13 +29,21 @@
       <view class="step-content">
         <text class="card-title">Welcome</text>
 
+        <view class="consent-row" bindtap="toggleConsent">
+          <view class="consent-checkbox {{consentChecked ? 'consent-checkbox--checked' : ''}}">
+            <text wx:if="{{consentChecked}}" class="consent-checkbox-mark">✓</text>
+          </view>
+          <view class="consent-caption">
+            <text class="consent-text">I agree to the </text><text class="consent-link" catchtap="openPrivacyPolicy">Privacy Policy</text><text class="consent-text"> and </text><text class="consent-link" catchtap="openTermsOfService">Terms of Service</text>
+          </view>
+        </view>
+
         <button
           class="btn-phone-main"
           open-type="getPhoneNumber"
           bindgetphonenumber="onGetPhoneNumber"
+          disabled="{{!consentChecked}}"
         >Sign In</button>
-
-        <view class="consent-caption"><text class="consent-text">By continuing, you agree to our </text><text class="consent-link" bindtap="openPrivacyPolicy">Privacy Policy</text><text class="consent-text"> and </text><text class="consent-link" bindtap="openTermsOfService">Terms of Service</text></view>
 
         <view class="btn-skip" bind:tap="goBack">
           <text class="btn-skip-text">Browse without signing in</text>

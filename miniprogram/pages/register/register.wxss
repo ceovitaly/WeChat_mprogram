@@ -178,18 +178,60 @@ page {
 }
 .btn-phone-main::after { border: none; }
 
+.btn-phone-main[disabled] {
+  opacity: 0.4;
+}
+
 /* ─── Согласие на конфиденциальность (шаг 1) ───
-   Small centered caption below the Sign In CTA; links use --accent per the
-   app's link-affordance convention, plain text uses --text-secondary (the
-   same value in both themes, so it reads fine against this page's
-   always-dark card). */
-.consent-caption {
+   Explicit opt-in row above the Sign In CTA: a tappable checkbox + caption,
+   read before you agree rather than an implied "by continuing" notice.
+   The whole row toggles the checkbox (bindtap on .consent-row); the two
+   links use catchtap so tapping them navigates to the legal page without
+   also flipping the checkbox via bubbling. Links use --accent per the app's
+   link-affordance convention, plain text uses --text-secondary (the same
+   value in both themes, so it reads fine against this page's always-dark
+   card). */
+.consent-row {
   width: 100%;
-  text-align: center;
-  line-height: 1.6;
-  margin-top: 20rpx;
-  padding: 0 12rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+  margin-top: 4rpx;
+  margin-bottom: 24rpx;
   box-sizing: border-box;
+}
+
+.consent-checkbox {
+  flex-shrink: 0;
+  width: 38rpx;
+  height: 38rpx;
+  margin-top: 2rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 8rpx;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.consent-checkbox--checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.consent-checkbox-mark {
+  font-size: 24rpx;
+  line-height: 1;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.consent-caption {
+  flex: 1;
+  text-align: left;
+  line-height: 1.6;
 }
 
 .consent-text {
