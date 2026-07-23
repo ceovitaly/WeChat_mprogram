@@ -208,8 +208,21 @@ exports.main = async (event, context) => {
     try {
       const targetId = eventId || id;
       if (!targetId) return { success: false, message: 'No ID provided' };
+
+      // Cascade: an event's registrations are meaningless once the event itself
+      // is gone — otherwise guests keep a ticket in "My Tickets" for an event
+      // that no longer exists anywhere in the app.
+      const regsRes = await db.collection('registrations')
+        .where({ eventId: targetId })
+        .field({ _id: true })
+        .limit(1000)
+        .get();
+      await Promise.all(
+        (regsRes.data || []).map(r => db.collection('registrations').doc(r._id).remove())
+      );
+
       await db.collection('events').doc(targetId).remove();
-      return { success: true };
+      return { success: true, removedRegistrations: (regsRes.data || []).length };
     } catch (e) {
       return { success: false, error: e.message };
     }
