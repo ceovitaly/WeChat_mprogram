@@ -14,10 +14,17 @@ page {
 
 /* ===== HEADER ===== */
 /* Lives INSIDE the scroll-view, stuck to its top. position:sticky keeps
-   the header's layout slot, so collapsing it (translateY + fade below)
-   never reflows the list — no content jump — and pull-to-refresh still
-   works because the header travels down with the pulled content.
-   padding-top is set inline from feed.js (clears the WeChat capsule). */
+   the header's layout slot, so collapsing it (translateY + fade, applied
+   continuously by the Skyline worklet in feed.js onReady via wx:ref
+   "header" — see feed.wxml) never reflows the list — no content jump —
+   and pull-to-refresh still works because the header travels down with
+   the pulled content. padding-top is set inline from feed.js (clears the
+   WeChat capsule).
+   NOTE: transform/opacity are intentionally NOT in the transition below —
+   the worklet updates them every scroll frame on the UI thread, so a CSS
+   transition on top would fight/lag behind those continuous writes.
+   Only box-shadow (the `scrolled` flag, still a plain setData flip) is
+   transitioned here. */
 .header {
   position: sticky;
   top: 0;
@@ -25,14 +32,7 @@ page {
   background: var(--bg-elevated);
   padding-bottom: 16rpx;
   border-bottom: 1rpx solid var(--border);
-  transition: transform 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
-}
-
-/* Collapsed on scroll-down (headerHidden flag, flip-only setData) */
-.header--hidden {
-  transform: translateY(-100%);
-  opacity: 0;
-  pointer-events: none;
+  transition: box-shadow 0.25s ease;
 }
 
 /* Subtle lift once the list is scrolled at all (scrolled flag) */

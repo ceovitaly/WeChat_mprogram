@@ -27,7 +27,9 @@ Page({
     cardImgHeight: 600,
     headerPadTop: 96,      // px; corrected from the capsule rect in onLoad
     refresherThreshold: 90, // px; corrected from the status bar in onLoad
-    headerHidden: false,
+    // headerHidden (binary flip flag) removed: the header's hide/reveal is
+    // now driven continuously by a Skyline worklet (see onReady /
+    // onScrollWorklet below) instead of a JS-thread setData class flip.
     scrolled: false
   },
 
@@ -50,13 +52,10 @@ Page({
     if (!padTop) padTop = (info.statusBarHeight || 44) + 48;
 
     // Header total height: capsule clearance + 40px row + 8px bottom pad.
-    // Used by the collapse logic (never hide while the header's own slot
-    // is still on screen) and the card-height math below.
+    // Used by the worklet's clamp (never hide while the header's own slot
+    // is still on screen — see onReady) and the card-height math below.
     var headerPx = padTop + 48;
     this._hideMinTop = headerPx + 24;
-    this._lastTop = 0;
-    this._scrollDir = 0;
-    this._dirAnchor = 0;
 
     // Calculate card image height so the full card fits on screen.
     // Header + card extras (title + CTA + padding) ~190px
@@ -94,6 +93,60 @@ Page({
   onShow: function() {
     this.refreshAuthUI();
     this.loadMyRegistrations();
+  },
+
+  // ===== SKYLINE WORKLET: continuous header hide/reveal =====
+  //
+  // This page is Skyline-only (feed.json renderer: "skyline"), so the
+  // worklet APIs below are always available at runtime — no classic-engine
+  // fallback branch is needed.
+  //
+  // UNCERTAIN API SURFACE (flag for spot-checking in real DevTools):
+  // the exact global/method names below — `wx.worklet.shared`,
+  // `this.getRef(name)` (paired with `wx:ref` in feed.wxml), and
+  // `ref.applyAnimatedStyle(workletFn)` — are implemented per the
+  // documented WeChat Skyline worklet contract as of this session, but
+  // naming has shifted between base library / doc revisions. If any of
+  // these throw "is not a function" in DevTools, this block (and the
+  // matching `worklet:onscroll` binding + `wx:ref="header"` in
+  // feed.wxml) is exactly where to look first.
+  onReady: function() {
+    try {
+      // Shared value written every scroll frame on the UI thread by
+      // onScrollWorklet below, in raw scrollTop px.
+      this.scrollYShared = wx.worklet.shared(0);
+
+      var headerRef = this.getRef && this.getRef('header');
+      if (headerRef && headerRef.applyAnimatedStyle) {
+        var hideMinTop = this._hideMinTop; // px; computed in onLoad
+        var scrollYShared = this.scrollYShared;
+
+        headerRef.applyAnimatedStyle(function() {
+          "worklet";
+          // Continuous 0..1 "hidden-ness" derived directly from scroll
+          // position — replaces the old binary headerHidden flip.
+          // Clamped to 0 below hideMinTop so the header never hides while
+          // its own slot could still be on screen (same guarantee the old
+          // `_hideMinTop` branch in onFeedScroll gave, just continuous
+          // instead of an if/else), and eased over a fixed px band above
+          // that point instead of snapping at a single flip line.
+          var top = scrollYShared.value;
+          var band = 120; // px over which the header fades/translates out
+          var progress = (top - hideMinTop) / band;
+          if (progress < 0) progress = 0;
+          if (progress > 1) progress = 1;
+          return {
+            opacity: 1 - progress,
+            transform: 'translateY(' + (-progress * 100) + '%)'
+          };
+        });
+      }
+    } catch (e) {
+      // Non-fatal: if the worklet API surface doesn't match at runtime,
+      // the header just stays fully visible (no crash) — see the
+      // uncertain-API comment above for what to check.
+      console.error('[feed] Skyline worklet header setup failed:', e);
+    }
   },
 
   // Header identity pill and card badges both derive from the central
@@ -425,35 +478,30 @@ Page({
 
   onReachBottom: function() {},
 
-  // Collapse-on-scroll for the sticky header. Fires on every scroll frame,
-  // so it must stay cheap: setData happens ONLY when one of the two
-  // booleans actually flips. Hysteresis: direction changes are tracked
-  // against an anchor point, and the header only reacts after ~10px of
-  // travel in one direction (so slow creeping scrolls still count, but
-  // jitter doesn't). It never hides while its own slot could still be on
-  // screen (scrollTop < header height + margin), and any scroll-up
-  // reveals it.
+  // JS-thread scroll handler — now only owns the `scrolled` boolean (the
+  // header's own hide/reveal box-shadow boundary). setData happens ONLY
+  // when it actually flips. The header's hide/reveal animation itself is
+  // handled entirely on the UI thread by the worklet in onReady /
+  // onScrollWorklet, so no per-frame setData round-trip is needed for it.
   onFeedScroll: function(e) {
     var top = e.detail.scrollTop;
-
     var scrolled = top > 8;
     if (scrolled !== this.data.scrolled) this.setData({ scrolled: scrolled });
+  },
 
-    var delta = top - this._lastTop;
-    this._lastTop = top;
-    if (delta === 0) return;
-
-    var dir = delta > 0 ? 1 : -1;
-    if (dir !== this._scrollDir) {
-      this._scrollDir = dir;
-      this._dirAnchor = top - delta;
-    }
-    if (Math.abs(top - this._dirAnchor) < 10) return;
-
-    var hidden;
-    if (top < this._hideMinTop) hidden = false;
-    else hidden = dir === 1;
-    if (hidden !== this.data.headerHidden) this.setData({ headerHidden: hidden });
+  // UI-thread worklet counterpart of onFeedScroll above, bound via
+  // `worklet:onscroll` on the scroll-view in feed.wxml (alongside the
+  // regular `bindscroll="onFeedScroll"` — UNCERTAIN whether both bindings
+  // firing on the same native scroll event is the documented/supported
+  // pattern; if DevTools only fires one of the two, that's the first
+  // thing to check here).
+  //
+  // Every scroll frame, this writes the raw scrollTop into the shared
+  // value that the header's applyAnimatedStyle worklet (onReady) reads —
+  // entirely on the UI thread, no JS-thread involvement per frame.
+  onScrollWorklet: function(e) {
+    "worklet";
+    this.scrollYShared.value = e.detail.scrollTop;
   },
 
   // ===== NAVIGATION =====

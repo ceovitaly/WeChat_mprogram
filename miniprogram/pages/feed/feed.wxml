@@ -10,6 +10,7 @@
   enhanced
   show-scrollbar="false"
   bindscroll="onFeedScroll"
+  worklet:onscroll="onScrollWorklet"
   bindscrolltolower="onReachBottom"
   lower-threshold="200"
   refresher-enabled
@@ -27,10 +28,14 @@
   </view>
 
   <!-- Header: one compact row — avatar / search / calendar / my list.
-       Collapses away on scroll-down, returns on scroll-up (feed.js flips
-       headerHidden/scrolled only when they change; CSS animates). -->
+       Hide/reveal opacity+translateY is applied continuously by a Skyline
+       worklet (feed.js onReady, via this wx:ref + .applyAnimatedStyle) as
+       the user scrolls — no discrete class flip for that part anymore.
+       `scrolled` (box-shadow only) is still a plain setData class flip;
+       see onFeedScroll. -->
   <view
-    class="header {{headerHidden ? 'header--hidden' : ''}} {{scrolled ? 'header--scrolled' : ''}}"
+    wx:ref="header"
+    class="header {{scrolled ? 'header--scrolled' : ''}}"
     style="padding-top:{{headerPadTop}}px"
   >
     <view class="header-row">
