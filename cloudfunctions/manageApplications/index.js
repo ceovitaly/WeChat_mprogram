@@ -150,12 +150,40 @@ exports.main = async (event, context) => {
     }
   }
 
-  // DELETE PROMOTER
+  // DELETE PROMOTER — guests referencing this promoter must be reassigned first
+  // (or explicitly unassigned), never silently orphaned. Two-phase: called without
+  // reassignToPromoterId, this refuses and reports affectedCount so the client can
+  // prompt for a replacement; called again with reassignToPromoterId (a promoter
+  // _id, or '' to mean "no replacement"), it reassigns then deletes.
   if (action === 'deletePromoter') {
     try {
       if (!id) return { success: false, message: 'No ID provided' };
+      const { reassignToPromoterId } = event;
+
+      const affected = await db.collection('guests').where({ promoterId: id }).field({ _id: true }).limit(1000).get();
+      const affectedCount = (affected.data || []).length;
+
+      if (affectedCount > 0 && reassignToPromoterId === undefined) {
+        // Caller hasn't decided yet — refuse and report how many guests are affected
+        // so the client can prompt for a replacement (or explicit unassignment).
+        return { success: false, requiresReassignment: true, affectedCount };
+      }
+
+      if (affectedCount > 0) {
+        let newName = '';
+        if (reassignToPromoterId) {
+          const target = await db.collection('promoters').doc(reassignToPromoterId).get();
+          newName = (target.data && target.data.name) || '';
+        }
+        await Promise.all(
+          affected.data.map(g => db.collection('guests').doc(g._id).update({
+            data: { promoterId: reassignToPromoterId || '', promoterName: newName }
+          }))
+        );
+      }
+
       await db.collection('promoters').doc(id).remove();
-      return { success: true };
+      return { success: true, reassignedCount: affectedCount };
     } catch (e) {
       return { success: false, message: e.message };
     }
@@ -364,10 +392,10 @@ exports.main = async (event, context) => {
 
   if (action === 'updateGuestPromoter') {
     try {
-      const { guestId, promoterName } = event;
+      const { guestId, promoterId, promoterName } = event;
       if (!guestId) return { success: false, message: 'No guestId' };
       await db.collection('guests').doc(guestId).update({
-        data: { promoterName: promoterName || '' }
+        data: { promoterId: promoterId || '', promoterName: promoterName || '' }
       });
       return { success: true };
     } catch (e) {
