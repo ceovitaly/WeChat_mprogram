@@ -1,28 +1,36 @@
 <!--pages/feed/feed.wxml-->
 <view class="page-container">
 
-<!-- Header: one compact row — avatar / search / calendar / my list. A
-     normal flex sibling ABOVE the scroll-view now (not inside it), so it
-     always stays fully visible and fixed in place: scrolling the list
-     doesn't touch it, and pull-to-refresh only stretches/moves the
-     scroll-view's own content, never the header. `scrolled` (box-shadow
-     only) is a plain setData class flip; see onFeedScroll. -->
+<!-- Nav bar: content-first redesign — the old avatar/search/calendar/my-list
+     row is gone. This is now just a slim icon strip (hamburger + search),
+     left-aligned clear of the WeChat capsule (top-right), so cards start
+     much higher on screen. A normal flex sibling ABOVE the scroll-view
+     (not inside it), so it stays fully visible and fixed in place;
+     pull-to-refresh only ever touches the scroll-view's own content.
+     padding-top is set inline from feed.js (clears the capsule) — same
+     mechanism the old .header used. `scrolled` (box-shadow only) is a
+     plain setData class flip; see onFeedScroll. -->
 <view
-  class="header {{scrolled ? 'header--scrolled' : ''}}"
+  class="feed-nav {{scrolled ? 'feed-nav--scrolled' : ''}}"
   style="padding-top:{{headerPadTop}}px"
 >
-  <view class="header-row">
-    <view class="avatar-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToProfile">
-      <image
-        wx:if="{{userInfo && userInfo.avatarUrl}}"
-        src="{{userInfo.avatarUrl}}"
-        mode="aspectFill"
-        class="pill-avatar"
-      />
-      <view wx:else class="pill-avatar-placeholder">
-        <text class="pill-avatar-text">{{userInitial}}</text>
-      </view>
-    </view>
+  <view class="nav-icon-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="openDrawer">
+    <view class="icon icon--menu nav-icon"></view>
+  </view>
+  <view class="nav-icon-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="toggleSearchPanel">
+    <view class="icon icon--search nav-icon"></view>
+  </view>
+</view>
+
+<!-- Search panel: expands DOWN from the nav-bar in place (not a separate
+     page). Always rendered (not wx:if-removed) so the height/opacity
+     transition below can actually animate instead of popping instantly;
+     `search-panel--collapsed` is the resting (0-height) state. NEEDS A
+     VISUAL CHECK in DevTools to confirm the max-height reveal feels
+     smooth — the max-height value below is a generous guess covering the
+     search-bar's rendered height plus its padding. -->
+<view class="search-panel {{showSearchPanel ? '' : 'search-panel--collapsed'}}">
+  <view class="search-panel-inner">
     <view class="search-bar">
       <view class="icon icon--search search-icon"></view>
       <input
@@ -30,6 +38,7 @@
         placeholder="Search events..."
         placeholder-class="search-placeholder"
         confirm-type="search"
+        focus="{{showSearchPanel}}"
         bindinput="onSearchInput"
         bindconfirm="onSearch"
         value="{{searchKeyword}}"
@@ -38,16 +47,15 @@
         <view class="icon icon--close search-clear-icon"></view>
       </view>
     </view>
-    <view class="calendar-btn pressable {{selectedDate ? 'calendar-btn-active' : ''}}" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="toggleCalendar">
-      <text class="calendar-day-num">{{selectedDate ? selectedDateNum : todayNum}}</text>
-      <text class="calendar-label">{{selectedDate ? selectedDateMonth : todayMonth}}</text>
-    </view>
-    <view class="mylist-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToTickets">
-      <view class="icon icon--list mylist-icon"></view>
-    </view>
   </view>
+</view>
 
-  <!-- Active filter pill -->
+<!-- Active filter pill — the calendar trigger button that used to set
+     selectedDate has been removed from view (see feed.js/toggleCalendar),
+     but selectedDate/selectedDateNum/selectedDateMonth/clearDateFilter and
+     this pill all stay fully intact per the project owner's plan to wire
+     up a new entry point later. Unreachable for now, harmless to leave
+     rendered here (wx:if guards it, same as before). -->
   <view wx:if="{{selectedDate}}" class="filter-row">
     <view class="filter-pill pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="clearDateFilter">
       <view class="icon icon--calendar filter-pill-icon"></view>
@@ -55,7 +63,6 @@
       <view class="icon icon--close filter-pill-remove"></view>
     </view>
   </view>
-</view>
 
 <!-- Scrollable Feed. -->
 <scroll-view
@@ -73,13 +80,13 @@
   refresher-triggered="{{refreshing}}"
   bindrefresherrefresh="onPullDownRefresh"
 >
-  <!-- Custom refresher: the scroll-view now starts BELOW the fixed header
-       (the header is a sibling above it, not inside it), so the spinner
-       area sits under the header rather than at the physical top of the
+  <!-- Custom refresher: the scroll-view now starts BELOW the fixed nav-bar
+       (the nav-bar is a sibling above it, not inside it), so the spinner
+       area sits under the nav-bar rather than at the physical top of the
        screen. Still bottom-aligned/status-bar-tall per refresherThreshold
        (feed.js) — NEEDS A VISUAL CHECK in DevTools to confirm the spinner
-       still looks right now that it renders just under the header instead
-       of under the notch. -->
+       still looks right now that the nav-bar above it is much shorter than
+       the old header. -->
   <view slot="refresher" class="feed-refresher" style="height:{{refresherThreshold}}px">
     <view class="loading-spinner feed-refresher-spinner"></view>
   </view>
@@ -213,5 +220,37 @@
     </view>
   </view>
 </bottom-sheet>
+
+<!-- Left-side drawer: holds what used to be the avatar/profile button and
+     the My List icon from the old header row. The mask is wx:if-gated
+     (fine — its own fade doesn't need to stay in lockstep with the panel's
+     slide), but the panel itself is ALWAYS rendered so
+     transform: translateX(...) can actually transition instead of the
+     panel popping in/out instantly with wx:if. NEEDS A VISUAL CHECK for
+     slide timing/easing feel. -->
+<view wx:if="{{showDrawer}}" class="drawer-mask" bindtap="closeDrawer"></view>
+<view class="drawer-panel {{showDrawer ? 'drawer-panel--open' : ''}}">
+  <view class="drawer-close pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="closeDrawer">
+    <view class="icon icon--close drawer-close-icon"></view>
+  </view>
+
+  <view class="drawer-user pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="onDrawerProfileTap">
+    <image
+      wx:if="{{userInfo && userInfo.avatarUrl}}"
+      src="{{userInfo.avatarUrl}}"
+      mode="aspectFill"
+      class="drawer-avatar"
+    />
+    <view wx:else class="drawer-avatar-placeholder">
+      <text class="drawer-avatar-text">{{userInitial}}</text>
+    </view>
+    <text class="drawer-user-label">{{userInfo ? (userInfo.nickName || userInfo.name || 'Profile') : 'Sign in'}}</text>
+  </view>
+
+  <view class="drawer-row pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="onDrawerTicketsTap">
+    <view class="icon icon--list drawer-row-icon"></view>
+    <text class="drawer-row-label">My List</text>
+  </view>
+</view>
 
 </view>

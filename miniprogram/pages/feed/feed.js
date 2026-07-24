@@ -28,7 +28,12 @@ Page({
     headerPadTop: 96,      // px; corrected from the capsule rect in onLoad
     refresherThreshold: 90, // px; corrected from the status bar in onLoad
     // Header always stays visible now — no hide/reveal state at all.
-    scrolled: false
+    scrolled: false,
+    // Content-first redesign: no permanent header row anymore, just a
+    // left-side drawer (avatar/profile + My List) and an expand-down
+    // search panel, both closed by default.
+    showDrawer: false,
+    showSearchPanel: false
   },
 
   onLoad: function() {
@@ -39,7 +44,7 @@ Page({
 
     var info = wx.getWindowInfo();
 
-    // The header is one full-width row now, so it must start below the
+    // The nav-bar is one full-width row now, so it must start below the
     // floating WeChat capsule (custom navigation) — measure it, with a
     // status-bar fallback.
     var padTop = 0;
@@ -49,12 +54,14 @@ Page({
     } catch (e) {}
     if (!padTop) padTop = (info.statusBarHeight || 44) + 48;
 
-    // Header total height: capsule clearance + 40px row + 8px bottom pad.
-    // Used by the card-height math below.
-    var headerPx = padTop + 48;
+    // Nav-bar total height: capsule clearance + its own (much shorter than
+    // the old avatar/search/calendar/my-list header) icon-row height. Used
+    // by the card-height math below — a slimmer nav-bar means more of this
+    // goes to cards, which is the whole point of this redesign.
+    var headerPx = padTop + 40;
 
     // Calculate card image height so the full card fits on screen.
-    // Header + card extras (title + CTA + padding) ~190px
+    // Nav-bar + card extras (title + CTA + padding) ~190px
     var availPx = info.windowHeight - headerPx - 190;
     var maxPx = Math.max(availPx, 220); // never smaller than 220px
     // Convert px → rpx (750rpx = screen width)
@@ -427,6 +434,35 @@ Page({
     var top = e.detail.scrollTop;
     var scrolled = top > 8;
     if (scrolled !== this.data.scrolled) this.setData({ scrolled: scrolled });
+  },
+
+  // ===== NAV DRAWER =====
+
+  openDrawer: function() {
+    this.setData({ showDrawer: true });
+  },
+
+  closeDrawer: function() {
+    this.setData({ showDrawer: false });
+  },
+
+  // Drawer rows close the drawer first, then run the existing navigation
+  // handler unchanged — goToProfile/goToTickets don't know about the
+  // drawer at all.
+  onDrawerProfileTap: function() {
+    this.closeDrawer();
+    this.goToProfile();
+  },
+
+  onDrawerTicketsTap: function() {
+    this.closeDrawer();
+    this.goToTickets();
+  },
+
+  // ===== SEARCH PANEL =====
+
+  toggleSearchPanel: function() {
+    this.setData({ showSearchPanel: !this.data.showSearchPanel });
   },
 
   // ===== NAVIGATION =====
