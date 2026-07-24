@@ -76,6 +76,15 @@ page {
   margin-top: -40rpx;
   padding: 48rpx 40rpx 240rpx;
   position: relative;
+  transform: translateY(320rpx);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Entrance animation: slides up into the resting -40rpx hero-overlap
+   position with a springy overshoot (panelEntered flag set shortly after
+   mount in event-detail.js onReady). The hero image itself never moves. */
+.main-card--entered {
+  transform: translateY(0);
 }
 
 /* Block 1: info (date + title) — plain on the card surface, competitor

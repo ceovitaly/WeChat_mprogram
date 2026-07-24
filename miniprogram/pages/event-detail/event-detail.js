@@ -30,7 +30,21 @@ Page({
     selectedPackageLink: '',
     heroHeight: 560,
     heroLoaded: false,
+    panelEntered: false,
     relatedEvents: []
+  },
+
+  onReady: function() {
+    // Entrance animation for .main-card: slides up from an off-screen-below
+    // transform into its resting (-40rpx hero-overlap) position with a
+    // springy overshoot (see .main-card--entered in event-detail.wxss).
+    // Independent of hero image loading (heroLoaded) — the panel should
+    // animate in immediately regardless of whether the hero photo has
+    // finished fading in. The tiny delay ensures the initial off-screen
+    // state actually paints before the transition starts.
+    setTimeout(() => {
+      this.setData({ panelEntered: true });
+    }, 30);
   },
 
   onLoad: function(options) {
