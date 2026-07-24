@@ -91,7 +91,7 @@ page {
 }
 
 .nav-seg-label {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 900;
   color: var(--text-primary);
   white-space: nowrap;
