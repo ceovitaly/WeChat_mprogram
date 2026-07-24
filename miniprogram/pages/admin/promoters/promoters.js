@@ -277,30 +277,63 @@ Page({
       confirmColor: '#FF3B30',
       confirmText: 'Delete',
       cancelText: 'Cancel',
-      success: async ({ confirm }) => {
+      success: ({ confirm }) => {
         if (!confirm) return
-        wx.showLoading({ title: 'Deleting...', mask: true })
-        try {
-          const res = await callFunction('manageApplications', {
-            action: 'deletePromoter',
-            id: selectedPromoter._id
-          })
-          if (!res || !res.success) {
-            if (isUnauthorized(res)) { handleAuthFailure(); return }
-            wx.showToast({ title: (res && res.message) || 'Error', icon: 'none' })
-            return
-          }
-          wx.vibrateShort({ type: 'medium' })
-          wx.showToast({ title: 'Deleted', icon: 'success' })
-          this.closeActions()
-          this.setData({
-            promoters: this.data.promoters.filter(p => p._id !== selectedPromoter._id)
-          })
-        } catch (err) {
-          wx.showToast({ title: 'Error', icon: 'none' })
-        } finally {
-          wx.hideLoading()
+        this._deletePromoter(selectedPromoter)
+      }
+    })
+  },
+
+  // Deletes `promoter`. `reassignToPromoterId` is omitted on the first attempt;
+  // if the server refuses with requiresReassignment, we prompt for a replacement
+  // and re-call this with the admin's choice (a promoter _id, or '' to unassign).
+  async _deletePromoter(promoter, reassignToPromoterId) {
+    wx.showLoading({ title: 'Deleting...', mask: true })
+    try {
+      const payload = { action: 'deletePromoter', id: promoter._id }
+      if (reassignToPromoterId !== undefined) payload.reassignToPromoterId = reassignToPromoterId
+      const res = await callFunction('manageApplications', payload)
+
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        if (res && res.requiresReassignment) {
+          this._promptReassignment(promoter, res.affectedCount)
+          return
         }
+        wx.showToast({ title: (res && res.message) || 'Error', icon: 'none' })
+        return
+      }
+      wx.vibrateShort({ type: 'medium' })
+      const moved = res.reassignedCount || 0
+      wx.showToast({
+        title: moved > 0 ? `Deleted (${moved} guest${moved === 1 ? '' : 's'} moved)` : 'Deleted',
+        icon: moved > 0 ? 'none' : 'success'
+      })
+      this.closeActions()
+      this.setData({
+        promoters: this.data.promoters.filter(p => p._id !== promoter._id)
+      })
+    } catch (err) {
+      wx.showToast({ title: 'Error', icon: 'none' })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
+  // Guests reference `promoter` — the deletion was refused. Offer a replacement
+  // promoter (or explicit unassignment) before retrying the delete.
+  _promptReassignment(promoter, affectedCount) {
+    const others = this.data.promoters.filter(p => p._id !== promoter._id)
+    const itemList = others.map(p => p.name).concat(['Remove without reassigning'])
+
+    wx.showActionSheet({
+      itemList,
+      success: ({ tapIndex }) => {
+        const reassignToPromoterId = tapIndex < others.length ? others[tapIndex]._id : ''
+        this._deletePromoter(promoter, reassignToPromoterId)
+      },
+      fail: () => {
+        // Admin cancelled the action sheet — leave the promoter and its guests untouched.
       }
     })
   }
