@@ -140,7 +140,12 @@
           <text class="card-header-date">{{item.chipDay}} {{item.chipMonth}}</text>
         </view>
 
-        <!-- Image; count badge is the sole remaining overlay -->
+        <!-- Image; count badge (top-right) and the title+CTA overlay
+             (bottom, .card-poster-overlay) both live inside this wrapper so
+             they stack visually on top of the photo. Title/button used to be
+             plain-background siblings below .card-media-wrap; they're now
+             absolutely positioned children anchored to the wrap's bottom
+             edge, over a dark gradient scrim (see .card-poster-scrim). -->
         <view class="card-media-wrap" style="min-height:{{cardImgHeight}}rpx">
           <image
             src="{{item.promoImages[0] || '/images/placeholder.png'}}"
@@ -155,30 +160,33 @@
             <text class="img-count-txt">{{item.promoImages.length}}</text>
             <view class="icon icon--camera img-count-icon"></view>
           </view>
-        </view>
 
-        <!-- Title + CTA -->
-        <view class="card-info">
-          <text class="card-title">{{item.title}}</text>
-        </view>
-        <view class="card-btn-wrap">
-          <button
-            wx:if="{{!item.isRegistered}}"
-            class="get-ticket-btn pressable"
-            hover-class="pressed"
-            hover-start-time="20"
-            hover-stay-time="80"
-            catchtap="goToTicketDirect"
-            data-id="{{item._id}}"
-          >
-            <view class="icon icon--list btn-list-icon"></view>
-            <text>ADD ME ON GUESTS LIST</text>
-          </button>
-          <view
-            wx:else
-            class="registered-badge"
-          >
-            <text class="registered-badge-txt">✓ You're on the list</text>
+          <!-- Bottom scrim + title/CTA overlay -->
+          <view class="card-poster-scrim"></view>
+          <view class="card-poster-overlay">
+            <view class="card-info">
+              <text class="card-title">{{item.title}}</text>
+            </view>
+            <view class="card-btn-wrap">
+              <button
+                wx:if="{{!item.isRegistered}}"
+                class="get-ticket-btn pressable"
+                hover-class="pressed"
+                hover-start-time="20"
+                hover-stay-time="80"
+                catchtap="goToTicketDirect"
+                data-id="{{item._id}}"
+              >
+                <view class="icon icon--list btn-list-icon"></view>
+                <text>ADD ME ON GUESTS LIST</text>
+              </button>
+              <view
+                wx:else
+                class="registered-badge"
+              >
+                <text class="registered-badge-txt">✓ You're on the list</text>
+              </view>
+            </view>
           </view>
         </view>
 
