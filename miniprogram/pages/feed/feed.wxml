@@ -131,29 +131,29 @@
         bindtap="goToDetail"
         data-id="{{item._id}}"
       >
-        <!-- Image with chip overlays -->
-        <view class="card-media-wrap" style="height:{{cardImgHeight}}rpx">
+        <!-- Header row: venue (left) + date (right), plain text on the
+             card's own background, sitting above the photo instead of
+             overlaid on it. Replaces the old date-chip/venue-chip/gradient
+             scrim that used to live inside .card-media-wrap. -->
+        <view class="card-header">
+          <text class="card-header-venue">{{item.venueName || 'Venue'}}</text>
+          <text class="card-header-date">{{item.chipDay}} {{item.chipMonth}}</text>
+        </view>
+
+        <!-- Image; count badge is the sole remaining overlay -->
+        <view class="card-media-wrap" style="min-height:{{cardImgHeight}}rpx">
           <image
             src="{{item.promoImages[0] || '/images/placeholder.png'}}"
-            mode="aspectFill"
+            mode="widthFix"
             class="card-img {{item.imgLoaded ? 'card-img--loaded' : ''}}"
             lazy-load="{{true}}"
             bindload="onCardImgLoad"
             data-id="{{item._id}}"
             data-index="{{index}}"
           />
-          <view class="card-media-gradient"></view>
-          <view wx:if="{{item.chipDay}}" class="card-date-chip">
-            <text class="chip-day">{{item.chipDay}}</text>
-            <text class="chip-month">{{item.chipMonth}}</text>
-          </view>
           <view wx:if="{{item.promoImages.length > 1}}" class="img-count-badge">
             <text class="img-count-txt">{{item.promoImages.length}}</text>
             <view class="icon icon--camera img-count-icon"></view>
-          </view>
-          <view class="card-venue-chip">
-            <view class="venue-dot"></view>
-            <text class="card-venue-chip-name">{{item.venueName || 'Venue'}}</text>
           </view>
         </view>
 

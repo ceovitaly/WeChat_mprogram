@@ -326,7 +326,41 @@ page {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Media — portrait ratio, height set dynamically via JS */
+/* Header row — venue (left) + date (right), plain text on the card's own
+   background, sitting above the photo. Replaces the old overlaid
+   date-chip/venue-chip and the gradient scrim that existed only to keep
+   the venue-chip's white text legible over the photo. Horizontal padding
+   (32rpx) matches .card-info's own horizontal inset so the header and
+   the title below it stay aligned. */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 32rpx 12rpx;
+}
+
+.card-header-venue {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.card-header-date {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--accent);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Media — height set dynamically via JS as a min-height placeholder;
+   mode="widthFix" (feed.wxml) derives the real height from each photo's
+   own aspect ratio so nothing gets cropped. */
 .card-media-wrap {
   position: relative;
   width: 100%;
@@ -343,7 +377,6 @@ page {
    (imgLoaded flag set by bindload in feed.js) instead of popping in */
 .card-img {
   width: 100%;
-  height: 100%;
   display: block;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -351,82 +384,6 @@ page {
 
 .card-img--loaded {
   opacity: 1;
-}
-
-/* Bottom vignette on the card image so the white venue chip text stays
-   legible over bright photos (fixed dark rgba — works in both themes) */
-.card-media-gradient {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 35%;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.45) 100%);
-}
-
-/* Date chip — top-left over the image. Plain translucent fill, no
-   backdrop blur (inconsistent on Android in the classic engine). */
-.card-date-chip {
-  position: absolute;
-  top: 16rpx;
-  left: 16rpx;
-  min-width: 84rpx;
-  padding: 10rpx 16rpx;
-  border-radius: 16rpx;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4rpx;
-  box-sizing: border-box;
-}
-
-.chip-day {
-  font-size: 34rpx;
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1;
-}
-
-.chip-month {
-  font-size: 18rpx;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
-  letter-spacing: 1.5rpx;
-  line-height: 1;
-}
-
-/* Venue chip — bottom-left over the gradient */
-.card-venue-chip {
-  position: absolute;
-  left: 16rpx;
-  bottom: 16rpx;
-  max-width: calc(100% - 32rpx);
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 32rpx;
-  padding: 10rpx 20rpx 10rpx 14rpx;
-  box-sizing: border-box;
-}
-
-.venue-dot {
-  width: 14rpx;
-  height: 14rpx;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
-.card-venue-chip-name {
-  font-size: 24rpx;
-  font-weight: 600;
-  color: #ffffff;
-  letter-spacing: 0.3rpx;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .img-count-badge {
@@ -453,7 +410,7 @@ page {
   background-color: #ffffff;
 }
 
-/* Card info — title only; date/venue moved onto the image chips */
+/* Card info — title only; date/venue now live in .card-header above the photo */
 .card-info {
   padding: 24rpx 32rpx 4rpx;
 }
