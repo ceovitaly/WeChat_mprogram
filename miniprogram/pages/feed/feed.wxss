@@ -13,22 +13,18 @@ page {
 }
 
 /* ===== HEADER ===== */
-/* Lives INSIDE the scroll-view, stuck to its top. position:sticky keeps
-   the header's layout slot, so collapsing it (translateY + fade, applied
-   continuously by the Skyline worklet in feed.js onReady via wx:ref
-   "header" — see feed.wxml) never reflows the list — no content jump —
-   and pull-to-refresh still works because the header travels down with
-   the pulled content. padding-top is set inline from feed.js (clears the
-   WeChat capsule).
-   NOTE: transform/opacity are intentionally NOT in the transition below —
-   the worklet updates them every scroll frame on the UI thread, so a CSS
-   transition on top would fight/lag behind those continuous writes.
-   Only box-shadow (the `scrolled` flag, still a plain setData flip) is
-   transitioned here. */
+/* A plain flex sibling ABOVE the scroll-view now (feed.wxml), not nested
+   inside it — .page-container is flex column, .feed-scroll is flex:1, so
+   the header just takes its natural height in its own slot above the
+   scrollable area. Always fully visible: no hide/reveal, no worklet, and
+   it can't be dragged by pull-to-refresh since that only affects the
+   scroll-view's own content. padding-top is set inline from feed.js
+   (clears the WeChat capsule). No position/z-index needed — a normal
+   flex item already stays put above the scroll-view; flex-shrink: 0
+   keeps it from being squeezed. Only box-shadow (the `scrolled` flag,
+   a plain setData flip — see onFeedScroll) is transitioned here. */
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  flex-shrink: 0;
   background: var(--bg-elevated);
   padding-bottom: 16rpx;
   border-bottom: 1rpx solid var(--border);
@@ -228,10 +224,14 @@ page {
   height: 0;
 }
 
-/* Custom pull-to-refresh area (slot="refresher"): the scroll-view starts
-   at the physical top of the screen now, so the spinner is bottom-aligned
-   inside a status-bar-tall area to stay clear of the notch. Height comes
-   inline from refresherThreshold (feed.js). */
+/* Custom pull-to-refresh area (slot="refresher"): the scroll-view now
+   starts BELOW the fixed header (a flex sibling above it, not inside it
+   — see feed.wxml/.header), so this spinner area renders under the
+   header rather than at the physical top of the screen. Still
+   bottom-aligned inside a status-bar-tall area per refresherThreshold
+   (feed.js) — worth a visual check in DevTools now that its position
+   relative to the notch/header has shifted. Height comes inline from
+   refresherThreshold (feed.js). */
 .feed-refresher {
   display: flex;
   align-items: flex-end;

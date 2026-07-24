@@ -1,16 +1,69 @@
 <!--pages/feed/feed.wxml-->
 <view class="page-container">
 
-<!-- Scrollable Feed. The header lives inside the scroll-view as a sticky
-     element: it keeps its layout slot (so hiding it never shifts the list)
-     and it travels down with the pulled content during pull-to-refresh. -->
+<!-- Header: one compact row — avatar / search / calendar / my list. A
+     normal flex sibling ABOVE the scroll-view now (not inside it), so it
+     always stays fully visible and fixed in place: scrolling the list
+     doesn't touch it, and pull-to-refresh only stretches/moves the
+     scroll-view's own content, never the header. `scrolled` (box-shadow
+     only) is a plain setData class flip; see onFeedScroll. -->
+<view
+  class="header {{scrolled ? 'header--scrolled' : ''}}"
+  style="padding-top:{{headerPadTop}}px"
+>
+  <view class="header-row">
+    <view class="avatar-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToProfile">
+      <image
+        wx:if="{{userInfo && userInfo.avatarUrl}}"
+        src="{{userInfo.avatarUrl}}"
+        mode="aspectFill"
+        class="pill-avatar"
+      />
+      <view wx:else class="pill-avatar-placeholder">
+        <text class="pill-avatar-text">{{userInitial}}</text>
+      </view>
+    </view>
+    <view class="search-bar">
+      <view class="icon icon--search search-icon"></view>
+      <input
+        class="search-input"
+        placeholder="Search events..."
+        placeholder-class="search-placeholder"
+        confirm-type="search"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+        value="{{searchKeyword}}"
+      />
+      <view wx:if="{{searchKeyword}}" class="search-clear" bindtap="clearSearch">
+        <view class="icon icon--close search-clear-icon"></view>
+      </view>
+    </view>
+    <view class="calendar-btn pressable {{selectedDate ? 'calendar-btn-active' : ''}}" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="toggleCalendar">
+      <text class="calendar-day-num">{{selectedDate ? selectedDateNum : todayNum}}</text>
+      <text class="calendar-label">{{selectedDate ? selectedDateMonth : todayMonth}}</text>
+    </view>
+    <view class="mylist-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToTickets">
+      <view class="icon icon--list mylist-icon"></view>
+    </view>
+  </view>
+
+  <!-- Active filter pill -->
+  <view wx:if="{{selectedDate}}" class="filter-row">
+    <view class="filter-pill pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="clearDateFilter">
+      <view class="icon icon--calendar filter-pill-icon"></view>
+      <text class="filter-pill-txt">{{selectedDate}}</text>
+      <view class="icon icon--close filter-pill-remove"></view>
+    </view>
+  </view>
+</view>
+
+<!-- Scrollable Feed. -->
 <scroll-view
   class="feed-scroll"
   scroll-y
   enhanced
   show-scrollbar="false"
   bindscroll="onFeedScroll"
-  worklet:onscroll="onScrollWorklet"
   bindscrolltolower="onReachBottom"
   lower-threshold="200"
   refresher-enabled
@@ -20,68 +73,15 @@
   refresher-triggered="{{refreshing}}"
   bindrefresherrefresh="onPullDownRefresh"
 >
-  <!-- Custom refresher: the scroll-view now starts at the physical top of
-       the screen, so the spinner is bottom-aligned inside a status-bar-tall
-       area to stay clear of the notch (threshold set in feed.js) -->
+  <!-- Custom refresher: the scroll-view now starts BELOW the fixed header
+       (the header is a sibling above it, not inside it), so the spinner
+       area sits under the header rather than at the physical top of the
+       screen. Still bottom-aligned/status-bar-tall per refresherThreshold
+       (feed.js) — NEEDS A VISUAL CHECK in DevTools to confirm the spinner
+       still looks right now that it renders just under the header instead
+       of under the notch. -->
   <view slot="refresher" class="feed-refresher" style="height:{{refresherThreshold}}px">
     <view class="loading-spinner feed-refresher-spinner"></view>
-  </view>
-
-  <!-- Header: one compact row — avatar / search / calendar / my list.
-       Hide/reveal opacity+translateY is applied continuously by a Skyline
-       worklet (feed.js onReady, via this wx:ref + .applyAnimatedStyle) as
-       the user scrolls — no discrete class flip for that part anymore.
-       `scrolled` (box-shadow only) is still a plain setData class flip;
-       see onFeedScroll. -->
-  <view
-    wx:ref="header"
-    class="header {{scrolled ? 'header--scrolled' : ''}}"
-    style="padding-top:{{headerPadTop}}px"
-  >
-    <view class="header-row">
-      <view class="avatar-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToProfile">
-        <image
-          wx:if="{{userInfo && userInfo.avatarUrl}}"
-          src="{{userInfo.avatarUrl}}"
-          mode="aspectFill"
-          class="pill-avatar"
-        />
-        <view wx:else class="pill-avatar-placeholder">
-          <text class="pill-avatar-text">{{userInitial}}</text>
-        </view>
-      </view>
-      <view class="search-bar">
-        <view class="icon icon--search search-icon"></view>
-        <input
-          class="search-input"
-          placeholder="Search events..."
-          placeholder-class="search-placeholder"
-          confirm-type="search"
-          bindinput="onSearchInput"
-          bindconfirm="onSearch"
-          value="{{searchKeyword}}"
-        />
-        <view wx:if="{{searchKeyword}}" class="search-clear" bindtap="clearSearch">
-          <view class="icon icon--close search-clear-icon"></view>
-        </view>
-      </view>
-      <view class="calendar-btn pressable {{selectedDate ? 'calendar-btn-active' : ''}}" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="toggleCalendar">
-        <text class="calendar-day-num">{{selectedDate ? selectedDateNum : todayNum}}</text>
-        <text class="calendar-label">{{selectedDate ? selectedDateMonth : todayMonth}}</text>
-      </view>
-      <view class="mylist-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToTickets">
-        <view class="icon icon--list mylist-icon"></view>
-      </view>
-    </view>
-
-    <!-- Active filter pill -->
-    <view wx:if="{{selectedDate}}" class="filter-row">
-      <view class="filter-pill pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="clearDateFilter">
-        <view class="icon icon--calendar filter-pill-icon"></view>
-        <text class="filter-pill-txt">{{selectedDate}}</text>
-        <view class="icon icon--close filter-pill-remove"></view>
-      </view>
-    </view>
   </view>
 
   <view class="event-list-container">
