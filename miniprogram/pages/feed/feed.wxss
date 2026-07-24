@@ -69,19 +69,21 @@ page {
    that all moved to .nav-seg-row above so the three segments read as
    ONE bar. Each segment centers its own label and gets a thin divider
    on the right EXCEPT the last one (border, not border-around, so it
-   never doubles up with the outer pill's own border). Horizontal
-   padding (0 28rpx) sized for "Profile"/"Search"/"Lists" without
-   cramping, while keeping the overall pill as narrow as reasonably
-   possible so it stays clear of the WeChat capsule's reserved zone on
-   the right — see feed.wxss commit note / task report for the width
-   estimate arithmetic (text labels are less precise to measure than the
-   old fixed icon squares; NEEDS A VISUAL CHECK in DevTools). */
+   never doubles up with the outer pill's own border). flex:1 (not
+   flex-shrink:0) so the three segments grow equally to fill the row's
+   new bound width (navSegRowWidth, feed.js) — the row now stretches to
+   fill the space between .feed-nav's left padding and the WeChat
+   capsule's left edge (minus a small buffer), rather than sizing to its
+   own text. Horizontal padding trimmed (0 12rpx) since equal-width
+   segments no longer need generous padding to avoid a lopsided look
+   between "Profile" and "Lists"; text-align: center on the label backs up
+   the segment's own justify-content: center regardless of word length. */
 .nav-seg {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 28rpx;
-  flex-shrink: 0;
+  padding: 0 12rpx;
+  flex: 1;
 }
 
 .nav-seg:not(:last-child) {
@@ -90,8 +92,9 @@ page {
 
 .nav-seg-label {
   font-size: 25rpx;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   white-space: nowrap;
+  text-align: center;
 }
 
 /* ===== SEARCH PANEL ===== */

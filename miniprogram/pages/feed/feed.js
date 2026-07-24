@@ -27,6 +27,7 @@ Page({
     cardImgHeight: 600,
     navPadTop: 48,          // px; distance to the capsule's top edge — corrected in onLoad
     navBarHeight: 32,       // px; icon row height, matches the capsule's own height — corrected in onLoad
+    navSegRowWidth: 175,    // px; segmented control width, clear of the capsule — corrected in onLoad
     refresherThreshold: 90, // px; corrected from the status bar in onLoad
     // Header always stays visible now — no hide/reveal state at all.
     scrolled: false,
@@ -54,8 +55,9 @@ Page({
     // default if the capsule rect API is unavailable.
     var navPadTop = 0;
     var navBarHeight = 0;
+    var menu = null;
     try {
-      var menu = wx.getMenuButtonBoundingClientRect();
+      menu = wx.getMenuButtonBoundingClientRect();
       if (menu && menu.top) {
         navPadTop = menu.top;
         navBarHeight = menu.height || 32;
@@ -63,6 +65,24 @@ Page({
     } catch (e) {}
     if (!navPadTop) navPadTop = info.statusBarHeight || 44;
     if (!navBarHeight) navBarHeight = 32;
+
+    // The segmented control should stretch to fill essentially all the
+    // horizontal space between .feed-nav's own left padding and the
+    // WeChat capsule's left edge, with a small buffer gap so the two stay
+    // visually distinct (never touching/merging with the capsule).
+    // .feed-nav's CSS padding-left is 24rpx (design-width-relative) — convert
+    // to real px (same unit as menu.left/info.windowWidth) before the
+    // subtraction. Falls back to a rough estimate if the capsule rect API
+    // is unavailable, matching the fallback style used for navPadTop/
+    // navBarHeight above.
+    var leftPaddingPx = 24 * info.windowWidth / 750;
+    var navSegRowBufferPx = 12;
+    var navSegRowWidth;
+    if (menu && menu.left) {
+      navSegRowWidth = menu.left - leftPaddingPx - navSegRowBufferPx;
+    } else {
+      navSegRowWidth = info.windowWidth - leftPaddingPx - 200;
+    }
 
     // Nav-bar total footprint: capsule clearance + the icon row's own
     // height + a little bottom breathing room. Used by the card-height
@@ -81,6 +101,7 @@ Page({
       cardImgHeight: Math.min(maxRpx, 937),
       navPadTop: navPadTop,
       navBarHeight: navBarHeight,
+      navSegRowWidth: navSegRowWidth,
       // Pull-to-refresh spinner sits at the bottom of this area, i.e.
       // just below the status bar / notch.
       refresherThreshold: (info.statusBarHeight || 20) + 56

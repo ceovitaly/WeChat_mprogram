@@ -19,7 +19,7 @@
   class="feed-nav {{scrolled ? 'feed-nav--scrolled' : ''}}"
   style="padding-top:{{navPadTop}}px"
 >
-  <view class="nav-seg-row" style="height:{{navBarHeight}}px">
+  <view class="nav-seg-row" style="height:{{navBarHeight}}px; width:{{navSegRowWidth}}px">
     <view class="nav-seg pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToProfile">
       <text class="nav-seg-label">Profile</text>
     </view>
