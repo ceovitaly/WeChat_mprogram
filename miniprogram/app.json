@@ -17,5 +17,7 @@
   "style": "v2",
   "darkmode": true,
   "themeLocation": "theme.json",
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "componentFramework": "glass-easel",
+  "lazyCodeLoading": "requiredComponents"
 }
