@@ -30,10 +30,9 @@ Page({
     refresherThreshold: 90, // px; corrected from the status bar in onLoad
     // Header always stays visible now — no hide/reveal state at all.
     scrolled: false,
-    // Content-first redesign: no permanent header row anymore, just a
-    // left-side drawer (avatar/profile + My List) and an expand-down
-    // search panel, both closed by default.
-    showDrawer: false,
+    // Content-first redesign: no permanent header row anymore — Profile
+    // and Tickets nav-bar buttons navigate directly (goToProfile/
+    // goToTickets), and an expand-down search panel, closed by default.
     showSearchPanel: false
   },
 
@@ -446,29 +445,6 @@ Page({
     var top = e.detail.scrollTop;
     var scrolled = top > 8;
     if (scrolled !== this.data.scrolled) this.setData({ scrolled: scrolled });
-  },
-
-  // ===== NAV DRAWER =====
-
-  openDrawer: function() {
-    this.setData({ showDrawer: true });
-  },
-
-  closeDrawer: function() {
-    this.setData({ showDrawer: false });
-  },
-
-  // Drawer rows close the drawer first, then run the existing navigation
-  // handler unchanged — goToProfile/goToTickets don't know about the
-  // drawer at all.
-  onDrawerProfileTap: function() {
-    this.closeDrawer();
-    this.goToProfile();
-  },
-
-  onDrawerTicketsTap: function() {
-    this.closeDrawer();
-    this.goToTickets();
   },
 
   // ===== SEARCH PANEL =====

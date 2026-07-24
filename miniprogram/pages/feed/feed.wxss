@@ -15,8 +15,9 @@ page {
 /* ===== NAV BAR ===== */
 /* Content-first redesign: the old avatar/search/calendar/my-list header
    row is gone entirely, freeing that vertical space for cards. What's
-   left is a slim icon strip (hamburger + search), left-aligned clear of
-   the WeChat capsule (top-right corner). A plain flex sibling ABOVE the
+   left is a slim icon strip (Profile, Search, Tickets — each a direct
+   one-tap nav button, no drawer), left-aligned clear of the WeChat
+   capsule (top-right corner). A plain flex sibling ABOVE the
    scroll-view (feed.wxml), not nested inside it — .page-container is flex
    column, .feed-scroll is flex:1, so the nav-bar just takes its natural
    height in its own slot above the scrollable area. Always fully visible:
@@ -52,7 +53,7 @@ page {
   gap: 16rpx;
 }
 
-/* Icon-only nav buttons (hamburger, search) — square, same tap-target
+/* Icon-only nav buttons (Profile, Search, Tickets) — same tap-target
    family as the old .mylist-btn/.calendar-btn but smaller, since this
    strip's whole point is to take up as little height as possible. */
 .nav-icon-btn {
@@ -708,136 +709,6 @@ page {
   color: #ffffff;
 }
 
-/* ===== NAV DRAWER ===== */
-/* Left-side sliding drawer (hamburger menu), replaces the old avatar
-   button + My List icon. Mask is wx:if-gated in feed.wxml (its fade-in
-   doesn't need to stay in lockstep with the panel's slide). The panel
-   itself is ALWAYS rendered — never wx:if-removed — resting at
-   translateX(-100%) (fully off-screen left) and sliding to translateX(0)
-   when `.drawer-panel--open` is added, so the transform can actually
-   transition instead of popping in/out instantly. z-index matches
-   bottom-sheet's overlay convention (1000+) since this is conceptually
-   the same "modal on top of everything" layer. NEEDS A VISUAL CHECK for
-   slide timing/easing feel and drawer width on narrow vs. wide screens. */
-.drawer-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 1000;
-  animation: drawerMaskFadeIn 0.2s ease-out;
-}
-
-@keyframes drawerMaskFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.drawer-panel {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 560rpx;
-  max-width: 80%;
-  box-sizing: border-box;
-  background: var(--bg-elevated);
-  z-index: 1001;
-  padding: 96rpx 32rpx 32rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-  box-shadow: 8rpx 0 32rpx rgba(0, 0, 0, 0.12);
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
-}
-
-.drawer-panel--open {
-  transform: translateX(0);
-}
-
-.drawer-close {
-  position: absolute;
-  top: 32rpx;
-  right: 32rpx;
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 50%;
-  background: var(--bg-inset);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.drawer-close-icon {
-  width: 28rpx;
-  height: 28rpx;
-  background-color: var(--text-secondary);
-}
-
-.drawer-user {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  padding: 16rpx 8rpx 32rpx;
-  border-bottom: 1rpx solid var(--border);
-  margin-bottom: 16rpx;
-}
-
-.drawer-avatar {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 50%;
-  background: var(--border);
-  display: block;
-  flex-shrink: 0;
-}
-
-.drawer-avatar-placeholder {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 50%;
-  background: var(--blue);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.drawer-avatar-text {
-  color: #ffffff;
-  font-size: 36rpx;
-  font-weight: 700;
-}
-
-.drawer-user-label {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.drawer-row {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  padding: 20rpx 8rpx;
-  border-radius: 16rpx;
-}
-
-.drawer-row-icon {
-  width: 36rpx;
-  height: 36rpx;
-  background-color: var(--text-primary);
-}
-
-.drawer-row-label {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
 /* ===== REGISTERED BADGE ===== */
 .registered-badge {
   flex: 1;
@@ -880,7 +751,4 @@ page {
 
   .calendar-modal { box-shadow: none; }
   .cal-selected:not(.cal-today) { background: rgba(255, 107, 53, 0.18); }
-
-  .drawer-mask { background: rgba(0, 0, 0, 0.65); }
-  .drawer-panel { box-shadow: none; }
 }

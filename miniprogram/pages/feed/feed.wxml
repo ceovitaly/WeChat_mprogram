@@ -2,7 +2,7 @@
 <view class="page-container">
 
 <!-- Nav bar: content-first redesign — the old avatar/search/calendar/my-list
-     row is gone. This is now just a slim icon strip (hamburger + search),
+     row is gone. This is now a slim icon strip (Profile, Search, Tickets),
      left-aligned clear of the WeChat capsule (top-right), so cards start
      much higher on screen. A normal flex sibling ABOVE the scroll-view
      (not inside it), so it stays fully visible and fixed in place;
@@ -12,17 +12,21 @@
      equal to the capsule's own height and is flex-centered, so the icons
      land in exactly the same vertical band as the capsule's icons instead
      of below it. `scrolled` (box-shadow only) is a plain setData class
-     flip; see onFeedScroll. -->
+     flip; see onFeedScroll. Profile and Tickets navigate directly
+     (goToProfile/goToTickets, feed.js) — no drawer/intermediate step. -->
 <view
   class="feed-nav {{scrolled ? 'feed-nav--scrolled' : ''}}"
   style="padding-top:{{navPadTop}}px"
 >
   <view class="nav-icon-row" style="height:{{navBarHeight}}px">
-    <view class="nav-icon-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="openDrawer">
-      <view class="icon icon--menu nav-icon"></view>
+    <view class="nav-icon-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToProfile">
+      <view class="icon icon--user nav-icon"></view>
     </view>
     <view class="nav-icon-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="toggleSearchPanel">
       <view class="icon icon--search nav-icon"></view>
+    </view>
+    <view class="nav-icon-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToTickets">
+      <view class="icon icon--list nav-icon"></view>
     </view>
   </view>
 </view>
@@ -225,37 +229,5 @@
     </view>
   </view>
 </bottom-sheet>
-
-<!-- Left-side drawer: holds what used to be the avatar/profile button and
-     the My List icon from the old header row. The mask is wx:if-gated
-     (fine — its own fade doesn't need to stay in lockstep with the panel's
-     slide), but the panel itself is ALWAYS rendered so
-     transform: translateX(...) can actually transition instead of the
-     panel popping in/out instantly with wx:if. NEEDS A VISUAL CHECK for
-     slide timing/easing feel. -->
-<view wx:if="{{showDrawer}}" class="drawer-mask" bindtap="closeDrawer"></view>
-<view class="drawer-panel {{showDrawer ? 'drawer-panel--open' : ''}}">
-  <view class="drawer-close pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="closeDrawer">
-    <view class="icon icon--close drawer-close-icon"></view>
-  </view>
-
-  <view class="drawer-user pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="onDrawerProfileTap">
-    <image
-      wx:if="{{userInfo && userInfo.avatarUrl}}"
-      src="{{userInfo.avatarUrl}}"
-      mode="aspectFill"
-      class="drawer-avatar"
-    />
-    <view wx:else class="drawer-avatar-placeholder">
-      <text class="drawer-avatar-text">{{userInitial}}</text>
-    </view>
-    <text class="drawer-user-label">{{userInfo ? (userInfo.nickName || userInfo.name || 'Profile') : 'Sign in'}}</text>
-  </view>
-
-  <view class="drawer-row pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="onDrawerTicketsTap">
-    <view class="icon icon--list drawer-row-icon"></view>
-    <text class="drawer-row-label">My List</text>
-  </view>
-</view>
 
 </view>
