@@ -333,8 +333,12 @@ page {
   /* Stagger entrance: per-card delay comes from item.animDelay (feed.js),
      computed alongside the other display fields on each event object.
      `backwards` (not `both`): a forwards fill would keep the keyframe's
-     transform applied forever and override the hover-class press scale. */
-  animation: cardIn 0.4s ease-out backwards;
+     transform applied forever and override the press-state transform.
+     Easing is the same overshoot bezier used app-wide for the bottom-sheet
+     and register-page consent-sheet springs (components/bottom-sheet/
+     index.wxss, pages/register/register.wxss) — swapped in from ease-out
+     for a springier "pop" on entrance. Pure CSS, zero new API surface. */
+  animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
   /* Card-specific press mechanism (replaces hover-class="pressed" on this
      element specifically — see feed.wxml/onCardTouchStart/onCardTouchEnd,
      feed.js). Rather than the shared .pressed's flat 0.16s ease transition
