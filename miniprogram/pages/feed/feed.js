@@ -28,7 +28,7 @@ Page({
     navPadTop: 48,          // px; distance to the capsule's top edge — corrected in onLoad
     navBarHeight: 32,       // px; icon row height, matches the capsule's own height — corrected in onLoad
     navSegRowWidth: 175,    // px; segmented control width, clear of the capsule — corrected in onLoad
-    refresherThreshold: 70, // px; corrected from the status bar in onLoad
+    refresherThreshold: 50, // px; corrected from the status bar in onLoad
     // Header always stays visible now — no hide/reveal state at all.
     scrolled: false,
     // Content-first redesign: no permanent header row anymore — Profile
@@ -104,7 +104,7 @@ Page({
       navSegRowWidth: navSegRowWidth,
       // Pull-to-refresh spinner sits at the bottom of this area, i.e.
       // just below the status bar / notch.
-      refresherThreshold: (info.statusBarHeight || 20) + 36
+      refresherThreshold: (info.statusBarHeight || 20) + 20
     });
 
     var today = new Date();
