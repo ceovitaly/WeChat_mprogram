@@ -143,15 +143,30 @@
 
     <!-- Event Cards -->
     <block wx:if="{{filteredEvents.length > 0}}">
+      <!-- Press feedback (Task 2, this round): hover-class="pressed" (the
+           shared, app-wide CSS-transition press mechanism — app.wxss) is
+           deliberately NOT used on this element anymore; a card-specific
+           spring mechanism replaces it (see .event-card/.event-card--pressed
+           in feed.wxss and onCardTouchStart/onCardTouchEnd in feed.js) so
+           the press-then-release feel is one cohesive spring, not the flat
+           shared .pressed effect plus a second competing spring stacked on
+           top. Implementation tier: CSS-bezier-fallback — plain touch
+           handlers toggle a class via ordinary setData; the spring
+           overshoot comes entirely from a CSS transition using the same
+           cubic-bezier(0.34, 1.56, 0.64, 1) curve already trusted elsewhere
+           in this app (bottom-sheet / register consent-sheet), not from a
+           worklet. This tier was chosen over a worklet-driven approach
+           because it is guaranteed to work without live DevTools
+           verification. -->
       <view
         wx:for="{{filteredEvents}}"
         wx:key="_id"
-        class="event-card pressable"
-        hover-class="pressed"
-        hover-start-time="20"
-        hover-stay-time="80"
+        class="event-card {{pressedCardId === item._id ? 'event-card--pressed' : ''}}"
         style="animation-delay: {{item.animDelay}}ms"
         bindtap="goToDetail"
+        bindtouchstart="onCardTouchStart"
+        bindtouchend="onCardTouchEnd"
+        bindtouchcancel="onCardTouchEnd"
         data-id="{{item._id}}"
       >
         <!-- Header row: venue (left) + date (right), plain text on the

@@ -335,6 +335,27 @@ page {
      `backwards` (not `both`): a forwards fill would keep the keyframe's
      transform applied forever and override the hover-class press scale. */
   animation: cardIn 0.4s ease-out backwards;
+  /* Card-specific press mechanism (replaces hover-class="pressed" on this
+     element specifically — see feed.wxml/onCardTouchStart/onCardTouchEnd,
+     feed.js). Rather than the shared .pressed's flat 0.16s ease transition
+     (which has no overshoot and would double up awkwardly if stacked with
+     a spring release), the card owns its own transform transition: fast/
+     flat going down (.event-card--pressed below), but a trusted overshoot
+     bezier — same curve used app-wide for the bottom-sheet/register
+     consent-sheet springs (components/bottom-sheet/index.wxss,
+     pages/register/register.wxss) — coming back up, so releasing the card
+     visibly overshoots past scale(1) before settling. Pure CSS
+     class-toggle via plain setData, no worklet. */
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Touch-down state: quick, flat scale-down (no overshoot on the way in —
+   only the release should spring). Magnitude (0.97) matches the shared
+   .pressed class's 0.98 closely so it doesn't read as a jarringly
+   different press depth from every other pressable element in the app. */
+.event-card--pressed {
+  transition: transform 0.12s ease;
+  transform: scale(0.97);
 }
 
 @keyframes cardIn {

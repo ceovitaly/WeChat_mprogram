@@ -34,6 +34,11 @@ Page({
     // to '' (baseline CSS look, see .refresh-dot in feed.wxss) once the
     // pull ends (release-without-trigger or refresh-complete).
     dotStyles: ['', '', ''],
+    // Card-specific press-spring state (Task 2) — the _id of the single
+    // event-card currently pressed, or '' when none. Compared per-item in
+    // the wx:for (feed.wxml) rather than a flat boolean so unrelated cards
+    // never move together.
+    pressedCardId: '',
     // Header always stays visible now — no hide/reveal state at all.
     scrolled: false,
     // Content-first redesign: no permanent header row anymore — Profile
@@ -507,6 +512,26 @@ Page({
   // rather than leaving them stuck at whatever progress they reached.
   onRefresherRestore: function() {
     this.setData({ dotStyles: ['', '', ''] });
+  },
+
+  // ===== CARD PRESS-SPRING FEEDBACK (Task 2) =====
+  //
+  // Plain touch handlers (no worklet) toggling pressedCardId via setData;
+  // the actual spring-overshoot feel comes from the CSS transition on
+  // .event-card / .event-card--pressed (feed.wxss), using the same
+  // cubic-bezier(0.34, 1.56, 0.64, 1) curve already trusted elsewhere in
+  // this app. This is the CSS-bezier-fallback tier — chosen over a
+  // worklet-driven touch approach because it's guaranteed to work without
+  // live DevTools verification.
+  onCardTouchStart: function(e) {
+    var id = e.currentTarget.dataset.id;
+    if (!id) return;
+    this.setData({ pressedCardId: id });
+  },
+
+  onCardTouchEnd: function() {
+    if (!this.data.pressedCardId) return;
+    this.setData({ pressedCardId: '' });
   },
 
   // Header stays fully visible at all times now — this only owns the
