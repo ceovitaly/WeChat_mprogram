@@ -275,6 +275,7 @@ Page({
               guestName: guest.nickName || guest.name || guest.phone || '',
               guestAvatar: guest.avatarUrl || '',
               promoCode: guest.promoCode || '',
+              promoterId: guest.promoterId || '',
               promoterName: guest.promoterName || '',
               ticketType: this.data.selectedTicketName || type,
               status: 'confirmed',

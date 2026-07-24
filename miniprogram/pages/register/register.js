@@ -255,6 +255,7 @@ Page({
             eventDate: event.date || '',
             guestName: profile.nickName || '',
             promoCode: profile.promoCode || '',
+            promoterId: profile.promoterId || '',
             promoterName: profile.promoterName || '',
             ticketType: 'Free Entry',
             status: 'confirmed',
