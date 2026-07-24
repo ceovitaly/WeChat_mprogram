@@ -267,16 +267,32 @@ page {
    refresherThreshold (feed.js). */
 .feed-refresher {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  padding-bottom: 16rpx;
 }
 
-.feed-refresher-spinner {
-  width: 48rpx;
-  height: 48rpx;
-  border-width: 5rpx;
+/* Three-dot sequential-bounce refresh indicator, replacing the ring spinner. */
+.refresh-dots {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.refresh-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: var(--blue);
+  animation: refresh-dot-bounce 1.2s ease-in-out infinite;
+}
+
+.refresh-dot:nth-child(2) { animation-delay: 0.15s; }
+.refresh-dot:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes refresh-dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40% { transform: translateY(-12rpx); opacity: 1; }
 }
 
 .event-list-container {

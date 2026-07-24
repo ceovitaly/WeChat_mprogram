@@ -98,7 +98,11 @@
        still looks right now that the nav-bar above it is much shorter than
        the old header. -->
   <view slot="refresher" class="feed-refresher" style="height:{{refresherThreshold}}px">
-    <view class="loading-spinner feed-refresher-spinner"></view>
+    <view class="refresh-dots">
+      <view class="refresh-dot"></view>
+      <view class="refresh-dot"></view>
+      <view class="refresh-dot"></view>
+    </view>
   </view>
 
   <view class="event-list-container">
