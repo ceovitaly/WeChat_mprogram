@@ -18,7 +18,7 @@
 </view>
 
 <scroll-view class="content-scroll" scroll-y enhanced show-scrollbar="false">
-<view class="main-card {{panelEntered ? 'main-card--entered' : ''}}">
+<view class="main-card">
 
     <!-- Block 1: date/time + title — the hero stays clean (image only);
          this block opens the scroll content for every event. -->
