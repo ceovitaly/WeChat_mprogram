@@ -92,6 +92,7 @@ page {
 
 .nav-seg-label {
   font-size: 25rpx;
+  font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
   text-align: center;
