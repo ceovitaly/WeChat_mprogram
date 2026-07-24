@@ -82,7 +82,7 @@ Page({
   goToEvent: function(e) {
     var id = e.currentTarget.dataset.id;
     if (!id) return;
-    wx.navigateTo({ url: '/pages/event-detail/event-detail?id=' + id });
+    wx.navigateTo({ url: '/pages/event-detail/event-detail?id=' + id, animationType: 'slide-in-bottom' });
   },
 
   removeFromList: function(e) {
