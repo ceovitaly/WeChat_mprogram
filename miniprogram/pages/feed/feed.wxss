@@ -43,43 +43,55 @@ page {
   box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.08);
 }
 
-/* Icon row: explicit height (navBarHeight, feed.js) equal to the WeChat
-   capsule's own height, flex-centered so the icons' vertical center lands
-   exactly on the capsule's vertical center (both share the same top via
-   .feed-nav's padding-top and the same height). */
-.nav-icon-row {
+/* Segmented-control row: ONE unified pill outline around all three
+   segments (Profile/Search/Lists), mimicking WeChat's own system capsule
+   (the "..."/"o" pill, top-right). explicit height (navBarHeight, feed.js)
+   equal to the WeChat capsule's own height, so the control lands in the
+   same vertical band as the capsule (shares .feed-nav's padding-top).
+   align-items is `stretch` (not `center`) so the divider borders added to
+   each segment span the control's full height edge-to-edge; each
+   segment centers its OWN label internally instead. border-radius:999rpx
+   auto-clamps to a perfect pill regardless of height — no half-height
+   math needed. overflow:hidden clips the flat-edged segments inside to
+   the pill's rounded ends. background is deliberately omitted (falls
+   through to .feed-nav's own var(--bg-elevated)) — no distinct fill,
+   just the outline, per the WeChat capsule's own transparent look. */
+.nav-seg-row {
   display: flex;
-  align-items: center;
-  gap: 16rpx;
+  align-items: stretch;
+  border: 1rpx solid var(--border);
+  border-radius: 999rpx;
+  overflow: hidden;
 }
 
-/* Icon-only nav buttons (Profile, Search, Tickets) — same tap-target
-   family as the old .mylist-btn/.calendar-btn but smaller, since this
-   strip's whole point is to take up as little height as possible.
-   width is elongated (1.5x the height) for an easier tap target — a
-   wider pill/rounded-rect rather than a square — while height stays
-   tied to navBarHeight (feed.js) for capsule alignment. With 3 buttons
-   at 96rpx + 2 gaps at 16rpx, the row totals 320rpx (+24rpx .feed-nav
-   left padding = 344rpx from the screen's left edge on the 750rpx
-   design grid) — comfortably clear of the capsule's reserved zone
-   (~570rpx+ on a 750rpx grid), so no crowding expected even on narrow
-   devices, but still worth a visual check in DevTools. */
-.nav-icon-btn {
-  width: 96rpx;
-  height: 64rpx;
-  flex-shrink: 0;
-  border-radius: 16rpx;
-  background: var(--bg-inset);
-  border: 1rpx solid var(--border);
+/* Segments (Profile, Search, Lists) — text labels instead of the old
+   per-button icon pills. No more individual background/border/radius;
+   that all moved to .nav-seg-row above so the three segments read as
+   ONE bar. Each segment centers its own label and gets a thin divider
+   on the right EXCEPT the last one (border, not border-around, so it
+   never doubles up with the outer pill's own border). Horizontal
+   padding (0 28rpx) sized for "Profile"/"Search"/"Lists" without
+   cramping, while keeping the overall pill as narrow as reasonably
+   possible so it stays clear of the WeChat capsule's reserved zone on
+   the right — see feed.wxss commit note / task report for the width
+   estimate arithmetic (text labels are less precise to measure than the
+   old fixed icon squares; NEEDS A VISUAL CHECK in DevTools). */
+.nav-seg {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 28rpx;
+  flex-shrink: 0;
 }
 
-.nav-icon {
-  width: 32rpx;
-  height: 32rpx;
-  background-color: var(--text-primary);
+.nav-seg:not(:last-child) {
+  border-right: 1rpx solid var(--border);
+}
+
+.nav-seg-label {
+  font-size: 25rpx;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 /* ===== SEARCH PANEL ===== */
