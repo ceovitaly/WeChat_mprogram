@@ -561,13 +561,13 @@ Page({
   goToDetail: function(e) {
     var id = e.currentTarget.dataset.id;
     if (!id) return;
-    wx.navigateTo({ url: '/pages/event-detail/event-detail?id=' + id, animationType: 'slide-in-bottom' });
+    wx.navigateTo({ url: '/pages/event-detail/event-detail?id=' + id });
   },
 
   goToTicketDirect: function(e) {
     var id = e.currentTarget.dataset.id;
     if (!id) return;
-    wx.navigateTo({ url: '/pages/event-detail/event-detail?id=' + id + '&autoTicket=1', animationType: 'slide-in-bottom' });
+    wx.navigateTo({ url: '/pages/event-detail/event-detail?id=' + id + '&autoTicket=1' });
   },
 
   goToTickets: function() {
