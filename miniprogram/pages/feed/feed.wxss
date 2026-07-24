@@ -30,12 +30,9 @@ page {
 .feed-nav {
   flex-shrink: 0;
   background: var(--bg-elevated);
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
   padding-left: 24rpx;
   padding-right: 24rpx;
-  padding-bottom: 16rpx;
+  padding-bottom: 12rpx;
   border-bottom: 1rpx solid var(--border);
   transition: box-shadow 0.25s ease;
 }
@@ -43,6 +40,16 @@ page {
 /* Subtle lift once the list is scrolled at all (scrolled flag) */
 .feed-nav--scrolled {
   box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.08);
+}
+
+/* Icon row: explicit height (navBarHeight, feed.js) equal to the WeChat
+   capsule's own height, flex-centered so the icons' vertical center lands
+   exactly on the capsule's vertical center (both share the same top via
+   .feed-nav's padding-top and the same height). */
+.nav-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
 }
 
 /* Icon-only nav buttons (hamburger, search) — square, same tap-target

@@ -7,18 +7,23 @@
      much higher on screen. A normal flex sibling ABOVE the scroll-view
      (not inside it), so it stays fully visible and fixed in place;
      pull-to-refresh only ever touches the scroll-view's own content.
-     padding-top is set inline from feed.js (clears the capsule) — same
-     mechanism the old .header used. `scrolled` (box-shadow only) is a
-     plain setData class flip; see onFeedScroll. -->
+     padding-top (navPadTop, feed.js) clears down to where the capsule
+     starts; the inner .nav-icon-row gets an explicit height (navBarHeight)
+     equal to the capsule's own height and is flex-centered, so the icons
+     land in exactly the same vertical band as the capsule's icons instead
+     of below it. `scrolled` (box-shadow only) is a plain setData class
+     flip; see onFeedScroll. -->
 <view
   class="feed-nav {{scrolled ? 'feed-nav--scrolled' : ''}}"
-  style="padding-top:{{headerPadTop}}px"
+  style="padding-top:{{navPadTop}}px"
 >
-  <view class="nav-icon-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="openDrawer">
-    <view class="icon icon--menu nav-icon"></view>
-  </view>
-  <view class="nav-icon-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="toggleSearchPanel">
-    <view class="icon icon--search nav-icon"></view>
+  <view class="nav-icon-row" style="height:{{navBarHeight}}px">
+    <view class="nav-icon-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="openDrawer">
+      <view class="icon icon--menu nav-icon"></view>
+    </view>
+    <view class="nav-icon-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="toggleSearchPanel">
+      <view class="icon icon--search nav-icon"></view>
+    </view>
   </view>
 </view>
 

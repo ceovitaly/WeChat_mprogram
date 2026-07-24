@@ -25,7 +25,8 @@ Page({
     eventDates: [],
     myRegistrationIds: [],
     cardImgHeight: 600,
-    headerPadTop: 96,      // px; corrected from the capsule rect in onLoad
+    navPadTop: 48,          // px; distance to the capsule's top edge — corrected in onLoad
+    navBarHeight: 32,       // px; icon row height, matches the capsule's own height — corrected in onLoad
     refresherThreshold: 90, // px; corrected from the status bar in onLoad
     // Header always stays visible now — no hide/reveal state at all.
     scrolled: false,
@@ -44,21 +45,31 @@ Page({
 
     var info = wx.getWindowInfo();
 
-    // The nav-bar is one full-width row now, so it must start below the
-    // floating WeChat capsule (custom navigation) — measure it, with a
-    // status-bar fallback.
-    var padTop = 0;
+    // The nav-bar's icon row must occupy the SAME vertical band as the
+    // floating WeChat capsule (custom navigation) — not a new band below
+    // it — so the icons land at the same height as the capsule's own
+    // icons. navPadTop clears down to where the capsule starts;
+    // navBarHeight is the icon row's own height, matching the capsule's
+    // height exactly so a centered icon row's center coincides with the
+    // capsule's center. Falls back to the status bar height / a sane
+    // default if the capsule rect API is unavailable.
+    var navPadTop = 0;
+    var navBarHeight = 0;
     try {
       var menu = wx.getMenuButtonBoundingClientRect();
-      if (menu && menu.bottom) padTop = menu.bottom + 12;
+      if (menu && menu.top) {
+        navPadTop = menu.top;
+        navBarHeight = menu.height || 32;
+      }
     } catch (e) {}
-    if (!padTop) padTop = (info.statusBarHeight || 44) + 48;
+    if (!navPadTop) navPadTop = info.statusBarHeight || 44;
+    if (!navBarHeight) navBarHeight = 32;
 
-    // Nav-bar total height: capsule clearance + its own (much shorter than
-    // the old avatar/search/calendar/my-list header) icon-row height. Used
-    // by the card-height math below — a slimmer nav-bar means more of this
-    // goes to cards, which is the whole point of this redesign.
-    var headerPx = padTop + 40;
+    // Nav-bar total footprint: capsule clearance + the icon row's own
+    // height + a little bottom breathing room. Used by the card-height
+    // math below — a slimmer nav-bar means more of this goes to cards,
+    // which is the whole point of this redesign.
+    var headerPx = navPadTop + navBarHeight + 12;
 
     // Calculate card image height so the full card fits on screen.
     // Nav-bar + card extras (title + CTA + padding) ~190px
@@ -69,7 +80,8 @@ Page({
     // Cap at 4:5 ratio (937rpx at 750rpx width) so large screens keep portrait look
     this.setData({
       cardImgHeight: Math.min(maxRpx, 937),
-      headerPadTop: padTop,
+      navPadTop: navPadTop,
+      navBarHeight: navBarHeight,
       // Pull-to-refresh spinner sits at the bottom of this area, i.e.
       // just below the status bar / notch.
       refresherThreshold: (info.statusBarHeight || 20) + 56
