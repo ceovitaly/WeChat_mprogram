@@ -29,6 +29,11 @@ Page({
     navBarHeight: 32,       // px; icon row height, matches the capsule's own height — corrected in onLoad
     navSegRowWidth: 175,    // px; segmented control width, clear of the capsule — corrected in onLoad
     refresherThreshold: 50, // px; corrected from the status bar in onLoad
+    // Pre-trigger pull-to-refresh dot feedback (onRefresherPulling below).
+    // One inline transform/opacity style string per dot, staggered; reset
+    // to '' (baseline CSS look, see .refresh-dot in feed.wxss) once the
+    // pull ends (release-without-trigger or refresh-complete).
+    dotStyles: ['', '', ''],
     // Header always stays visible now — no hide/reveal state at all.
     scrolled: false,
     // Content-first redesign: no permanent header row anymore — Profile
@@ -453,11 +458,56 @@ Page({
   },
 
   onPullDownRefresh: function() {
-    this.setData({ refreshing: true });
+    // The dots' pre-trigger progress styles no longer matter once the
+    // actual refresh animation (refresh-dot-active, feed.wxss) takes over;
+    // reset them so nothing lingers once refreshing flips back to false.
+    this.setData({ refreshing: true, dotStyles: ['', '', ''] });
     this.fetchEvents(false);
   },
 
   onReachBottom: function() {},
+
+  // ===== PULL-TO-REFRESH DOT FEEDBACK (Task 1) =====
+  //
+  // Plain (non-worklet) handler for scroll-view's bindrefresherpulling,
+  // which fires continuously while the user is dragging down, before
+  // refresher-triggered becomes true. e.detail.dy is the current pull
+  // distance in px. Confidence note: a worklet:bindrefresherpulling
+  // binding was considered but not used here — whether that exact
+  // attribute accepts a worklet binding the same way worklet:onscroll did
+  // in an earlier (since-reverted) attempt this session could not be
+  // verified without live DevTools, so this plain setData path was chosen
+  // deliberately as the option that cannot crash the page.
+  onRefresherPulling: function(e) {
+    if (this.data.refreshing) return; // bounce animation already owns the dots
+    var dy = (e.detail && e.detail.dy) || 0;
+    var threshold = this.data.refresherThreshold || 50;
+    var progress = dy / threshold;
+    if (progress < 0) progress = 0;
+    if (progress > 1) progress = 1;
+
+    // Staggered bands so the three dots don't all pop in at once: dot 1
+    // ramps 0→0.6, dot 2 0.2→0.8, dot 3 0.4→1.0 of the overall pull.
+    var bands = [[0, 0.6], [0.2, 0.8], [0.4, 1.0]];
+    var styles = bands.map(function(band) {
+      var lo = band[0], hi = band[1];
+      var p = (progress - lo) / (hi - lo);
+      if (p < 0) p = 0;
+      if (p > 1) p = 1;
+      var scale = (0.4 + p * 0.6).toFixed(3);   // 0.4 -> 1.0
+      var opacity = (0.25 + p * 0.75).toFixed(3); // 0.25 -> 1.0
+      return 'transform: scale(' + scale + '); opacity: ' + opacity + ';';
+    });
+
+    this.setData({ dotStyles: styles });
+  },
+
+  // Fires when the user releases the pull without crossing the refresh
+  // threshold (no refresh triggered) — snap the dots back to baseline
+  // rather than leaving them stuck at whatever progress they reached.
+  onRefresherRestore: function() {
+    this.setData({ dotStyles: ['', '', ''] });
+  },
 
   // Header stays fully visible at all times now — this only owns the
   // `scrolled` boolean (the header's box-shadow boundary). setData

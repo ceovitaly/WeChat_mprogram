@@ -273,7 +273,15 @@ page {
   width: 100%;
 }
 
-/* Three-dot sequential-bounce refresh indicator, replacing the ring spinner. */
+/* Three-dot sequential-bounce refresh indicator, replacing the ring spinner.
+   Pre-trigger state (pulling, refresher-triggered false): each dot's
+   transform/opacity comes from an inline style driven by dotStyles
+   (feed.js, computed continuously in onRefresherPulling from the pull
+   distance) so the dots grow from small/faint to full-size as the user
+   pulls. Once refresher-triggered flips true, .refresh-dot-active below
+   takes over via the existing @keyframes refresh-dot-bounce — CSS
+   animations take priority over a plain inline style while running, so
+   this handoff is automatic with no JS coordination needed. */
 .refresh-dots {
   display: flex;
   align-items: center;
@@ -285,11 +293,19 @@ page {
   height: 14rpx;
   border-radius: 50%;
   background: var(--accent);
+  /* Baseline pre-pull look (progress 0): small/faint. Overridden per-dot by
+     the inline style below while pulling, then superseded entirely by
+     .refresh-dot-active's animation once triggered. */
+  transform: scale(0.4);
+  opacity: 0.25;
+}
+
+.refresh-dot-active {
   animation: refresh-dot-bounce 1.2s ease-in-out infinite;
 }
 
-.refresh-dot:nth-child(2) { animation-delay: 0.15s; }
-.refresh-dot:nth-child(3) { animation-delay: 0.3s; }
+.refresh-dot-active:nth-child(2) { animation-delay: 0.15s; }
+.refresh-dot-active:nth-child(3) { animation-delay: 0.3s; }
 
 @keyframes refresh-dot-bounce {
   0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }

@@ -89,6 +89,8 @@
   refresher-threshold="{{refresherThreshold}}"
   refresher-triggered="{{refreshing}}"
   bindrefresherrefresh="onPullDownRefresh"
+  bindrefresherpulling="onRefresherPulling"
+  bindrefresherrestore="onRefresherRestore"
 >
   <!-- Custom refresher: the scroll-view now starts BELOW the fixed nav-bar
        (the nav-bar is a sibling above it, not inside it), so the spinner
@@ -96,12 +98,33 @@
        screen. Still bottom-aligned/status-bar-tall per refresherThreshold
        (feed.js) — NEEDS A VISUAL CHECK in DevTools to confirm the spinner
        still looks right now that the nav-bar above it is much shorter than
-       the old header. -->
+       the old header.
+
+       Pre-trigger pull feedback (Task 1, this round): bindrefresherpulling
+       fires continuously while the user drags down, before refresher-
+       triggered flips true. Implemented as a PLAIN (non-worklet) handler —
+       onRefresherPulling in feed.js — using ordinary setData, not
+       worklet:bindrefresherpulling. Confidence note: binding a worklet to
+       this specific attribute the same way worklet:onscroll was used
+       earlier this session could not be verified without live DevTools
+       (per the project owner's own caution about that prior, since-
+       reverted attempt), so the safe non-worklet path was chosen
+       deliberately here — a plain setData handler cannot crash the page,
+       at worst it's a bit less silky-smooth than a worklet would be.
+       dotStyles (feed.js) holds one inline transform/opacity string per
+       dot, staggered so they don't all appear in unison; once
+       refresher-triggered is true, refresh-dot-active's CSS keyframe
+       (feed.wxss) takes over automatically (CSS animations win over a
+       plain inline style while running) — no JS coordination needed for
+       that handoff itself, but onPullDownRefresh also resets dotStyles
+       back to baseline once refreshing begins, and onRefresherRestore
+       resets them if the user lets go before triggering, so the dots
+       don't get stuck mid-pull-progress. -->
   <view slot="refresher" class="feed-refresher" style="height:{{refresherThreshold}}px">
     <view class="refresh-dots">
-      <view class="refresh-dot"></view>
-      <view class="refresh-dot"></view>
-      <view class="refresh-dot"></view>
+      <view class="refresh-dot {{refreshing ? 'refresh-dot-active' : ''}}" style="{{refreshing ? '' : dotStyles[0]}}"></view>
+      <view class="refresh-dot {{refreshing ? 'refresh-dot-active' : ''}}" style="{{refreshing ? '' : dotStyles[1]}}"></view>
+      <view class="refresh-dot {{refreshing ? 'refresh-dot-active' : ''}}" style="{{refreshing ? '' : dotStyles[2]}}"></view>
     </view>
   </view>
 
