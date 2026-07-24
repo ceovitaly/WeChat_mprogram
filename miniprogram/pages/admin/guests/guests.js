@@ -129,6 +129,7 @@ Page({
   },
 
   async assignPromoter(e) {
+    const promoterId = e.currentTarget.dataset.id
     const promoterName = e.currentTarget.dataset.name
     const guest = this.data.selectedGuest
     if (!guest) return
@@ -140,13 +141,14 @@ Page({
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
         action: 'updateGuestPromoter',
         guestId: guest._id,
+        promoterId,
         promoterName
       })
       if (isUnauthorized(res)) { handleAuthFailure(); return }
       if (!res || !res.success) throw new Error(res && res.message || 'Failed')
 
       const allGuests = this.data.allGuests.map(g =>
-        g._id === guest._id ? { ...g, promoterName } : g
+        g._id === guest._id ? { ...g, promoterId, promoterName } : g
       )
       this.setData({ allGuests, selectedGuest: null })
       this._applyFilters()

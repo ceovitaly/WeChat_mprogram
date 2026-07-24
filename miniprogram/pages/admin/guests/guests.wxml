@@ -71,12 +71,13 @@
       <view
         wx:for="{{promoters}}"
         wx:key="_id"
-        class="sheet-row {{selectedGuest.promoterName === item.name ? 'sheet-row--active' : ''}}"
+        class="sheet-row {{selectedGuest.promoterId === item._id ? 'sheet-row--active' : ''}}"
         bindtap="assignPromoter"
+        data-id="{{item._id}}"
         data-name="{{item.name}}"
       >
         <text class="sheet-row-name">{{item.name}}</text>
-        <text wx:if="{{selectedGuest.promoterName === item.name}}" class="sheet-check">✓</text>
+        <text wx:if="{{selectedGuest.promoterId === item._id}}" class="sheet-check">✓</text>
       </view>
     </scroll-view>
     <view class="sheet-cancel" bindtap="closePromoterSheet">
