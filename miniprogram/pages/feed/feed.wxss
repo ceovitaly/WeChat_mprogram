@@ -55,9 +55,17 @@ page {
 
 /* Icon-only nav buttons (Profile, Search, Tickets) — same tap-target
    family as the old .mylist-btn/.calendar-btn but smaller, since this
-   strip's whole point is to take up as little height as possible. */
+   strip's whole point is to take up as little height as possible.
+   width is elongated (1.5x the height) for an easier tap target — a
+   wider pill/rounded-rect rather than a square — while height stays
+   tied to navBarHeight (feed.js) for capsule alignment. With 3 buttons
+   at 96rpx + 2 gaps at 16rpx, the row totals 320rpx (+24rpx .feed-nav
+   left padding = 344rpx from the screen's left edge on the 750rpx
+   design grid) — comfortably clear of the capsule's reserved zone
+   (~570rpx+ on a 750rpx grid), so no crowding expected even on narrow
+   devices, but still worth a visual check in DevTools. */
 .nav-icon-btn {
-  width: 64rpx;
+  width: 96rpx;
   height: 64rpx;
   flex-shrink: 0;
   border-radius: 16rpx;
