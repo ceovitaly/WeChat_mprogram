@@ -73,12 +73,6 @@ Page({
     this.setData({ activeTab: e.currentTarget.dataset.tab });
   },
 
-  goBack: function() {
-    wx.navigateBack({
-      fail: () => wx.reLaunch({ url: '/pages/feed/feed' }),
-    });
-  },
-
   goToEvent: function(e) {
     var id = e.currentTarget.dataset.id;
     if (!id) return;

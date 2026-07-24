@@ -535,18 +535,37 @@ Page({
   },
 
   // Header stays fully visible at all times now — this only owns the
-  // `scrolled` boolean (the header's box-shadow boundary). setData
-  // happens ONLY when it actually flips.
+  // `scrolled` boolean (the header's box-shadow boundary), plus closing
+  // the search panel if it's open when the user starts scrolling. Fires
+  // continuously during scrolling, so both checks are batched into a
+  // single setData call per invocation (built conditionally) rather than
+  // one setData per flag — two separate calls here would hurt scroll
+  // performance.
   onFeedScroll: function(e) {
     var top = e.detail.scrollTop;
     var scrolled = top > 8;
-    if (scrolled !== this.data.scrolled) this.setData({ scrolled: scrolled });
+    var patch = {};
+    var hasPatch = false;
+    if (scrolled !== this.data.scrolled) { patch.scrolled = scrolled; hasPatch = true; }
+    if (this.data.showSearchPanel) { patch.showSearchPanel = false; hasPatch = true; }
+    if (hasPatch) this.setData(patch);
   },
 
   // ===== SEARCH PANEL =====
 
   toggleSearchPanel: function() {
     this.setData({ showSearchPanel: !this.data.showSearchPanel });
+  },
+
+  // Broader "interacting with other elements should hide the search bar"
+  // case: a plain tap on a card (no scroll distance) never fires
+  // bindscroll, so this closes the panel on the very first touch anywhere
+  // in the scrollable feed content. bindtouchstart (not catchtouchstart)
+  // lets the touch keep propagating normally — tapping a card while the
+  // panel happens to be open both closes the panel AND still triggers the
+  // card's own tap/navigation.
+  onFeedTouchStart: function() {
+    if (this.data.showSearchPanel) this.setData({ showSearchPanel: false });
   },
 
   // ===== NAVIGATION =====

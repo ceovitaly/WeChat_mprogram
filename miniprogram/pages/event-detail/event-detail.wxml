@@ -1,47 +1,50 @@
 <view class="container">
 
+<scroll-view class="content-scroll" scroll-y enhanced show-scrollbar="false" bindscroll="onContentScroll">
+
 <view class="hero-section" style="height:{{heroHeight}}rpx">
   <block wx:if="{{event.promoImages && event.promoImages.length > 1}}">
-    <swiper class="hero-swiper" style="height:{{heroHeight}}rpx" indicator-dots="{{true}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#ffffff" circular="{{true}}">
+    <swiper class="hero-swiper" style="height:{{heroHeight}}rpx" indicator-dots="{{true}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#ffffff" circular="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{400}}">
       <swiper-item wx:for="{{event.promoImages}}" wx:for-item="img" wx:key="*this">
         <image src="{{img}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{img}}" />
       </swiper-item>
     </swiper>
-    <view class="hero-gradient"></view>
+    <view class="hero-scrim"></view>
   </block>
   <block wx:elif="{{event.promoImage}}">
     <image src="{{event.promoImage}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
+    <view class="hero-scrim"></view>
   </block>
   <view wx:else class="image-placeholder">
     <text class="placeholder-text">No Image</text>
   </view>
 </view>
 
-<scroll-view class="content-scroll" scroll-y enhanced show-scrollbar="false">
+<view class="hero-overlay {{(headerPinned || !(event.promoImage || (event.promoImages && event.promoImages.length > 0))) ? 'hero-overlay--pinned' : ''}}" wx:if="{{event}}">
+  <text wx:if="{{event.displayDatetimeShort || event.date}}" class="info-datetime">{{event.displayDatetimeShort || event.date}}</text>
+  <text class="info-title">{{event.title}}</text>
+</view>
+
 <view class="main-card">
 
-    <!-- Block 1: date/time + title — the hero stays clean (image only);
-         this block opens the scroll content for every event. -->
-    <view class="info-block" wx:if="{{event}}">
-      <text wx:if="{{event.displayDatetimeShort || event.date}}" class="info-datetime">{{event.displayDatetimeShort || event.date}}</text>
-      <text class="info-title">{{event.title}}</text>
+    <view class="section section--desc" wx:if="{{event.description}}">
+      <text class="section-content">{{event.description}}</text>
     </view>
 
-    <!-- Block 2: venue card — name + full address, with an embedded
-         static mini-map preview when coordinates are known. The whole
-         card opens the system map (openMap). The map is display-only:
-         all gestures are disabled and a transparent cover (which also
-         hosts the CSS center pin) keeps taps bubbling to the card. -->
+    <!-- Block 2: venue card — a real map of the venue's location as a
+         preview strip on top, plain venue name/address below it. No
+         cover-view/overlay-on-map anymore: cover-view children of a
+         native <map> component can visibly lag the map's own compositing
+         layer while the page scrolls (WeChat DevTools-confirmed jitter),
+         so text is never overlaid on the map — it's a separate block
+         underneath instead. When there are no coordinates, .venue-map-preview
+         just renders its fallback background with no <map> (no crash);
+         the name/address strip below is unconditional either way. The
+         whole card opens the system map (openMap). -->
     <view class="venue-card pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openMap">
-      <view class="venue-info">
-        <view class="venue-name-row">
-          <view class="icon icon--pin venue-pin"></view>
-          <text class="venue-name">{{event.venueName || 'TBA'}}</text>
-        </view>
-        <text wx:if="{{event.venueAddress}}" class="venue-address">{{event.venueAddress}}</text>
-      </view>
-      <view wx:if="{{event.venueLatitude && event.venueLongitude}}" class="venue-map-wrap">
+      <view class="venue-map-preview">
         <map
+          wx:if="{{event.venueLatitude && event.venueLongitude}}"
           class="venue-map"
           latitude="{{event.venueLatitude}}"
           longitude="{{event.venueLongitude}}"
@@ -52,14 +55,14 @@
           show-compass="{{false}}"
           show-scale="{{false}}"
         ></map>
-        <view class="venue-map-cover">
-          <view class="venue-map-pin"></view>
-        </view>
       </view>
-    </view>
-
-    <view class="section section--desc" wx:if="{{event.description}}">
-      <text class="section-content">{{event.description}}</text>
+      <view class="venue-info venue-info--plain">
+        <view class="venue-name-row">
+          <view class="icon icon--pin venue-pin venue-pin--plain"></view>
+          <text class="venue-name venue-name--plain">{{event.venueName || 'TBA'}}</text>
+        </view>
+        <text wx:if="{{event.venueAddress}}" class="venue-address venue-address--plain">{{event.venueAddress}}</text>
+      </view>
     </view>
 
     <view class="section" wx:if="{{event.promoMaterials && event.promoMaterials.length > 0}}">
@@ -139,14 +142,18 @@
       <text class="registered-icon">✓</text>
       <text class="registered-text">You're on the list</text>
     </view>
-    <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">Share</button>
+    <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
+      <view class="icon icon--share btn-share-icon"></view>
+    </button>
   </view>
   <view wx:else class="action-row">
     <button class="btn-register pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="openTicketModal">
       <view class="icon icon--list btn-register-icon"></view>
       <text>Get on list</text>
     </button>
-    <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">Share</button>
+    <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
+      <view class="icon icon--share btn-share-icon"></view>
+    </button>
   </view>
 </view>
 

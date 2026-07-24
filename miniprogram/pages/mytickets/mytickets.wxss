@@ -10,27 +10,23 @@ page {
   flex-direction: column;
 }
 
-/* Fixed Header */
-.header {
-  background: var(--bg-elevated);
-  padding-top: calc(44rpx + env(safe-area-inset-top));
-  padding-bottom: 0;
-  border-bottom: 0.5px solid var(--border);
-  flex-shrink: 0;
-}
-
-.header-top {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 0 24rpx 20rpx;
-}
-
 /* Tabs */
 .tabs {
+  position: relative;
   display: flex;
-  padding: 0 32rpx 16rpx;
+  background: var(--bg-elevated);
+  padding: 20rpx 32rpx 16rpx;
   gap: 8rpx;
+  flex-shrink: 0;
+}
+.tabs::after {
+  content: '';
+  position: absolute;
+  left: 32rpx;
+  right: 32rpx;
+  bottom: 0;
+  height: 0.5px;
+  background: var(--border);
 }
 
 .tab {
@@ -101,15 +97,19 @@ page {
 .signin-btn {
   margin-top: 8rpx;
   background: var(--blue);
-  border-radius: 14rpx;
-  padding: 16rpx 40rpx;
+  border-radius: 999rpx;
+  height: 88rpx;
+  padding: 0 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .signin-btn:active { opacity: 0.8; }
 
 .signin-btn-text {
   color: #FFFFFF;
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
 }
 

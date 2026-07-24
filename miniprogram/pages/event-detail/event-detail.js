@@ -28,17 +28,28 @@ Page({
     selectedTicketName: '',
     selectedTicketPrice: 0,
     selectedPackageLink: '',
-    heroHeight: 560,
+    heroHeight: 750,
     heroLoaded: false,
+    headerPinned: false,
     relatedEvents: []
   },
 
   onLoad: function(options) {
-    // Hero = 40% of screen height, min 280rpx, max 560rpx (in px, converted to rpx)
+    // Hero = 55% of screen height, min 320rpx, max 750rpx (in px, converted to rpx).
+    // Bumped up from the old 40%/280-560rpx range to give promo images much
+    // more room, per the redesign making the hero the dominant visual element.
     const { windowHeight, windowWidth } = wx.getWindowInfo();
     const rpxPerPx = 750 / windowWidth;
-    const heroH = Math.round(Math.min(Math.max(windowHeight * 0.40, 280 / rpxPerPx), 560 / rpxPerPx) * rpxPerPx);
+    const heroH = Math.round(Math.min(Math.max(windowHeight * 0.55, 320 / rpxPerPx), 750 / rpxPerPx) * rpxPerPx);
     this.setData({ heroHeight: heroH });
+
+    // Pixel scroll offset (matching scroll-view's bindscroll e.detail.scrollTop
+    // units, which are px) at which the sticky .hero-overlay bar reaches the
+    // scroll-view's top and CSS position:sticky pins it there. overlapRpx must
+    // match the negative margin-top on .hero-overlay in event-detail.wxss.
+    const pxPerRpx = windowWidth / 750;
+    const overlapRpx = 170;
+    this._pinThresholdPx = Math.max(0, heroH - overlapRpx) * pxPerRpx;
 
     this._autoTicket = options.autoTicket === '1';
     app.getCloud((cloud) => {
@@ -376,6 +387,19 @@ Page({
     var id = e.currentTarget.dataset.id;
     if (!id) return;
     wx.navigateTo({ url: '/pages/event-detail/event-detail?id=' + id });
+  },
+
+  // Tracks whether the sticky title/datetime bar (.hero-overlay) has
+  // reached the top of the scroll-view and is currently pinned there —
+  // WXSS has no :sticky/:stuck pseudo-class, so this has to be computed
+  // from the scroll offset in JS and toggled via a class (see the
+  // hero-overlay--pinned binding in event-detail.wxml). Only calls
+  // setData when the boolean actually flips, so this doesn't trigger a
+  // re-render on every scroll tick.
+  onContentScroll: function(e) {
+    var st = e.detail.scrollTop;
+    var pinned = st >= this._pinThresholdPx;
+    if (pinned !== this.data.headerPinned) this.setData({ headerPinned: pinned });
   },
 
   // Fade the hero in on first load (see .hero-image in event-detail.wxss).

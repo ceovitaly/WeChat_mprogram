@@ -14,11 +14,20 @@ page {
 
 /* Fixed Header — same shape as mytickets' header (page-header + tab row) */
 .header {
+  position: relative;
   background: var(--bg-elevated);
   padding-top: calc(44rpx + env(safe-area-inset-top));
   padding-bottom: 0;
-  border-bottom: 0.5px solid var(--border);
   flex-shrink: 0;
+}
+.header::after {
+  content: '';
+  position: absolute;
+  left: 32rpx;
+  right: 32rpx;
+  bottom: 0;
+  height: 0.5px;
+  background: var(--border);
 }
 
 .header-top {

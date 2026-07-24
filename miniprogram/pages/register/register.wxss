@@ -162,17 +162,17 @@ page {
 /* ─── Главная кнопка (шаг 1) ─── */
 /* Primary onboarding CTA — brand emphasis, promoted from --blue to --accent */
 .btn-phone-main {
-  width: 100% !important;
-  height: 96rpx;
-  background: var(--accent);
-  border-radius: 28rpx;
+  width: calc(100% - 48rpx) !important;
+  height: 76rpx;
+  background: linear-gradient(135deg, #FF8F5E 0%, #FF6B35 100%);
+  border-radius: 999rpx;
   color: #FFFFFF;
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 !important;
+  margin: 0 24rpx !important;
   padding: 0 !important;
   box-sizing: border-box;
 }
@@ -192,19 +192,21 @@ page {
    value in both themes, so it reads fine against this page's always-dark
    card). */
 .consent-row {
-  width: 100%;
+  width: calc(100% - 48rpx);
   display: flex;
   align-items: flex-start;
   gap: 16rpx;
-  margin-top: 4rpx;
-  margin-bottom: 24rpx;
+  margin: 4rpx 24rpx 24rpx;
+  padding: 20rpx 24rpx;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 20rpx;
   box-sizing: border-box;
 }
 
 .consent-checkbox {
   flex-shrink: 0;
-  width: 38rpx;
-  height: 38rpx;
+  width: 42rpx;
+  height: 42rpx;
   margin-top: 2rpx;
   border: 2rpx solid var(--border);
   border-radius: 8rpx;
@@ -222,7 +224,7 @@ page {
 }
 
 .consent-checkbox-mark {
-  font-size: 24rpx;
+  font-size: 26rpx;
   line-height: 1;
   color: #FFFFFF;
   font-weight: 700;
@@ -235,31 +237,32 @@ page {
 }
 
 .consent-text {
-  font-size: 22rpx;
+  font-size: 26rpx;
   color: var(--text-secondary);
 }
 
 .consent-link {
-  font-size: 22rpx;
+  font-size: 26rpx;
   font-weight: 600;
   color: var(--accent);
 }
 
 /* ─── Skip / Back (шаг 1) ─── */
 .btn-skip {
-  width: 100%;
-  height: 96rpx;
-  margin-top: 24rpx;
+  width: calc(100% - 48rpx);
+  height: 76rpx;
+  margin: 24rpx 24rpx 0;
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 28rpx;
+  border-radius: 999rpx;
   border: 1px solid rgba(255, 255, 255, 0.14);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .btn-skip-text {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.75);
 }
@@ -316,16 +319,16 @@ page {
 /* Registration submit button — the explicit "primary CTA" example from the
    token task; promoted from --blue to --accent */
 .btn-submit {
-  width: 100%;
-  height: 96rpx;
-  line-height: 96rpx;
-  background: var(--accent);
+  width: calc(100% - 48rpx);
+  height: 76rpx;
+  line-height: 76rpx;
+  background: linear-gradient(135deg, #FF8F5E 0%, #FF6B35 100%);
   color: #FFFFFF;
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
-  border-radius: 28rpx;
+  border-radius: 999rpx;
   border: none;
-  margin-top: 16rpx;
+  margin: 16rpx 24rpx 0;
   text-align: center;
   box-sizing: border-box;
   padding: 0;
@@ -402,13 +405,13 @@ button[disabled].btn-submit {
 
 .privacy-btn-outline {
   width: 100%;
-  height: 96rpx;
-  line-height: 92rpx;
+  height: 76rpx;
+  line-height: 72rpx;
   background: transparent;
   color: var(--accent);
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
-  border-radius: 24rpx;
+  border-radius: 999rpx;
   border: 2rpx solid var(--accent);
   text-align: center;
   margin: 0 0 16rpx;
@@ -419,13 +422,13 @@ button[disabled].btn-submit {
 
 .privacy-btn-primary {
   width: 100%;
-  height: 96rpx;
-  line-height: 96rpx;
-  background: var(--accent);
+  height: 76rpx;
+  line-height: 76rpx;
+  background: linear-gradient(135deg, #FF8F5E 0%, #FF6B35 100%);
   color: #FFFFFF;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 700;
-  border-radius: 24rpx;
+  border-radius: 999rpx;
   border: none;
   text-align: center;
   margin: 0;

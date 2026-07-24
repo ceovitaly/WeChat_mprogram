@@ -83,6 +83,10 @@ page {
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M21%2010c0%207-9%2013-9%2013s-9-6-9-13a9%209%200%200%201%2018%200z'/%3E%3Ccircle%20cx='12'%20cy='10'%20r='3'/%3E%3C/svg%3E");
 }
 
+.icon--share {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%2012v8a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2v-8'/%3E%3Cpolyline%20points='16%206%2012%202%208%206'/%3E%3Cline%20x1='12'%20y1='2'%20x2='12'%20y2='15'/%3E%3C/svg%3E");
+}
+
 /* Large muted icon for empty states (replaces the old emoji glyphs) */
 .icon-empty {
   width: 96rpx;
@@ -114,10 +118,18 @@ page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 0.5px solid #C6C6C8;
   position: sticky;
   top: 0;
   z-index: 10;
+}
+.nav-bar::after {
+  content: '';
+  position: absolute;
+  left: 32rpx;
+  right: 32rpx;
+  bottom: 0;
+  height: 0.5px;
+  background: #C6C6C8;
 }
 .nav-title {
   font-size: 34rpx;

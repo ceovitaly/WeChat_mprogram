@@ -29,13 +29,22 @@ page {
    being squeezed. Only box-shadow (the `scrolled` flag, a plain setData
    flip — see onFeedScroll) is transitioned here. */
 .feed-nav {
+  position: relative;
   flex-shrink: 0;
   background: var(--bg-elevated);
   padding-left: 24rpx;
   padding-right: 24rpx;
   padding-bottom: 12rpx;
-  border-bottom: 1rpx solid var(--border);
   transition: box-shadow 0.25s ease;
+}
+.feed-nav::after {
+  content: '';
+  position: absolute;
+  left: 24rpx;
+  right: 24rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--border);
 }
 
 /* Subtle lift once the list is scrolled at all (scrolled flag) */
@@ -79,19 +88,48 @@ page {
    between "Profile" and "Lists"; text-align: center on the label backs up
    the segment's own justify-content: center regardless of word length. */
 .nav-seg {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6rpx;
   padding: 0 12rpx;
   flex: 1;
 }
 
-.nav-seg:not(:last-child) {
-  border-right: 1rpx solid var(--border);
+/* Inset divider (not full-height border): a short, vertically-centered
+   line via ::after instead of border-right, so it reads as a subtle
+   in-between-segments hint rather than a hard edge-to-edge rule touching
+   the pill's own top/bottom curve. */
+.nav-seg:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 1rpx;
+  background: var(--border);
 }
 
+/* Icon reinstated next to the label (see icon--user/--search/--list in
+   app.wxss). Sized modestly below the label's font-size, since the
+   segment's width is fixed by JS (navSegRowWidth / 3) and now has to fit
+   icon + gap + text with no room to grow. */
+.nav-seg-icon {
+  width: 28rpx;
+  height: 28rpx;
+  background-color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+/* font-size trimmed 30rpx -> 28rpx: adding a 28rpx icon + 6rpx gap eats
+   ~34rpx out of each already-fixed-width third, and "Profile"/"Search"
+   were already the tightest-fitting labels at 30rpx. Dropping a touch
+   keeps them comfortable next to the icon and the segment's own divider
+   on narrower phone screens without needing to touch the width math in
+   feed.js. */
 .nav-seg-label {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -104,23 +142,38 @@ page {
    actually transition — wx:if add/remove collapses instantly with no
    animation. `.search-panel--collapsed` is the resting (hidden) state;
    feed.js toggleSearchPanel() flips `showSearchPanel`, which removes that
-   class in the WXML. NEEDS A VISUAL CHECK: the open max-height (160rpx) is
-   sized to comfortably fit .search-bar's 80rpx height plus the panel's own
-   padding — adjust if it clips or leaves too much empty space. */
+   class in the WXML. Open max-height (120rpx) is tightened to real content
+   height: .search-bar is 80rpx + .search-panel-inner's 16rpx top/bottom
+   padding = 112rpx, plus a small ~8rpx buffer — a prior 160rpx value left a
+   48rpx gap past the real content height, which made the max-height reveal
+   finish well before the transition's duration elapsed (fast pop-in, then
+   a lingering no-op "settle"), reading as jerky/uneven. Both transitioned
+   properties now share duration + easing so they resolve in lockstep. */
 .search-panel {
+  position: relative;
   flex-shrink: 0;
   overflow: hidden;
-  max-height: 160rpx;
+  max-height: 120rpx;
   opacity: 1;
-  transition: max-height 0.28s ease, opacity 0.2s ease;
+  transition: max-height 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--bg-elevated);
-  border-bottom: 1rpx solid var(--border);
+}
+.search-panel::after {
+  content: '';
+  position: absolute;
+  left: 32rpx;
+  right: 32rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--border);
 }
 
 .search-panel--collapsed {
   max-height: 0;
   opacity: 0;
-  border-bottom-width: 0;
+}
+.search-panel--collapsed::after {
+  opacity: 0;
 }
 
 .search-panel-inner {
@@ -377,12 +430,12 @@ page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20rpx 32rpx 12rpx;
+  padding: 26rpx 32rpx 18rpx;
 }
 
 .card-header-venue {
-  font-size: 28rpx;
-  font-weight: 600;
+  font-size: 30rpx;
+  font-weight: 700;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -392,8 +445,8 @@ page {
 }
 
 .card-header-date {
-  font-size: 26rpx;
-  font-weight: 600;
+  font-size: 28rpx;
+  font-weight: 700;
   color: var(--accent);
   flex-shrink: 0;
   white-space: nowrap;
@@ -494,7 +547,7 @@ page {
    Now sits inside the photo overlay, so top padding just separates it from
    the top of the scrim rather than from the card's own background. */
 .card-info {
-  padding: 16rpx 32rpx 4rpx;
+  padding: 16rpx 32rpx 0;
 }
 
 /* Fixed white (not var(--text-primary)) — this text is always over the dark
@@ -502,7 +555,7 @@ page {
    flip with dark/light mode. Mirrors the old venue-chip precedent for
    over-photo text before the header-row restructure. */
 .card-title {
-  font-size: 40rpx;
+  font-size: 44rpx;
   font-weight: 700;
   color: #ffffff;
   line-height: 1.25;
@@ -512,13 +565,25 @@ page {
   overflow: hidden;
 }
 
+/* Divider under the title, over the photo scrim — semi-transparent white
+   (not var(--border), which is a light/dark surface token that would be
+   invisible or wrong against a dark photo gradient). Sits inside
+   .card-info's own 32rpx horizontal padding, so it's already inset
+   relative to the card's outer edges without extra margin. */
+.card-title-divider {
+  width: 100%;
+  height: 2rpx;
+  background: rgba(255, 255, 255, 0.25);
+  margin-top: 24rpx;
+}
+
 /* Get Ticket Button — primary brand CTA, full width, last thing before the
    photo's bottom edge. Padding re-tuned from the old below-photo layout:
    less top padding (title sits closer above it now, tighter over the
    scrim) but bottom padding keeps real breathing room from the photo edge
    plus the card's rounded corner. */
 .card-btn-wrap {
-  padding: 16rpx 32rpx 28rpx;
+  padding: 24rpx 32rpx 28rpx;
   display: flex;
   align-items: center;
 }
@@ -529,12 +594,12 @@ page {
   align-items: center;
   justify-content: center;
   gap: 12rpx;
-  height: 88rpx;
-  background: var(--accent);
+  height: 76rpx;
+  background: linear-gradient(135deg, #FF8F5E 0%, #FF6B35 100%);
   color: #ffffff;
   border: none;
   border-radius: 999rpx;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
   text-align: center;
   box-sizing: border-box;
@@ -545,8 +610,8 @@ page {
 
 /* Leading icon inside the CTA — tinted by the button's white text color */
 .btn-list-icon {
-  width: 30rpx;
-  height: 30rpx;
+  width: 26rpx;
+  height: 26rpx;
 }
 
 .get-ticket-btn::after {

@@ -1,9 +1,7 @@
 {
   "usingComponents": {
-    "page-header": "/components/page-header/index",
     "bottom-sheet": "/components/bottom-sheet/index"
   },
-  "navigationBarTitleText": "",
-  "navigationStyle": "custom",
+  "navigationBarTitleText": "Profile",
   "disableScroll": true
 }

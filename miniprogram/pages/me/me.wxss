@@ -45,30 +45,21 @@ page {
 
 .signin-btn {
   margin-top: 8rpx;
+  height: 88rpx;
   background: var(--blue);
-  border-radius: 14rpx;
-  padding: 16rpx 40rpx;
+  border-radius: 999rpx;
+  padding: 0 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .signin-btn:active { opacity: 0.8; }
 
 .signin-btn-text {
   color: #FFFFFF;
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
-}
-
-/* Header */
-.header {
-  background: var(--bg-elevated);
-  padding-top: calc(44rpx + env(safe-area-inset-top));
-  padding-bottom: 24rpx;
-  padding-left: 32rpx;
-  padding-right: 32rpx;
-  border-bottom: 0.5px solid var(--border);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
 }
 
 /* Scroll */
@@ -84,72 +75,6 @@ page {
   gap: 24rpx;
 }
 
-/* Profile card */
-.profile-card {
-  background: var(--bg-elevated);
-  border-radius: 24rpx;
-  padding: 40rpx 32rpx;
-  display: flex;
-  align-items: center;
-  gap: 28rpx;
-}
-
-.avatar-wrap {
-  flex-shrink: 0;
-}
-
-.avatar {
-  width: 128rpx;
-  height: 128rpx;
-  border-radius: 50%;
-  background: var(--border);
-}
-
-.avatar-placeholder {
-  width: 128rpx;
-  height: 128rpx;
-  border-radius: 50%;
-  background: var(--blue);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar-letter {
-  font-size: 56rpx;
-  font-weight: 700;
-  color: #FFFFFF;
-}
-
-.user-info-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-
-.user-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
-.nickname {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.user-sub-hint {
-  font-size: 24rpx;
-  color: #C7C7CC;
-}
-
-.user-phone {
-  font-size: 26rpx;
-  color: var(--text-secondary);
-  letter-spacing: 0.5rpx;
-}
-
 /* Info list */
 .info-list {
   background: var(--bg-elevated);
@@ -158,15 +83,24 @@ page {
 }
 
 .info-row {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 32rpx;
-  border-bottom: 0.5px solid var(--bg-inset);
+}
+.info-row::after {
+  content: '';
+  position: absolute;
+  left: 32rpx;
+  right: 32rpx;
+  bottom: 0;
+  height: 0.5px;
+  background: var(--bg-inset);
 }
 
-.info-row:last-child {
-  border-bottom: none;
+.info-row:last-child::after {
+  display: none;
 }
 
 .info-label {
@@ -180,23 +114,38 @@ page {
   color: var(--text-primary);
 }
 
+.info-row-value-group {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
 .safe-bottom {
   height: calc(120rpx + env(safe-area-inset-bottom));
 }
 
 /* Logout bar */
 .logout-bar {
+  position: relative;
   padding: 16rpx 24rpx;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
   background: var(--bg-elevated);
-  border-top: 0.5px solid var(--border);
   flex-shrink: 0;
+}
+.logout-bar::after {
+  content: '';
+  position: absolute;
+  left: 24rpx;
+  right: 24rpx;
+  top: 0;
+  height: 0.5px;
+  background: var(--border);
 }
 
 .logout-btn {
-  height: 96rpx;
+  height: 88rpx;
   background: #FF3B30;
-  border-radius: 20rpx;
+  border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,16 +156,9 @@ page {
 }
 
 .logout-text {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: #FFFFFF;
-}
-
-/* Nickname row */
-.nickname-row {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
 }
 
 .edit-pencil {
@@ -229,6 +171,7 @@ page {
    page-specific card styling for the name-edit sheet's contents. */
 .name-sheet {
   width: 100%;
+  box-sizing: border-box;
   background: var(--bg-elevated);
   border-radius: 24rpx 24rpx 0 0;
   padding: 12rpx 24rpx 32rpx;
@@ -306,8 +249,6 @@ page {
    token's dark value) are overridden below. */
 @media (prefers-color-scheme: dark) {
   .page { background: var(--bg); }
-
-  .user-sub-hint { color: #636366; }
 
   .logout-btn { background: #FF453A; }
 

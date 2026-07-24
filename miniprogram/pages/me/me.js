@@ -6,12 +6,14 @@ Page({
     userInfo: null,
     loading: true,
     isAnonymous: false,
-    avatarLetter: '?',
     showNameEdit: false,
     editingName: ''
   },
 
   onLoad: function() {
+    // Timestamp used by openNameEdit's post-navigation guard below — not
+    // rendered, so it lives as a plain instance property, not `data`.
+    this._readyAt = Date.now();
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this._loadProfile();
@@ -30,8 +32,7 @@ Page({
         this.setData({ isAnonymous: true, userInfo: null, loading: false });
         return;
       }
-      const avatarLetter = (profile.nickName || profile.name || '?').charAt(0).toUpperCase();
-      this.setData({ isAnonymous: false, userInfo: profile, avatarLetter, loading: false });
+      this.setData({ isAnonymous: false, userInfo: profile, loading: false });
     });
   },
 
@@ -40,6 +41,10 @@ Page({
   },
 
   openNameEdit() {
+    // Guard against a ghost-tap artifact from the feed page's Profile
+    // nav-bar segment landing on this page's tappable nickname row right
+    // after navigation — ignore any tap within 400ms of page-ready.
+    if (Date.now() - (this._readyAt || 0) < 400) return;
     const name = this.data.userInfo.nickName || this.data.userInfo.name || '';
     this.setData({ showNameEdit: true, editingName: name });
   },
@@ -66,11 +71,10 @@ Page({
     .then(() => {
       wx.hideLoading();
       const userInfo = Object.assign({}, this.data.userInfo, { nickName: name });
-      const avatarLetter = name.charAt(0).toUpperCase();
       // Refresh the central auth cache so the feed header/badges pick up
       // the new name without an app restart.
       auth.completeSignIn(userInfo);
-      this.setData({ showNameEdit: false, editingName: '', userInfo, avatarLetter });
+      this.setData({ showNameEdit: false, editingName: '', userInfo });
       wx.vibrateShort({ type: 'medium' });
       wx.showToast({ title: 'Saved!', icon: 'success' });
     })
@@ -93,12 +97,6 @@ Page({
           wx.reLaunch({ url: '/pages/feed/feed' });
         }
       }
-    });
-  },
-
-  goBack() {
-    wx.navigateBack({
-      fail: () => wx.reLaunch({ url: '/pages/feed/feed' }),
     });
   }
 });

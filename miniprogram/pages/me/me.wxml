@@ -8,9 +8,6 @@
 
   <!-- Signed out -->
   <block wx:elif="{{isAnonymous}}">
-    <view class="header">
-      <page-header title="Profile" bind:back="goBack" />
-    </view>
     <view class="signed-out-wrap">
       <view class="icon icon--user icon-empty"></view>
       <text class="empty-title">You're signed out</text>
@@ -23,35 +20,24 @@
 
   <!-- Profile -->
   <block wx:elif="{{userInfo}}">
-    <view class="header">
-      <page-header title="Profile" bind:back="goBack" />
-    </view>
 
     <scroll-view class="scroll" scroll-y>
       <view class="content">
 
-        <view class="profile-card">
-          <view class="avatar-wrap">
-            <image wx:if="{{userInfo.avatarUrl}}" class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
-            <view wx:else class="avatar-placeholder">
-              <text class="avatar-letter">{{avatarLetter}}</text>
-            </view>
-          </view>
-          <view class="user-info-wrap">
-            <view class="user-info" bindtap="openNameEdit">
-              <view class="nickname-row">
-                <text class="nickname">{{userInfo.nickName || userInfo.name || 'Set name'}}</text>
-                <view class="icon icon--edit edit-pencil"></view>
-              </view>
-              <text class="user-sub-hint">Tap to edit</text>
-            </view>
-            <text wx:if="{{userInfo.phone}}" class="user-phone">{{userInfo.phone}}</text>
-          </view>
-        </view>
-
         <view class="info-list">
+          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openNameEdit">
+            <text class="info-label">Name</text>
+            <view class="info-row-value-group">
+              <text class="info-value">{{userInfo.nickName || userInfo.name || 'Set name'}}</text>
+              <view class="icon icon--edit edit-pencil"></view>
+            </view>
+          </view>
+          <view class="info-row" wx:if="{{userInfo.phone}}">
+            <text class="info-label">Phone</text>
+            <text class="info-value">{{userInfo.phone}}</text>
+          </view>
           <view class="info-row" wx:if="{{userInfo.promoCode}}">
-            <text class="info-label">Promo code</text>
+            <text class="info-label">Promoter</text>
             <text class="info-value">{{userInfo.promoCode}}</text>
           </view>
         </view>
@@ -78,7 +64,6 @@
         bindinput="onNameInput"
         placeholder="Your name"
         placeholder-class="name-input-ph"
-        focus="{{true}}"
         maxlength="30"
         confirm-type="done"
         bindconfirm="saveNameEdit"

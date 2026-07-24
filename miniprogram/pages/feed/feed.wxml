@@ -21,12 +21,15 @@
 >
   <view class="nav-seg-row" style="height:{{navBarHeight}}px; width:{{navSegRowWidth}}px">
     <view class="nav-seg pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToProfile">
+      <view class="icon icon--user nav-seg-icon"></view>
       <text class="nav-seg-label">Profile</text>
     </view>
     <view class="nav-seg pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="toggleSearchPanel">
+      <view class="icon icon--search nav-seg-icon"></view>
       <text class="nav-seg-label">Search</text>
     </view>
     <view class="nav-seg pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToTickets">
+      <view class="icon icon--list nav-seg-icon"></view>
       <text class="nav-seg-label">Lists</text>
     </view>
   </view>
@@ -81,6 +84,7 @@
   enhanced
   show-scrollbar="false"
   bindscroll="onFeedScroll"
+  bindtouchstart="onFeedTouchStart"
   bindscrolltolower="onReachBottom"
   lower-threshold="200"
   refresher-enabled
@@ -204,6 +208,7 @@
           <view class="card-poster-overlay">
             <view class="card-info">
               <text class="card-title">{{item.title}}</text>
+              <view class="card-title-divider"></view>
             </view>
             <view class="card-btn-wrap">
               <button

@@ -20,10 +20,16 @@
 .bottom-sheet-shell {
   width: 100%;
   box-sizing: border-box;
-  /* Spring/overshoot: the sheet slides past translateY(0) slightly then
-     settles back, instead of a flat ease-out. Mask fade stays a plain
-     ease-out fade (unchanged) — only the sheet's slide gets the spring feel. */
-  animation: slideUp 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Opacity-only fade, deliberately not a translateY slide: a transform
+     animation on this shell was found (real-device testing only, not
+     reproducible in the DevTools simulator) to visually detach/shift native
+     components rendered inside the slot — e.g. the profile page's name-edit
+     <input>. WeChat's native form components don't reliably track an
+     ancestor's CSS transform mid-animation, so any sheet content that
+     includes a native element (input/textarea/etc.) would render shifted
+     off-screen. This trades away the spring slide-up motion for correctness
+     across all current and future sheet content. */
+  animation: sheetFadeIn 0.22s ease-out;
 }
 
 .bottom-sheet-shell--center {
@@ -35,9 +41,9 @@
   to { opacity: 1; }
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(48rpx); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes sheetFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @media (prefers-color-scheme: dark) {

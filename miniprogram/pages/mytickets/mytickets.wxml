@@ -1,26 +1,21 @@
 <!--pages/mytickets/mytickets.wxml-->
 <view class="page">
 
-  <!-- Fixed Header -->
-  <view class="header">
-    <view class="header-top">
-      <page-header title="My List" bind:back="goBack" />
+  <!-- Tabs -->
+  <view class="tabs">
+    <view
+      class="tab {{activeTab === 'active' ? 'tab-active' : ''}}"
+      bindtap="switchTab"
+      data-tab="active"
+    >
+      <text class="tab-text">Active</text>
     </view>
-    <view class="tabs">
-      <view
-        class="tab {{activeTab === 'active' ? 'tab-active' : ''}}"
-        bindtap="switchTab"
-        data-tab="active"
-      >
-        <text class="tab-text">Active</text>
-      </view>
-      <view
-        class="tab {{activeTab === 'past' ? 'tab-active' : ''}}"
-        bindtap="switchTab"
-        data-tab="past"
-      >
-        <text class="tab-text">Past</text>
-      </view>
+    <view
+      class="tab {{activeTab === 'past' ? 'tab-active' : ''}}"
+      bindtap="switchTab"
+      data-tab="past"
+    >
+      <text class="tab-text">Past</text>
     </view>
   </view>
 
