@@ -492,7 +492,7 @@ page {
   background: var(--accent);
   color: #ffffff;
   border: none;
-  border-radius: 18rpx;
+  border-radius: 999rpx;
   font-size: 30rpx;
   font-weight: 600;
   text-align: center;
