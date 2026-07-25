@@ -76,15 +76,16 @@ page {
    pins it there so the title/date stay visible while the rest of the
    content (venue card, description, etc.) keeps scrolling underneath.
    Non-interactive (pointer-events: none) so taps still reach the image
-   underneath for previewHeroImage. -170rpx roughly matches this block's
-   own rendered height (datetime line + up-to-3-line title + gaps/padding)
-   — needs live-DevTools tuning against real title lengths, see report. */
+   underneath for previewHeroImage. -184rpx roughly matches this block's
+   own rendered height (datetime line + up-to-3-line title + divider/gaps/
+   padding) — needs live-DevTools tuning against real title lengths, see
+   report. */
 .hero-overlay {
   position: sticky;
   top: 0;
   z-index: 10;
-  margin-top: -170rpx;
-  padding: 0 40rpx 36rpx;
+  margin-top: -184rpx;
+  padding: 0 40rpx 24rpx;
   display: flex;
   flex-direction: column;
   gap: 12rpx;
@@ -101,7 +102,6 @@ page {
 .hero-overlay--pinned {
   background: var(--bg-elevated);
   border-radius: 0;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
 }
 .hero-overlay--pinned::after {
   content: '';
@@ -136,7 +136,7 @@ page {
   background: var(--bg-elevated);
   border-radius: 40rpx 40rpx 0 0;
   margin-top: -40rpx;
-  padding: 48rpx 40rpx 240rpx;
+  padding: 32rpx 40rpx 48rpx;
   position: relative;
 }
 
@@ -169,6 +169,22 @@ page {
   overflow: hidden;
 }
 
+/* Divider under the title, over the hero scrim — semi-transparent white
+   (not var(--border), which is a light/dark surface token that would be
+   invisible or wrong against a dark photo). Same technique as the feed
+   page's .card-title-divider (feed.wxss). Switches to the normal
+   var(--border) token once .hero-overlay--pinned is active, matching how
+   .info-title/.info-datetime already get color overrides in that state. */
+.info-title-divider {
+  width: calc(100% + 16rpx);
+  height: 1rpx;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 24rpx -8rpx 0;
+}
+.hero-overlay--pinned .info-title-divider {
+  background: var(--border);
+}
+
 /* Block 2: venue card — top-map/bottom-text stacked card. A map preview
    strip sits on top (no cover-view, no text overlaid on it — see below),
    the venue name/address sit in a plain solid-background strip
@@ -176,11 +192,17 @@ page {
    its fallback background (no <map>, no crash) and the text strip below
    still renders normally — same unconditional markup either way. */
 .venue-card {
-  margin-bottom: 32rpx;
+  margin-bottom: 16rpx;
   border-radius: 24rpx;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.venue-card-divider {
+  height: 1rpx;
+  background: var(--border);
+  margin: 0 32rpx 16rpx;
 }
 
 /* Map preview strip. Deliberately NOT overlaid with any cover-view text:
@@ -253,7 +275,10 @@ page {
 
 /* Sections */
 .section {
-  margin-bottom: 28rpx;
+  margin-bottom: 32rpx;
+}
+.section--related {
+  margin-top: 16rpx;
 }
 .section-label {
   font-size: 22rpx;
@@ -266,8 +291,27 @@ page {
 .section-content {
   font-size: 30rpx;
   color: #3a3a3c;
-  line-height: 1.7;
+  line-height: 1.5;
   display: block;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+/* Sub-heading produced by the admin's rich-text editor (a user selects part
+   of the description and marks it as a heading, rendered as <h2>). Sized
+   relative to the hero title (.info-title, 50rpx) rather than left to
+   rich-text's own default UA-style h2 sizing, so it reads as a deliberate
+   sub-heading (50rpx - 3rpx = 47rpx) without competing with the hero title. */
+.section-content h2 {
+  font-size: 47rpx;
+  font-weight: 700;
+  color: inherit;
+  line-height: 0.8;
+  margin: 12rpx 0;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 /* Description block — flat on the page, separated from the next block by
@@ -512,6 +556,23 @@ button::after { border: none; }
   font-size: 32rpx;
   font-weight: 600;
   color: #34c759;
+}
+
+/* Ended/closed state — event's date has passed, registration no longer
+   available. Mirrors .registered-bar's layout (flex row, space-between,
+   same alignment relative to the share button) but muted/neutral coloring
+   instead of the green "confirmed" look — this isn't an error or success
+   state, just informational. */
+.ended-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.ended-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 /* Ticket modal — mask/shell now provided by <bottom-sheet>; this stays

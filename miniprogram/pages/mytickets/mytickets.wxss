@@ -96,9 +96,9 @@ page {
    .empty-clear-btn) */
 .signin-btn {
   margin-top: 8rpx;
-  background: var(--blue);
+  background: linear-gradient(135deg, #FF8F5E 0%, #FF6B35 100%);
   border-radius: 999rpx;
-  height: 88rpx;
+  height: 76rpx;
   padding: 0 40rpx;
   display: flex;
   align-items: center;
@@ -109,7 +109,7 @@ page {
 
 .signin-btn-text {
   color: #FFFFFF;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
 }
 

@@ -16,6 +16,44 @@ function formatShortDatetime(dateStr, startTime) {
   return s + (startTime ? ' • ' + startTime : '');
 }
 
+// Builds the actual end Date for an event from date + startTime + endTime.
+// Nightlife events routinely run past midnight (e.g. startTime "22:00",
+// endTime "04:00" meaning 4am the FOLLOWING calendar day) — there's no
+// separate endDate field, only one `date` for the whole event, so an
+// endTime that's numerically <= startTime is treated as rolling over to
+// the next day. Returns null if dateStr is missing/unparseable.
+function computeEventEndDate(dateStr, startTime, endTime) {
+  if (!dateStr) return null;
+  var parts = dateStr.split('-');
+  if (parts.length !== 3) return null;
+  var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1, d = parseInt(parts[2], 10);
+  var endParts = (endTime || '00:00').split(':');
+  var eh = parseInt(endParts[0], 10) || 0, em = parseInt(endParts[1], 10) || 0;
+  var endDate = new Date(y, m, d, eh, em, 0, 0);
+  if (startTime) {
+    var startParts = startTime.split(':');
+    var sh = parseInt(startParts[0], 10) || 0, sm = parseInt(startParts[1], 10) || 0;
+    var startMinutes = sh * 60 + sm;
+    var endMinutes = eh * 60 + em;
+    if (endMinutes <= startMinutes) {
+      endDate.setDate(endDate.getDate() + 1);
+    }
+  }
+  return endDate;
+}
+
+// The admin's rich-text <editor> (Quill-based) bakes inline style="..."
+// attributes directly onto elements it generates (e.g. <h2 style="line-
+// height:1.42;...">). An inline style always wins over an external WXSS
+// selector like .section-content h2, so any styling we set in WXSS for
+// the rendered description (font-size, line-height, etc.) would silently
+// have no visible effect. Stripping inline style attributes here means our
+// own CSS classes fully control the rendered look, as intended.
+function stripInlineStyles(html) {
+  if (!html) return html;
+  return html.replace(/\s*style\s*=\s*"[^"]*"/gi, '').replace(/\s*style\s*=\s*'[^']*'/gi, '');
+}
+
 Page({
   data: {
     event: null,
@@ -80,7 +118,15 @@ Page({
           }
         }
 
+        event.description = stripInlineStyles(event.description);
         event.displayDatetimeShort = formatShortDatetime(event.date, event.startTime);
+        // Nightlife events can run past midnight (e.g. 22:00 -> 04:00 the
+        // following day), so a plain date-only comparison isn't precise
+        // enough — this replaces an earlier, coarser date-only
+        // approximation with a full end-Date computed from date+startTime+
+        // endTime, compared against the current moment.
+        var eventEndDate = computeEventEndDate(event.date, event.startTime, event.endTime);
+        event.isEventOver = !!(eventEndDate && Date.now() > eventEndDate.getTime());
         this.setData({ event });
         wx.setNavigationBarTitle({ title: event.title || '' });
 
@@ -182,6 +228,10 @@ Page({
   },
 
   openTicketModal: function() {
+    if (this.data.event && this.data.event.isEventOver) {
+      wx.showToast({ title: 'Registration is closed for this event', icon: 'none' });
+      return;
+    }
     if (this.data.hasProfile === false) {
       this.setData({ showRegisterPrompt: true });
       return;
@@ -215,6 +265,10 @@ Page({
   // preselected — same anonymous-user gate as openTicketModal, same
   // selection shape as selectPackage.
   openPackageFromList: function(e) {
+    if (this.data.event && this.data.event.isEventOver) {
+      wx.showToast({ title: 'Registration is closed for this event', icon: 'none' });
+      return;
+    }
     if (this.data.hasProfile === false) {
       this.setData({ showRegisterPrompt: true });
       return;
@@ -241,6 +295,10 @@ Page({
   },
 
   handleJoin: function() {
+    if (this.data.event && this.data.event.isEventOver) {
+      wx.showToast({ title: 'Registration is closed for this event', icon: 'none' });
+      return;
+    }
     if (this.data.isRegistered) {
       this.setData({ showTicketModal: false });
       wx.showToast({ title: 'Already registered!', icon: 'none' });

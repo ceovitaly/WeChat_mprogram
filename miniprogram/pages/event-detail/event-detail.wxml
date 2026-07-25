@@ -4,15 +4,15 @@
 
 <view class="hero-section" style="height:{{heroHeight}}rpx">
   <block wx:if="{{event.promoImages && event.promoImages.length > 1}}">
-    <swiper class="hero-swiper" style="height:{{heroHeight}}rpx" indicator-dots="{{true}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#ffffff" circular="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{400}}">
+    <swiper class="hero-swiper" style="height:{{heroHeight + 24}}rpx" indicator-dots="{{true}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#ffffff" circular="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{400}}">
       <swiper-item wx:for="{{event.promoImages}}" wx:for-item="img" wx:key="*this">
-        <image src="{{img}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{img}}" />
+        <image src="{{img}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight + 24}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{img}}" />
       </swiper-item>
     </swiper>
     <view class="hero-scrim"></view>
   </block>
   <block wx:elif="{{event.promoImage}}">
-    <image src="{{event.promoImage}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
+    <image src="{{event.promoImage}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight + 24}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
     <view class="hero-scrim"></view>
   </block>
   <view wx:else class="image-placeholder">
@@ -23,12 +23,13 @@
 <view class="hero-overlay {{(headerPinned || !(event.promoImage || (event.promoImages && event.promoImages.length > 0))) ? 'hero-overlay--pinned' : ''}}" wx:if="{{event}}">
   <text wx:if="{{event.displayDatetimeShort || event.date}}" class="info-datetime">{{event.displayDatetimeShort || event.date}}</text>
   <text class="info-title">{{event.title}}</text>
+  <view class="info-title-divider"></view>
 </view>
 
 <view class="main-card">
 
     <view class="section section--desc" wx:if="{{event.description}}">
-      <text class="section-content">{{event.description}}</text>
+      <rich-text class="section-content" nodes="{{event.description}}"></rich-text>
     </view>
 
     <!-- Block 2: venue card — a real map of the venue's location as a
@@ -64,6 +65,8 @@
         <text wx:if="{{event.venueAddress}}" class="venue-address venue-address--plain">{{event.venueAddress}}</text>
       </view>
     </view>
+
+    <view class="venue-card-divider"></view>
 
     <view class="section" wx:if="{{event.promoMaterials && event.promoMaterials.length > 0}}">
       <text class="section-label">PROMO</text>
@@ -142,6 +145,12 @@
       <text class="registered-icon">✓</text>
       <text class="registered-text">You're on the list</text>
     </view>
+    <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
+      <view class="icon icon--share btn-share-icon"></view>
+    </button>
+  </view>
+  <view wx:elif="{{event.isEventOver}}" class="ended-bar">
+    <text class="ended-text">Registration closed</text>
     <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
       <view class="icon icon--share btn-share-icon"></view>
     </button>

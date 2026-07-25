@@ -45,8 +45,8 @@ page {
 
 .signin-btn {
   margin-top: 8rpx;
-  height: 88rpx;
-  background: var(--blue);
+  height: 76rpx;
+  background: linear-gradient(135deg, #FF8F5E 0%, #FF6B35 100%);
   border-radius: 999rpx;
   padding: 0 40rpx;
   display: flex;
@@ -58,7 +58,7 @@ page {
 
 .signin-btn-text {
   color: #FFFFFF;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
 }
 
@@ -143,7 +143,7 @@ page {
 }
 
 .logout-btn {
-  height: 88rpx;
+  height: 76rpx;
   background: #FF3B30;
   border-radius: 999rpx;
   display: flex;
@@ -156,7 +156,7 @@ page {
 }
 
 .logout-text {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: #FFFFFF;
 }
