@@ -390,14 +390,49 @@ exports.main = async (event, context) => {
     }
   }
 
+  // UPDATE GUEST PROMOTER — reassigns the guest's promoter, and also rewrites the
+  // promoter snapshot stored on that guest's registrations for UPCOMING events only.
+  // Registrations carry their own promoterId/promoterName copied at signup time (the
+  // counter workspace reads them from there, not from guests), so without this the
+  // reassignment would never show up on the guest list. Past events are deliberately
+  // left untouched so historical attribution / commission stats stay intact.
   if (action === 'updateGuestPromoter') {
     try {
       const { guestId, promoterId, promoterName } = event;
       if (!guestId) return { success: false, message: 'No guestId' };
+
+      let guestOpenid = '';
+      try {
+        const guestDoc = await db.collection('guests').doc(guestId).get();
+        guestOpenid = (guestDoc.data && guestDoc.data._openid) || '';
+      } catch (e) {
+        guestOpenid = '';
+      }
+
       await db.collection('guests').doc(guestId).update({
         data: { promoterId: promoterId || '', promoterName: promoterName || '' }
       });
-      return { success: true };
+
+      // Isolated: a failure here must never fail the guest-level reassignment above.
+      let updatedRegistrations = 0;
+      if (guestOpenid) {
+        try {
+          const _ = db.command;
+          const todayStr = new Date().toISOString().split('T')[0];
+          const regRes = await db.collection('registrations').where({
+            _openid: guestOpenid,
+            eventDate: _.gte(todayStr)
+          }).update({
+            data: { promoterId: promoterId || '', promoterName: promoterName || '' }
+          });
+          updatedRegistrations = (regRes.stats && regRes.stats.updated) || 0;
+        } catch (e) {
+          console.error('updateGuestPromoter: registrations update failed', e);
+          updatedRegistrations = 0;
+        }
+      }
+
+      return { success: true, updatedRegistrations };
     } catch (e) {
       return { success: false, message: e.message };
     }

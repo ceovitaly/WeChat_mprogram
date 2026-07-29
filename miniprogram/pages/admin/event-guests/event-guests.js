@@ -1,6 +1,7 @@
 const { callFunction } = require('../../../utils/request')
-const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
+const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
 const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
+const { startLiveSync } = require('../../../utils/liveSync')
 const { buildInternalRoleMap, annotateInternalRole } = require('../../../utils/phoneMatch')
 
 // checkedInAt normalizer: the server value (db.serverDate()) crosses the cloud-function
@@ -47,6 +48,10 @@ Page({
 
   onLoad(options) {
     const userInfo = getApp().globalData.userInfo
+    this._stopLiveSync = null
+    // onShow fires straight after onLoad — onLoad already fetched, so the first
+    // onShow must not fire a duplicate request.
+    this._firstShow = true
     this.setData({
       eventId: options.eventId || '',
       eventTitle: options.eventTitle ? decodeURIComponent(options.eventTitle) : '',
@@ -56,11 +61,59 @@ Page({
     this._fetch()
     this._fetchPromoters()
     this._fetchStaff()
-    this._timer = setInterval(() => this._fetch(), 10000)
+  },
+
+  // ─── Live guest-list updates ──────────────────────────────
+  //
+  // Replaces the old unconditional 10-second interval poll. The mechanism (watch as a
+  // change trigger, debounce, init-snapshot skip, 30s polling fallback) lives in
+  // utils/liveSync.js — see that file for the full rationale. Here it only signals
+  // "registrations for this event changed", and the page re-runs its own _fetch()
+  // silently so no spinner flashes under the admin's eyes.
+  //
+  // Bound to onShow/onHide, not just onLoad/onUnload: a backgrounded or
+  // navigated-away-from page must not keep watching or polling.
+
+  _startLiveUpdates() {
+    this._stopLiveUpdates()
+    const { eventId } = this.data
+    if (!eventId) return
+    this._stopLiveSync = startLiveSync({
+      collection: COLLECTIONS.REGISTRATIONS,
+      where: { eventId },
+      label: '[event-guests]',
+      onChange: () => {
+        // A signal that lands after the page moved on must not refetch.
+        if (this.data.eventId !== eventId) return
+        this._fetch({ silent: true })
+      }
+    })
+  },
+
+  // Safe to call when nothing is running, and safe to call twice.
+  _stopLiveUpdates() {
+    if (this._stopLiveSync) {
+      this._stopLiveSync()
+      this._stopLiveSync = null
+    }
+  },
+
+  onShow() {
+    this._startLiveUpdates()
+    if (this._firstShow) {
+      this._firstShow = false
+      return
+    }
+    // Returning to the page: show current data immediately, without a spinner.
+    this._fetch({ silent: true })
+  },
+
+  onHide() {
+    this._stopLiveUpdates()
   },
 
   onUnload() {
-    if (this._timer) clearInterval(this._timer)
+    this._stopLiveUpdates()
   },
 
   async _fetchPromoters() {
@@ -83,15 +136,21 @@ Page({
     } catch (_) {}
   },
 
-  async _fetch() {
+  // opts.silent — skip clearing the `loading` flag and skip the failure toast, so a
+  // live-update-driven background refresh never flashes a spinner or steals focus.
+  // `lastUpdated` is still written in silent mode: it is a "data as of…" indicator
+  // and the data genuinely did refresh. Existing call sites pass no opts and keep
+  // their original visible-loading behaviour.
+  async _fetch(opts = {}) {
+    const silent = !!opts.silent
     const { eventId } = this.data
     if (!eventId) return
     try {
       const regRes = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getRegistrations', eventId })
       if (!regRes || !regRes.success) {
-        this.setData({ loading: false })
+        if (!silent) this.setData({ loading: false })
         if (isUnauthorized(regRes)) { handleAuthFailure(); return }
-        wx.showToast({ title: 'Load failed', icon: 'none' })
+        if (!silent) wx.showToast({ title: 'Load failed', icon: 'none' })
         return
       }
       const regs = regRes.data || []
@@ -110,7 +169,7 @@ Page({
           if (!isNaN(endDt.getTime()) && new Date() > endDt) {
             isClosed = true
             // _closing guards against duplicate closeEvent calls from consecutive
-            // 10s poll ticks (the event doc only reflects isClosed after a round-trip).
+            // refreshes (the event doc only reflects isClosed after a round-trip).
             if (!this._closing) {
               this._closing = true
               callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
@@ -148,11 +207,12 @@ Page({
       const lastUpdated = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0')
 
       const userInfo = getApp().globalData.userInfo
-      const update = { dutyStaff, arrivedGuests: arrived, arrivedSections, pendingGuests: pending, totalRegistered: regs.length, loading: false, lastUpdated, isClosed, eventDate: ev.date || '' }
+      const update = { dutyStaff, arrivedGuests: arrived, arrivedSections, pendingGuests: pending, totalRegistered: regs.length, lastUpdated, isClosed, eventDate: ev.date || '' }
+      if (!silent) update.loading = false
       if (userInfo) update.isAdmin = userInfo.role === 'admin'
       this.setData(update)
     } catch (e) {
-      this.setData({ loading: false })
+      if (!silent) this.setData({ loading: false })
     }
   },
 

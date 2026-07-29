@@ -2,6 +2,7 @@ const app = getApp()
 const { callFunction, collection } = require('../../../utils/request')
 const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
 const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
+const { startLiveSync } = require('../../../utils/liveSync')
 const phoneMatch = require('../../../utils/phoneMatch')
 
 // checkedInAt normalizer: the server value (db.serverDate()) crosses the cloud-function
@@ -57,11 +58,21 @@ Page({
     this._checkingIn = new Set()
     this._roleMap = {}
     this._lastRawGuests = null
+    this._stopLiveSync = null
+    this._watchedEventId = null
   },
 
   onShow() {
     this._syncTabBar()
     this._restoreSession()
+  },
+
+  onHide() {
+    this._stopLiveUpdates()
+  },
+
+  onUnload() {
+    this._stopLiveUpdates()
   },
 
   _syncTabBar() {
@@ -83,11 +94,57 @@ Page({
       this.setData({ step: 'guests', venueName: savedName, currentVenueId: savedId, currentEvent: savedEvent })
       this._fetchGuests(savedEvent._id)
       this._fetchStaffAndPromoters()
+      // onShow runs on every tab switch / foreground, so this restart path can hit
+      // repeatedly — _startLiveUpdates always tears down first, so no watcher stacks up.
+      this._startLiveUpdates(savedEvent._id)
       if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: true })
     } else if (savedId) {
+      this._stopLiveUpdates()
       this.setData({ step: 'event', venueName: savedName, currentVenueId: savedId })
       this._fetchEvents()
+    } else {
+      this._stopLiveUpdates()
     }
+  },
+
+  // ─── Live guest-list updates ──────────────────────────────
+  //
+  // The whole watch-as-trigger / debounce / init-skip / polling-fallback mechanism
+  // lives in utils/liveSync.js (see that file for the full design rationale). Here
+  // it is used purely as a change signal: whenever a registration for the current
+  // event changes, re-run _fetchGuests() so all existing join/build logic is kept.
+  //
+  // Two page-level details:
+  //   - Lifecycle: the stop handle lives on the page instance (never in `data`) and
+  //     _startLiveUpdates() always tears down first, so onShow re-entry, event
+  //     switches and venue switches can't stack duplicate listeners.
+  //   - Stale-event guard: _watchedEventId is re-checked inside the callback so a
+  //     signal that lands after the user left this event can't refetch it.
+  //   - Silent refetch: { silent: true } keeps the isLoading spinner from flashing.
+
+  _startLiveUpdates(eventId) {
+    this._stopLiveUpdates()
+    if (!eventId) return
+    this._watchedEventId = eventId
+    this._stopLiveSync = startLiveSync({
+      collection: COLLECTIONS.REGISTRATIONS,
+      where: { eventId },
+      label: '[work]',
+      onChange: () => {
+        if (this._watchedEventId !== eventId) return
+        this._fetchGuests(eventId, { silent: true })
+      }
+    })
+  },
+
+  // Single teardown for the live-update mechanism.
+  // Safe to call when nothing is running, and safe to call twice.
+  _stopLiveUpdates() {
+    if (this._stopLiveSync) {
+      this._stopLiveSync()
+      this._stopLiveSync = null
+    }
+    this._watchedEventId = null
   },
 
   // ─── Step 1 ───────────────────────────────────────────────
@@ -125,6 +182,7 @@ Page({
       confirmText: 'Exit', confirmColor: '#FF3B30', cancelText: 'Cancel',
       success: ({ confirm }) => {
         if (!confirm) return
+        this._stopLiveUpdates()
         wx.removeStorageSync('currentVenueId')
         wx.removeStorageSync('currentVenueName')
         wx.removeStorageSync('currentEvent')
@@ -166,10 +224,13 @@ Page({
     this.setData({ step: 'guests', currentEvent: event, searchQuery: '', selectedPromoter: '' })
     this._fetchGuests(event._id)
     this._fetchStaffAndPromoters()
+    // Switching events restarts the watcher against the new eventId (old one closed first).
+    this._startLiveUpdates(event._id)
     if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: true })
   },
 
   backToEvents() {
+    this._stopLiveUpdates()
     wx.removeStorageSync('currentEvent')
     if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: false })
     this.setData({ step: 'event', currentEvent: null, guests: [], filteredGuests: [], arrivedGuests: [], totalExpected: 0 })
@@ -178,21 +239,29 @@ Page({
 
   // ─── Step 3 ───────────────────────────────────────────────
 
-  async _fetchGuests(eventId) {
-    this.setData({ isLoading: true })
+  // opts.silent — skip the isLoading spinner and the failure toast. Used by the live
+  // update path so a background refresh never flickers the list under staff's fingers.
+  // Existing call sites pass no opts and keep their original visible-loading behaviour.
+  async _fetchGuests(eventId, opts = {}) {
+    const silent = !!opts.silent
+    if (!silent) this.setData({ isLoading: true })
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getRegistrations', eventId })
       if (!res || !res.success) {
-        this.setData({ isLoading: false })
+        if (!silent) this.setData({ isLoading: false })
         if (isUnauthorized(res)) { handleAuthFailure(); return }
-        wx.showToast({ title: 'Load failed', icon: 'none' })
+        if (!silent) wx.showToast({ title: 'Load failed', icon: 'none' })
         return
       }
+      // A slow silent refetch can land after the user already left this event — drop it.
+      if (silent && this.data.currentEvent && this.data.currentEvent._id !== eventId) return
       this._lastRawGuests = res.data || []
       this._buildState(this._lastRawGuests)
     } catch (e) {
-      this.setData({ isLoading: false })
-      wx.showToast({ title: 'Load failed', icon: 'none' })
+      if (!silent) {
+        this.setData({ isLoading: false })
+        wx.showToast({ title: 'Load failed', icon: 'none' })
+      }
     }
   },
 

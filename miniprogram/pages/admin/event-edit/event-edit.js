@@ -15,6 +15,9 @@ Page({
 
     title: '',
     description: '',
+    descPreviewText: '',
+    showDescEditor: false,
+    editorFormats: {},
     date: '',
     startTime: '22:00',
     endTime: '04:00',
@@ -140,6 +143,7 @@ Page({
       this.setData({
         title: e.title || '',
         description: e.description || '',
+        descPreviewText: this._stripHtml(e.description || ''),
         date: e.date || '',
         startTime: e.startTime || '22:00',
         endTime: e.endTime || '04:00',
@@ -172,7 +176,6 @@ Page({
   },
 
   onTitleInput(e) { this.setData({ title: e.detail.value }) },
-  onDescInput(e) { this.setData({ description: e.detail.value }) },
   onDateChange(e) { this.setData({ date: e.detail.value }) },
   onStartTimeChange(e) { this.setData({ startTime: e.detail.value }) },
   onEndTimeChange(e) { this.setData({ endTime: e.detail.value }) },
@@ -301,6 +304,85 @@ Page({
     const { index } = e.currentTarget.dataset
     this.setData({ tables: this.data.tables.filter((_, i) => i !== index) })
   },
+
+  // ─── Description Editor ──────────────────────────────────
+
+  _stripHtml(html) {
+    return (html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  },
+
+  openDescEditor() {
+    this.setData({ showDescEditor: true })
+  },
+
+  onEditorReady() {
+    const query = wx.createSelectorQuery().in(this)
+    query.select('#descEditor').context((res) => {
+      this._descEditorCtx = res.context
+      this._descEditorCtx.setContents({ html: this.data.description || '' })
+    }).exec()
+  },
+
+  onEditorStatusChange(e) {
+    // bindstatuschange fires on every cursor/selection move, not just on an
+    // actual format toggle — calling setData unconditionally here re-renders
+    // the toolbar (and, it turns out, appears to jostle the keyboard/focus
+    // state of the native <editor> component) on every single cursor
+    // movement. Only touch data when the format flags we actually care
+    // about have changed, so simply moving the cursor through plain text
+    // no longer triggers any re-render at all.
+    var next = e.detail || {}
+    var prev = this.data.editorFormats || {}
+    var keys = ['bold', 'italic', 'header', 'list']
+    var changed = false
+    for (var i = 0; i < keys.length; i++) {
+      if (prev[keys[i]] !== next[keys[i]]) {
+        changed = true
+        break
+      }
+    }
+    if (changed) this.setData({ editorFormats: next })
+  },
+
+  onFormatBold() {
+    if (this._descEditorCtx) this._descEditorCtx.format('bold')
+  },
+
+  onFormatItalic() {
+    if (this._descEditorCtx) this._descEditorCtx.format('italic')
+  },
+
+  onFormatHeader() {
+    if (this._descEditorCtx) this._descEditorCtx.format('header', 2)
+  },
+
+  onFormatBulletList() {
+    if (this._descEditorCtx) this._descEditorCtx.format('list', 'bullet')
+  },
+
+  closeDescEditor() {
+    this.setData({ showDescEditor: false })
+    this._descEditorCtx = null
+  },
+
+  saveDescEditor() {
+    if (!this._descEditorCtx) {
+      this.closeDescEditor()
+      return
+    }
+    this._descEditorCtx.getContents({
+      success: (res) => {
+        this.setData({
+          description: res.html,
+          descPreviewText: this._stripHtml(res.html),
+          showDescEditor: false
+        })
+        this._descEditorCtx = null
+      }
+    })
+  },
+
+  noop() {},
 
   // ─── Save ────────────────────────────────────────────────
 
