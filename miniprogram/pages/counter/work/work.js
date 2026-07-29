@@ -4,6 +4,7 @@ const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
 const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 const { startLiveSync } = require('../../../utils/liveSync')
 const phoneMatch = require('../../../utils/phoneMatch')
+const refCache = require('../../../utils/refCache')
 
 // checkedInAt normalizer: the server value (db.serverDate()) crosses the cloud-function
 // JSON boundary as an ISO string or a {$date: <ms>} object depending on SDK serialization;
@@ -270,19 +271,21 @@ Page({
   // resolve before or after it. Whichever finishes last re-runs _buildState so the guest
   // list ends up correctly annotated either way (annotation never changes grouping/sorting,
   // it only adds fields, so re-running is safe/idempotent).
+  // Both rosters are read through the shared reference cache (utils/refCache): this runs
+  // on every venue/event switch on a door screen that stays open all night, and neither
+  // list changes during a shift. Promise.all still resolves only when both are available,
+  // so the role map is replaced all-or-nothing exactly as before.
   async _fetchStaffAndPromoters() {
     try {
-      const [staffRes, promoterRes] = await Promise.all([
-        callFunction(CLOUD_FUNCTIONS.MANAGE_STAFF, { action: 'getAll' }),
-        callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getPromoters' })
+      const [staff, promoters] = await Promise.all([
+        refCache.getStaff(),
+        refCache.getPromoters()
       ])
-      if (isUnauthorized(staffRes) || isUnauthorized(promoterRes)) { handleAuthFailure(); return }
-      if (staffRes && staffRes.success && promoterRes && promoterRes.success) {
-        this._roleMap = phoneMatch.buildInternalRoleMap(staffRes.data || [], promoterRes.data || [])
-      }
-      // on any other non-success: keep whatever role map we already had — annotation no-ops
+      this._roleMap = phoneMatch.buildInternalRoleMap(staff, promoters)
     } catch (e) {
-      // keep whatever role map we already had (possibly empty) — annotation just no-ops
+      if (isUnauthorized(refCache.cloudResponseOf(e))) { handleAuthFailure(); return }
+      // any other failure: keep whatever role map we already had (possibly empty) —
+      // annotation just no-ops
     }
     if (this._lastRawGuests) this._buildState(this._lastRawGuests)
   },

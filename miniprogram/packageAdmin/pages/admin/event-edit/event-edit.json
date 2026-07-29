@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "bottom-sheet": "/packageAdmin/components/bottom-sheet/index"
+  },
+  "navigationBarTitleText": "Event",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black"
+}

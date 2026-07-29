@@ -91,7 +91,7 @@
     <input
       class="search-input"
       placeholder="Search guests..."
-      placeholder-class="search-ph"
+      placeholder-class="field-placeholder"
       value="{{searchQuery}}"
       bindinput="onSearchInput"
     />

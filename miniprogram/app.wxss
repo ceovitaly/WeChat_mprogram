@@ -47,32 +47,329 @@ button::after {
   border: none;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   SHARED PAGE STYLES
+
+   Everything below this line was previously duplicated verbatim
+   across page .wxss files and was hoisted here so it is parsed
+   once at startup instead of once per page.
+
+   Page .wxss is appended after app.wxss, so an equal-specificity
+   rule in a page still wins — pages that needed a different value
+   keep a local override with a comment pointing back here.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Surfaces ─────────────────────────────────────────────────── */
+
+/* was duplicated in: event-edit, event-guests, venue-edit, counter/work.
+   team (24rpx) and register (glass card) keep their own radius. */
 .card {
   background: var(--bg-card);
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   overflow: hidden;
 }
 
-.card-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22rpx 28rpx;
-  border-bottom: 0.5px solid var(--bg);
-}
-
-.card-row:last-child {
-  border-bottom: none;
-}
-
+/* was duplicated in: event-edit, event-guests, stats, venue-edit,
+   plus promoters (.action-section-title) and staff (.role-section-title).
+   team keeps a local override (0 8rpx 12rpx). */
 .section-title {
   font-size: 22rpx;
   font-weight: 500;
   color: var(--text-2);
   text-transform: uppercase;
   letter-spacing: 1rpx;
-  padding: 24rpx 32rpx 12rpx;
+  padding: 0 4rpx 12rpx;
+  display: block;
 }
+
+/* was duplicated in: event-edit, venue-edit, counter/stats.
+   counter/work overrides font-size + adds flex/centering. */
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* was duplicated in: event-edit, venue-edit */
+.nav-btn-text--dim { opacity: 0.4; }
+
+/* was duplicated in: calendar, team, counter/work.
+   stats and counter/stats keep their own flat 160rpx value. */
+.tab-bar-spacer {
+  height: calc(100rpx + env(safe-area-inset-bottom));
+}
+
+/* Card list pages (venue-list / promoters / staff) ──────────── */
+
+.scroll-content {
+  flex: 1;
+  height: 0;
+}
+
+.nav-add-text {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.list {
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.item-card {
+  background: var(--bg-card);
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.item-top {
+  display: flex;
+  align-items: center;
+  padding: 28rpx;
+  gap: 20rpx;
+  border-bottom: 0.5px solid var(--bg);
+}
+
+/* border-radius / background stay page-local: venue-list uses a rounded
+   square logo tile, promoters + staff use circles. */
+.item-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* colour stays page-local (#185FA5 on venue-list/promoters,
+   var(--text) on staff). */
+.item-avatar-text {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+/* venue-list + promoters add `overflow: hidden` locally. */
+.item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.item-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* venue-list adds ellipsis truncation locally. */
+.item-sub {
+  font-size: 28rpx;
+  color: var(--text-2);
+}
+
+/* Empty states ─────────────────────────────────────────────── */
+/* NOTE: .empty-state itself is deliberately NOT unified — the eight
+   pages that use it disagree on padding, gap, direction and text
+   colour. Only the genuinely identical pieces live here. */
+
+/* calendar keeps a local 64rpx override. */
+.empty-icon { font-size: 80rpx; }
+
+/* was duplicated in: calendar, promoters, venue-list */
+.empty-btn {
+  margin-top: 8rpx;
+  padding: 16rpx 40rpx;
+  background: var(--blue);
+  border-radius: 20rpx;
+}
+
+.empty-btn-text {
+  font-size: 28rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+/* Form field rows ──────────────────────────────────────────── */
+/* was duplicated in: event-edit, promoters, staff, venue-edit.
+   .field-input is intentionally left page-local — the four pages
+   disagree on text alignment, and event-edit's line-height/padding
+   are hand-tuned so the Title input and Description field share a
+   baseline. Don't hoist it. */
+
+.field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28rpx;
+  min-height: 88rpx;
+  border-bottom: 0.5px solid var(--bg);
+}
+
+.field-row:last-child { border-bottom: none; }
+
+/* min-width stays page-local (160–200rpx depending on label length). */
+.field-label {
+  font-size: 28rpx;
+  color: var(--text);
+}
+
+.field-placeholder { color: var(--text-3); }
+
+/* venue-edit adds `flex: 1` locally. */
+.field-picker {
+  font-size: 28rpx;
+  color: var(--blue);
+  text-align: right;
+}
+
+/* was duplicated in: event-edit, venue-edit */
+.save-btn {
+  background: var(--blue);
+  border-radius: 20rpx;
+  padding: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8rpx;
+}
+
+.save-btn:active { opacity: 0.8; }
+.save-btn--dim { opacity: 0.5; }
+.save-btn-text { font-size: 30rpx; color: #FFFFFF; font-weight: 600; }
+
+/* Sheet / modal contents ───────────────────────────────────── */
+/* The overlay + sheet shell now live in packageAdmin/components/bottom-sheet.
+   These are the *contents* placed in its <slot>, which is rendered
+   in the host page's scope, so they must be global (or page) styles. */
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 32rpx 20rpx;
+}
+
+.modal-title { font-size: 32rpx; font-weight: 700; color: var(--text); }
+.modal-close { font-size: 28rpx; color: var(--text-2); padding: 8rpx 16rpx; }
+
+.modal-body {
+  background: var(--bg-card);
+  margin: 0 24rpx;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 16rpx;
+  padding: 24rpx;
+}
+
+/* promoters keeps its own .modal-cancel/.modal-save (text-align based
+   rather than flex based) so its rendering is bit-for-bit unchanged. */
+.modal-cancel {
+  flex: 1;
+  background: var(--bg-card);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.modal-save {
+  flex: 2;
+  background: var(--blue);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.modal-save:active { opacity: 0.8; }
+
+/* Guest rows (event-guests / guests / counter/work) ─────────── */
+
+/* counter/work overrides `gap` to 20rpx. */
+.guest-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  gap: 16rpx;
+  border-bottom: 0.5px solid var(--bg);
+}
+
+.guest-row:last-child { border-bottom: none; }
+
+/* guests/ overrides font-size + adds flex:1. */
+.guest-name { font-size: 30rpx; font-weight: 500; color: var(--text); }
+
+.guest-info { flex: 1; display: flex; flex-direction: column; gap: 4rpx; }
+.guest-sub { font-size: 22rpx; color: var(--text-2); }
+.arrival-time { font-size: 26rpx; color: var(--text-2); flex-shrink: 0; }
+
+/* was duplicated in: guests, counter/work */
+.search-input {
+  height: 72rpx;
+  background: var(--bg-card);
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: var(--text);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* was duplicated in: event-guests, guests */
+.internal-badge { flex-shrink: 0; }
+
+/* Tier badge box — colours stay page-local, they genuinely differ. */
+.tier-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  flex-shrink: 0;
+}
+
+/* was duplicated in: event-guests, counter/work */
+.arrived-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx 8rpx;
+  background: var(--bg);
+  border-radius: 16rpx 16rpx 0 0;
+  margin-top: 16rpx;
+}
+
+.arrived-section-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: 1rpx;
+  text-transform: uppercase;
+}
+
+.arrived-section-count {
+  font-size: 24rpx;
+  color: var(--text-2);
+}
+
+.arrived-section-card {
+  border-radius: 0 0 20rpx 20rpx;
+}
+
+/* Buttons ──────────────────────────────────────────────────── */
 
 .primary-btn {
   background: var(--blue);
@@ -83,39 +380,6 @@ button::after {
   font-size: 32rpx;
   font-weight: 600;
   border: none;
-  width: 100%;
-}
-
-.destructive-btn {
-  background: var(--red);
-  border-radius: 24rpx;
-  padding: 26rpx;
-  text-align: center;
-  color: #FFFFFF;
-  font-size: 32rpx;
-  font-weight: 600;
-  border: none;
-  width: 100%;
-}
-
-.ghost-btn {
-  background: transparent;
-  border-radius: 24rpx;
-  padding: 26rpx;
-  text-align: center;
-  color: var(--blue);
-  font-size: 32rpx;
-  font-weight: 500;
-  border: 1rpx solid var(--blue);
-  width: 100%;
-}
-
-.ios-input {
-  background: var(--bg-card);
-  border-radius: 20rpx;
-  padding: 22rpx 28rpx;
-  font-size: 30rpx;
-  color: var(--text);
   width: 100%;
 }
 
@@ -133,11 +397,6 @@ button::after {
   font-size: 28rpx;
 }
 
-.chevron {
-  color: var(--text-3);
-  font-size: 26rpx;
-}
-
 .badge {
   font-size: 22rpx;
   font-weight: 500;
@@ -145,11 +404,8 @@ button::after {
   border-radius: 20rpx;
 }
 
-.badge-green {
-  background: #E8F8F0;
-  color: #1D9E75;
-}
-
+/* Only .badge-blue / .badge-orange are referenced (guests + event-guests
+   internal-role pills). The green/red/gray variants were unused. */
 .badge-blue {
   background: #E8F0FB;
   color: #185FA5;
@@ -158,14 +414,4 @@ button::after {
 .badge-orange {
   background: #FFF3E0;
   color: #E65100;
-}
-
-.badge-red {
-  background: #FFEBE9;
-  color: #FF3B30;
-}
-
-.badge-gray {
-  background: var(--bg);
-  color: var(--text-2);
 }

@@ -1,0 +1,56 @@
+/* Hoisted to app.wxss: .section-title .card .field-row .field-label
+   .field-placeholder .field-picker .nav-title .nav-btn-text--dim
+   .save-btn(+states). Only the deltas live here.
+
+   Removed as dead code: the .logo-row/.logo-img/.logo-placeholder/
+   .logo-plus/.logo-info/.logo-title/.logo-sub block — venue-edit.wxml
+   has no logo picker (venue logos are shown, but not edited, here). */
+
+.page {
+  background: var(--bg);
+}
+
+/* ── Nav bar ── */
+.nav-bar {
+  background: var(--bg-card);
+  padding: 20rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.nav-btn {
+  padding: 10rpx 16rpx;
+}
+
+.nav-btn-text {
+  font-size: 30rpx;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+/* ── Sections ── */
+.section {
+  padding: 24rpx 24rpx 0;
+}
+
+/* ── Field rows ── */
+.field-row:active { background: var(--bg); }
+
+.field-label { min-width: 200rpx; flex-shrink: 0; }
+
+.field-input {
+  flex: 1;
+  text-align: left;
+  font-size: 28rpx;
+  color: var(--text);
+  height: 88rpx;
+  padding-left: 20rpx;
+}
+
+.field-picker { flex: 1; }
+
+.safe-area-bottom {
+  height: calc(40rpx + env(safe-area-inset-bottom));
+}

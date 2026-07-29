@@ -1,0 +1,188 @@
+/* Shared with venue-list + staff and hoisted to app.wxss:
+   .scroll-content .nav-add-text .list .item-card .item-top .item-name
+   .item-info .item-sub .item-avatar .item-avatar-text .empty-icon
+   .empty-btn .empty-btn-text .field-row .field-label .field-placeholder
+   .section-title .card and most of the .modal-* sheet chrome.
+   Only the deltas live here. */
+
+page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* .nav-bar is deliberately NOT global — nine pages use the name for
+   visually different bars. */
+.nav-bar {
+  background: var(--bg-card);
+  padding: 24rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.nav-bar:active { background: var(--bg); }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 40rpx;
+  gap: 20rpx;
+}
+
+.empty-text { font-size: 28rpx; color: var(--text-2); }
+
+.item-avatar {
+  border-radius: 50%;
+  background: #E8F0FB;
+}
+
+.item-avatar-text { color: #185FA5; }
+
+.item-info { overflow: hidden; }
+
+.item-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+.status-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 10rpx;
+}
+
+.badge-approved { background: #E8F8F0; }
+.badge-pending { background: #FFF3E0; }
+.badge-suspended { background: #FFEBE9; }
+.badge-revoked { background: var(--bg); }
+
+.status-text {
+  font-size: 20rpx;
+  font-weight: 500;
+  text-transform: capitalize;
+  color: #8E8E93;
+}
+
+.badge-approved .status-text { color: #1D9E75; }
+.badge-pending .status-text { color: #E65100; }
+.badge-suspended .status-text { color: #FF3B30; }
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.promo-code {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--blue);
+  letter-spacing: 1rpx;
+}
+
+.meta-dot {
+  font-size: 24rpx;
+  color: var(--text-3);
+}
+
+.safe-area-bottom {
+  height: calc(32rpx + env(safe-area-inset-bottom));
+}
+
+/* ── Modals ── */
+
+.modal-subtitle {
+  font-size: 24rpx;
+  color: var(--text-2);
+  margin-top: 4rpx;
+  display: block;
+}
+
+.field-label { min-width: 180rpx; }
+
+.field-input {
+  flex: 1;
+  text-align: right;
+  font-size: 28rpx;
+  color: var(--text);
+  height: 88rpx;
+}
+
+.code-save-wrap {
+  padding: 16rpx 24rpx 0;
+}
+
+.code-save-btn {
+  background: var(--bg-card);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  text-align: center;
+  border: 1.5rpx solid var(--blue);
+}
+
+.code-save-btn:active { opacity: 0.7; }
+
+.code-save-text {
+  font-size: 28rpx;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.action-section {
+  padding: 24rpx 24rpx 0;
+}
+
+.action-row {
+  padding: 28rpx;
+  border-bottom: 0.5px solid var(--bg);
+  text-align: center;
+}
+
+.action-row:last-child { border-bottom: none; }
+.action-row:active { opacity: 0.6; }
+
+.action-row--green .action-row-text { color: #34C759; font-weight: 600; font-size: 28rpx; }
+.action-row--orange .action-row-text { color: #FF9500; font-weight: 600; font-size: 28rpx; }
+.action-row--red .action-row-text { color: #FF3B30; font-weight: 600; font-size: 28rpx; }
+
+/* Kept page-local on purpose. app.wxss's shared .modal-cancel/.modal-save
+   centre their label with flexbox; this page has always centred it with
+   text-align, so its own definitions stay to preserve that exactly. */
+.modal-cancel {
+  flex: 1;
+  background: var(--bg-card);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: var(--text-2);
+  font-weight: 500;
+  display: block;
+}
+
+.modal-cancel--full { flex: 1; }
+
+.modal-save {
+  flex: 2;
+  background: var(--blue);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: #FFFFFF;
+  font-weight: 600;
+  display: block;
+}

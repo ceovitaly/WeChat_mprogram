@@ -1,4 +1,5 @@
 const { STORAGE_KEYS, ROLES } = require('./constants')
+const refCache = require('./refCache')
 
 const getStoredUser = () => {
   return wx.getStorageSync(STORAGE_KEYS.STAFF_USER) || null
@@ -8,8 +9,12 @@ const saveUser = (userData) => {
   wx.setStorageSync(STORAGE_KEYS.STAFF_USER, userData)
 }
 
+// Also drops the cached reference lists: this is the single choke point for both
+// an explicit logout (app.logout) and an expired session (handleAuthFailure), and
+// one account's venues/promoters/staff must never survive into the next login.
 const clearUser = () => {
   wx.removeStorageSync(STORAGE_KEYS.STAFF_USER)
+  refCache.invalidateAll()
 }
 
 const isAdmin = (user) => {

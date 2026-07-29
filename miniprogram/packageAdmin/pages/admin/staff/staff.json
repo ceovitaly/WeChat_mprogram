@@ -1,0 +1,9 @@
+{
+  "usingComponents": {
+    "bottom-sheet": "/packageAdmin/components/bottom-sheet/index"
+  },
+  "navigationBarTitleText": "Counters",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black",
+  "disableScroll": true
+}

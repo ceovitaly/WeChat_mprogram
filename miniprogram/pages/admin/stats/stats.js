@@ -129,7 +129,7 @@ Page({
     const event = this.data.todayEvents.find(ev => ev._id === id)
     if (!event) return
     wx.navigateTo({
-      url: `/pages/admin/event-guests/event-guests?eventId=${id}&eventTitle=${encodeURIComponent(event.title || '')}&venueName=${encodeURIComponent(event.venueName || '')}`
+      url: `/packageAdmin/pages/admin/event-guests/event-guests?eventId=${id}&eventTitle=${encodeURIComponent(event.title || '')}&venueName=${encodeURIComponent(event.venueName || '')}`
     })
   },
 
@@ -138,7 +138,7 @@ Page({
     const event = this.data.pastEvents.find(ev => ev._id === id)
     if (!event) return
     wx.navigateTo({
-      url: `/pages/admin/event-guests/event-guests?eventId=${id}&eventTitle=${encodeURIComponent(event.title || '')}&venueName=${encodeURIComponent(event.venueName || '')}`
+      url: `/packageAdmin/pages/admin/event-guests/event-guests?eventId=${id}&eventTitle=${encodeURIComponent(event.title || '')}&venueName=${encodeURIComponent(event.venueName || '')}`
     })
   },
 

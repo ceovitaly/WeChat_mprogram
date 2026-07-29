@@ -1,0 +1,200 @@
+<view class="page">
+
+  <view class="nav-bar" bindtap="openAddModal">
+    <text class="nav-add-text">+ Add Promoter</text>
+  </view>
+
+  <scroll-view class="scroll-content" scroll-y>
+
+    <view wx:if="{{loading}}" class="empty-state">
+      <text class="empty-text">Loading...</text>
+    </view>
+
+    <view wx:elif="{{promoters.length === 0}}" class="empty-state">
+      <text class="empty-icon">⭐</text>
+      <text class="empty-text">No promoters yet</text>
+      <view class="empty-btn" bindtap="openAddModal">
+        <text class="empty-btn-text">Add first promoter</text>
+      </view>
+    </view>
+
+    <view wx:else class="list">
+      <view wx:for="{{promoters}}" wx:key="_id" class="item-card" bindtap="openActions" data-id="{{item._id}}">
+        <view class="item-top">
+          <view class="item-avatar"><text class="item-avatar-text">{{item.avatarLetter}}</text></view>
+          <view class="item-info">
+            <view class="item-name-row">
+              <text class="item-name">{{item.name}}</text>
+              <view class="status-badge badge-{{item.status}}">
+                <text class="status-text">{{item.status}}</text>
+              </view>
+            </view>
+            <view class="item-meta">
+              <text class="promo-code">{{item.promoCode || 'No code'}}</text>
+              <text class="meta-dot">·</text>
+              <text class="item-sub">{{item.guestCount || 0}} guests</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="safe-area-bottom" />
+
+  </scroll-view>
+
+<!-- ══ ADD MODAL ══ -->
+<bottom-sheet show="{{showAddModal}}" bind:close="closeAddModal">
+
+    <view class="modal-header">
+      <text class="modal-title">New Promoter</text>
+      <view bindtap="closeAddModal">
+        <text class="modal-close">✕</text>
+      </view>
+    </view>
+
+    <view class="modal-body">
+      <view class="field-row">
+        <text class="field-label">Name</text>
+        <input
+          class="field-input"
+          placeholder="Full name"
+          placeholder-class="field-placeholder"
+          value="{{newName}}"
+          bindinput="onNameInput"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Promo code</text>
+        <input
+          class="field-input"
+          placeholder="MYCODE"
+          placeholder-class="field-placeholder"
+          value="{{newPromoCode}}"
+          bindinput="onPromoCodeInput"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Phone</text>
+        <input
+          class="field-input"
+          type="number"
+          placeholder="Phone number"
+          placeholder-class="field-placeholder"
+          value="{{newPhone}}"
+          bindinput="onPhoneInput"
+        />
+      </view>
+    </view>
+
+    <view class="modal-footer">
+      <view class="modal-cancel" bindtap="closeAddModal">
+        <text>Cancel</text>
+      </view>
+      <view class="modal-save" bindtap="createPromoter">
+        <text>Create</text>
+      </view>
+    </view>
+
+</bottom-sheet>
+
+<!-- ══ ACTION SHEET ══ -->
+<bottom-sheet show="{{showActionSheet}}" bind:close="closeActions">
+
+    <view class="modal-header">
+      <view>
+        <text class="modal-title">{{selectedPromoter.name}}</text>
+        <text class="modal-subtitle">{{selectedPromoter.promoCode}}</text>
+      </view>
+      <view bindtap="closeActions">
+        <text class="modal-close">✕</text>
+      </view>
+    </view>
+
+    <view class="modal-body">
+      <view class="field-row">
+        <text class="field-label">Name</text>
+        <input
+          class="field-input"
+          value="{{editName}}"
+          bindinput="onEditNameInput"
+          placeholder="Full name"
+          placeholder-class="field-placeholder"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Promo code</text>
+        <input
+          class="field-input"
+          value="{{editPromoCode}}"
+          bindinput="onEditPromoCodeInput"
+          placeholder="CODE"
+          placeholder-class="field-placeholder"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Phone</text>
+        <input
+          class="field-input"
+          type="number"
+          value="{{editPhone}}"
+          bindinput="onEditPhoneInput"
+          placeholder="Phone number"
+          placeholder-class="field-placeholder"
+        />
+      </view>
+    </view>
+    <view class="code-save-wrap">
+      <view class="code-save-btn" bindtap="savePromoterInfo">
+        <text class="code-save-text">Save changes</text>
+      </view>
+    </view>
+
+    <view class="action-section">
+      <text class="section-title">Status</text>
+      <view class="card">
+
+        <view
+          wx:if="{{selectedPromoter.status !== 'approved'}}"
+          class="action-row action-row--green"
+          bindtap="setStatus"
+          data-status="approved"
+        >
+          <text class="action-row-text">Approve</text>
+        </view>
+
+        <view
+          wx:if="{{selectedPromoter.status !== 'suspended'}}"
+          class="action-row action-row--orange"
+          bindtap="setStatus"
+          data-status="suspended"
+        >
+          <text class="action-row-text">Suspend</text>
+        </view>
+
+        <view
+          class="action-row action-row--red"
+          bindtap="confirmRevoke"
+        >
+          <text class="action-row-text">Revoke status</text>
+        </view>
+
+        <view
+          class="action-row action-row--red"
+          bindtap="confirmDelete"
+        >
+          <text class="action-row-text">Delete promoter</text>
+        </view>
+
+      </view>
+    </view>
+
+    <view class="modal-footer">
+      <view class="modal-cancel modal-cancel--full" bindtap="closeActions">
+        <text>Close</text>
+      </view>
+    </view>
+
+</bottom-sheet>
+
+</view>

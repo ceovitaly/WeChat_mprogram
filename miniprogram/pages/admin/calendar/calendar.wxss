@@ -1,3 +1,9 @@
+/* Hoisted to app.wxss: .empty-btn .empty-btn-text .tab-bar-spacer.
+
+   Removed as dead code: the dark-mode .badge-green/.badge-red/.badge-gray
+   overrides — calendar.wxml never renders those badges (and the base
+   rules in app.wxss were unused too, so they went with them). */
+
 page {
   height: 100vh;
 }
@@ -130,21 +136,10 @@ page {
   gap: 16rpx;
 }
 
+/* 64rpx rather than the shared 80rpx — this empty state sits inside the
+   day list rather than filling the page */
 .empty-icon { font-size: 64rpx; }
 .empty-text { font-size: 28rpx; color: var(--text-2); }
-
-.empty-btn {
-  margin-top: 8rpx;
-  padding: 16rpx 40rpx;
-  background: var(--blue);
-  border-radius: 20rpx;
-}
-
-.empty-btn-text {
-  font-size: 28rpx;
-  color: #FFFFFF;
-  font-weight: 500;
-}
 
 .event-card {
   background: var(--bg-card);
@@ -268,15 +263,8 @@ page {
   color: var(--text);
 }
 
-.tab-bar-spacer {
-  height: calc(100rpx + env(safe-area-inset-bottom));
-}
-
 @media (prefers-color-scheme: dark) {
   .event-cover {
     background: linear-gradient(135deg, #1B3A8C 0%, #2D1B69 100%);
   }
-  .badge-green { background: rgba(48, 209, 88, 0.18); color: #30D158; }
-  .badge-red   { background: rgba(255, 69, 58, 0.18); color: #FF453A; }
-  .badge-gray  { background: rgba(174,174,178,0.15);  color: #AEAEB2; }
 }

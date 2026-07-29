@@ -4,16 +4,39 @@
     "pages/admin/calendar/calendar",
     "pages/admin/team/team",
     "pages/admin/stats/stats",
-    "pages/admin/venue-list/venue-list",
-    "pages/admin/venue-edit/venue-edit",
-    "pages/admin/event-edit/event-edit",
-    "pages/admin/staff/staff",
-    "pages/admin/promoters/promoters",
-    "pages/admin/guests/guests",
-    "pages/admin/event-guests/event-guests",
     "pages/counter/work/work",
     "pages/counter/stats/stats"
   ],
+  "subPackages": [
+    {
+      "root": "packageAdmin",
+      "name": "admin",
+      "pages": [
+        "pages/admin/venue-list/venue-list",
+        "pages/admin/venue-edit/venue-edit",
+        "pages/admin/event-edit/event-edit",
+        "pages/admin/staff/staff",
+        "pages/admin/promoters/promoters",
+        "pages/admin/guests/guests",
+        "pages/admin/event-guests/event-guests"
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/admin/calendar/calendar": {
+      "network": "all",
+      "packages": ["admin"]
+    },
+    "pages/admin/team/team": {
+      "network": "all",
+      "packages": ["admin"]
+    },
+    "pages/admin/stats/stats": {
+      "network": "all",
+      "packages": ["admin"]
+    }
+  },
+  "lazyCodeLoading": "requiredComponents",
   "tabBar": {
     "custom": true,
     "color": "#8E8E93",

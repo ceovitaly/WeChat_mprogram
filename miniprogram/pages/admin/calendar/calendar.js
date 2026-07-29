@@ -174,14 +174,14 @@ Page({
 
   goCreateEvent() {
     wx.navigateTo({
-      url: `/pages/admin/event-edit/event-edit?date=${this.data.selectedDate}`
+      url: `/packageAdmin/pages/admin/event-edit/event-edit?date=${this.data.selectedDate}`
     })
   },
 
   goEditEvent(e) {
     const { id } = e.currentTarget.dataset
     wx.navigateTo({
-      url: `/pages/admin/event-edit/event-edit?id=${id}`
+      url: `/packageAdmin/pages/admin/event-edit/event-edit?id=${id}`
     })
   },
 

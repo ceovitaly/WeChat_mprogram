@@ -1,3 +1,8 @@
+/* Hoisted to app.wxss: .card .search-input .guest-row(+:last-child)
+   .guest-name .guest-info .guest-sub .arrival-time .tier-badge
+   .arrived-section-header/-title/-count/-card .tab-bar-spacer
+   .empty-icon .nav-title. Only the deltas live here. */
+
 page {
   height: 100vh;
   background: var(--bg);
@@ -163,7 +168,7 @@ page {
   flex-shrink: 0;
 }
 
-.nav-title { font-size: 32rpx; font-weight: 700; color: var(--text); flex: 1; text-align: center; }
+.nav-title { font-size: 32rpx; flex: 1; text-align: center; }
 .nav-back-red {
   width: 60rpx;
   height: 60rpx;
@@ -183,7 +188,6 @@ page {
   gap: 16rpx;
 }
 
-.empty-icon { font-size: 80rpx; }
 .empty-text { font-size: 28rpx; color: var(--text-2); text-align: center; }
 
 .events-list { padding: 24rpx; }
@@ -278,19 +282,6 @@ page {
   flex-shrink: 0;
 }
 
-.search-input {
-  height: 72rpx;
-  background: var(--bg-card);
-  border-radius: 16rpx;
-  padding: 0 24rpx;
-  font-size: 28rpx;
-  color: var(--text);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.search-ph { color: var(--text-3); }
-
 /* Chips */
 .chips-bar {
   background: var(--bg);
@@ -358,17 +349,9 @@ page {
 
 .group-hd-count { font-size: 22rpx; color: var(--text-3); }
 
-.card { background: var(--bg-card); border-radius: 20rpx; overflow: hidden; }
+/* wider gap than the shared 16rpx — this list has a leading checkbox */
+.guest-row { gap: 20rpx; }
 
-.guest-row {
-  display: flex;
-  align-items: center;
-  padding: 20rpx 24rpx;
-  gap: 20rpx;
-  border-bottom: 0.5px solid var(--bg);
-}
-
-.guest-row:last-child { border-bottom: none; }
 .guest-row:active { background: var(--bg); }
 .guest-row--done { background: #FAFFFE; }
 
@@ -385,11 +368,7 @@ page {
 
 .checkbox-empty { font-size: 28rpx; color: var(--text-3); }
 
-.guest-info { flex: 1; display: flex; flex-direction: column; gap: 4rpx; }
-
-.guest-name { font-size: 30rpx; font-weight: 500; color: var(--text); }
 .guest-name--done { color: var(--text-green); }
-.guest-sub { font-size: 22rpx; color: var(--text-2); }
 
 .arrival-number {
   font-size: 28rpx;
@@ -397,12 +376,6 @@ page {
   color: var(--green);
   min-width: 44rpx;
   text-align: center;
-  flex-shrink: 0;
-}
-
-.arrival-time {
-  font-size: 26rpx;
-  color: var(--text-2);
   flex-shrink: 0;
 }
 
@@ -422,13 +395,9 @@ page {
 .attend-btn--marked .attend-btn-icon { color: #FFFFFF; }
 
 .safe-area-bottom { height: calc(32rpx + env(safe-area-inset-bottom)); }
-.tab-bar-spacer { height: calc(100rpx + env(safe-area-inset-bottom)); }
 
-.tier-badge {
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  flex-shrink: 0;
-}
+/* Tier badge colours — deliberately NOT shared with event-guests, which
+   uses translucent fills where this page uses solid pastel ones. */
 .tier-badge-text { font-size: 22rpx; font-weight: 600; font-family: monospace; }
 .tier-badge--p { background: #E8F5E9; }
 .tier-badge--p .tier-badge-text { color: #2E7D32; }
@@ -443,30 +412,6 @@ page {
 .row--ap { background: #F5F8FF; }
 .row--lap { background: #FFFBF5; }
 .row--extra { background: #FAFFFE; }
-
-.arrived-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16rpx 24rpx 8rpx;
-  background: var(--bg);
-  border-radius: 16rpx 16rpx 0 0;
-  margin-top: 16rpx;
-}
-.arrived-section-title {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: var(--text-2);
-  letter-spacing: 1rpx;
-  text-transform: uppercase;
-}
-.arrived-section-count {
-  font-size: 24rpx;
-  color: var(--text-2);
-}
-.arrived-section-card {
-  border-radius: 0 0 20rpx 20rpx;
-}
 
 @media (prefers-color-scheme: dark) {
   .guest-row--done { background: var(--bg-card); }
@@ -485,4 +430,3 @@ page {
   .tier-badge--e   { background: rgba(255, 255, 255, 0.08); }
   .tier-badge--e .tier-badge-text   { color: #AEAEB2; }
 }
-

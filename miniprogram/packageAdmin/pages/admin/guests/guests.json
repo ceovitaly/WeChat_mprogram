@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "bottom-sheet": "/packageAdmin/components/bottom-sheet/index"
+  },
+  "navigationBarTitleText": "All Guests"
+}

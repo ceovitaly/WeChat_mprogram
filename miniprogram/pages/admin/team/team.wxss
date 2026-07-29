@@ -1,44 +1,17 @@
+/* Hoisted to app.wxss: .tab-bar-spacer.
+
+   Removed as dead code — team.wxml contains no matching markup:
+     .counter-bar .counter-item .counter-num .counter-label .counter-divider
+     .event-list .event-row(+states) .event-row-info .event-row-title
+     .event-row-meta .event-row-right .event-row-count .event-row-count-label
+     .empty-state .empty-text
+   Verified with a grep of team.wxml and every page .js. */
+
 .page {
   background: var(--bg);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-}
-
-/* Counter bar */
-.counter-bar {
-  background: var(--bg-card);
-  border-bottom: 0.5px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 20rpx 0;
-  flex-shrink: 0;
-}
-
-.counter-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4rpx;
-}
-
-.counter-num {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1;
-}
-
-.counter-label {
-  font-size: 22rpx;
-  color: var(--text-2);
-}
-
-.counter-divider {
-  width: 1rpx;
-  height: 48rpx;
-  background: var(--border);
 }
 
 /* Scroll */
@@ -51,93 +24,15 @@
   padding: 0 24rpx 0;
 }
 
+/* wider side padding than the shared .section-title (0 4rpx 12rpx),
+   because this page's section sits at 24rpx rather than 24rpx + card inset */
 .section-title {
-  font-size: 22rpx;
-  font-weight: 500;
-  color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 1rpx;
   padding: 0 8rpx 12rpx;
-  display: block;
 }
 
-/* Event list (guest lists) */
-.event-list {
-  background: var(--bg-card);
-  border-radius: 24rpx;
-  overflow: hidden;
-}
-
-.event-row {
-  display: flex;
-  align-items: center;
-  padding: 24rpx 28rpx;
-  border-bottom: 0.5px solid var(--bg);
-  gap: 16rpx;
-}
-
-.event-row:last-child {
-  border-bottom: none;
-}
-
-.event-row:active {
-  background: var(--bg);
-}
-
-.event-row-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-
-.event-row-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.event-row-meta {
-  font-size: 24rpx;
-  color: var(--text-2);
-}
-
-.event-row-right {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.event-row-count {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: var(--blue);
-  line-height: 1;
-}
-
-.event-row-count-label {
-  font-size: 20rpx;
-  color: var(--text-2);
-  margin-top: 2rpx;
-}
-
-/* Empty state */
-.empty-state {
-  padding: 48rpx 0;
-  text-align: center;
-}
-
-.empty-text {
-  font-size: 28rpx;
-  color: var(--text-3);
-}
-
-/* Manage card */
+/* Manage card — 24rpx radius rather than the shared 20rpx */
 .card {
-  background: var(--bg-card);
   border-radius: 24rpx;
-  overflow: hidden;
 }
 
 .card-row {
@@ -220,8 +115,4 @@
   font-size: 36rpx;
   color: var(--text-3);
   font-weight: 300;
-}
-
-.tab-bar-spacer {
-  height: calc(100rpx + env(safe-area-inset-bottom));
 }

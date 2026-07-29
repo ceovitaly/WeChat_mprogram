@@ -1,0 +1,39 @@
+/* Style isolation is left at the WeChat default (`isolated`): these two
+   classes are the component's own chrome and nothing outside needs to
+   reach them. The <slot> contents are still page-scoped nodes, so the
+   pages' `.modal-*` classes keep applying to them as before.
+   The `--bg` / theme custom properties are declared on `page` and CSS
+   custom properties inherit through style isolation, so dark mode works
+   here without any extra wiring. */
+
+.bs-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+/* Top-anchored variant — see the note in index.js. The keyboard rises
+   from the bottom of the screen, so a bottom sheet cannot guarantee that
+   a rich-text toolbar stays reachable while typing. */
+.bs-mask--top {
+  align-items: flex-start;
+}
+
+.bs-shell {
+  width: 100%;
+  background: var(--bg);
+  border-radius: 24rpx 24rpx 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bs-shell--top {
+  border-radius: 0 0 24rpx 24rpx;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: 0;
+}

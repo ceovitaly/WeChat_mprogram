@@ -1,0 +1,191 @@
+/* Hoisted to app.wxss: .search-input .guest-row(+:last-child) .empty-icon
+   .internal-badge. The promoter sheet's overlay + shell now come from
+   <bottom-sheet>. Only the deltas live here. */
+
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* Search */
+.search-wrap {
+  padding: 16rpx 24rpx 8rpx;
+  background: var(--bg);
+}
+
+/* Promoter filter chips */
+.filter-scroll {
+  width: 100%;
+}
+
+.filter-row {
+  display: flex;
+  flex-direction: row;
+  padding: 8rpx 24rpx 16rpx;
+  gap: 12rpx;
+  white-space: nowrap;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 10rpx 24rpx;
+  border-radius: 32rpx;
+  background: var(--bg-card);
+  border: 1rpx solid var(--border);
+  flex-shrink: 0;
+}
+
+.filter-chip--active {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+.filter-chip-text {
+  font-size: 26rpx;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.filter-chip--active .filter-chip-text {
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+/* Guest list */
+.guest-list {
+  margin: 0 24rpx;
+  background: var(--bg-card);
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.guest-row:active {
+  opacity: 0.6;
+}
+
+.guest-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: rgba(10, 132, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.guest-avatar-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+/* narrower + flexible, unlike the shared 30rpx label used by
+   event-guests / counter-work */
+.guest-name {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.guest-promoter {
+  font-size: 26rpx;
+  color: var(--blue);
+  flex-shrink: 0;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 40rpx;
+  gap: 16rpx;
+}
+
+.empty-text { font-size: 28rpx; color: var(--text-2); }
+
+/* Safe area */
+.safe-area-bottom {
+  height: calc(40rpx + env(safe-area-inset-bottom));
+}
+
+/* Change Promoter Sheet — contents of <bottom-sheet>.
+   The old `.sheet` capped the whole sheet (including its safe-area
+   padding) at 70vh. That padding now lives on the component's shell,
+   one level up, so subtract it here to keep the same overall cap. */
+.sheet-inner {
+  max-height: calc(70vh - env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-header {
+  padding: 32rpx 32rpx 20rpx;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.sheet-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+}
+
+.sheet-guest-name {
+  font-size: 26rpx;
+  color: var(--text-2);
+  margin-top: 6rpx;
+  display: block;
+}
+
+.sheet-scroll {
+  flex: 1;
+  overflow: hidden;
+}
+
+.sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.sheet-row:active { opacity: 0.6; }
+
+.sheet-row--active {
+  background: rgba(10, 132, 255, 0.06);
+}
+
+.sheet-row-name {
+  font-size: 30rpx;
+  color: var(--text);
+}
+
+.sheet-row--active .sheet-row-name {
+  color: var(--blue);
+  font-weight: 500;
+}
+
+.sheet-check {
+  font-size: 28rpx;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.sheet-cancel {
+  padding: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 0.5px solid var(--border);
+}
+
+.sheet-cancel:active { opacity: 0.6; }
+
+.sheet-cancel-text {
+  font-size: 30rpx;
+  color: var(--text-2);
+  font-weight: 500;
+}

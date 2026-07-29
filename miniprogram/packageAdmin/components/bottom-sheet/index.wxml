@@ -1,0 +1,12 @@
+<view
+  wx:if="{{show}}"
+  class="bs-mask {{position === 'top' ? 'bs-mask--top' : ''}}"
+  bindtap="onMaskTap"
+>
+  <view
+    class="bs-shell {{position === 'top' ? 'bs-shell--top' : ''}}"
+    catchtap="noop"
+  >
+    <slot></slot>
+  </view>
+</view>

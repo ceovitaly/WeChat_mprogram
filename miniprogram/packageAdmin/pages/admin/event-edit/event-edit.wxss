@@ -1,0 +1,249 @@
+/* Hoisted to app.wxss: .section-title .card .field-row(+:last-child)
+   .field-label .field-placeholder .field-picker .nav-title
+   .nav-btn-text--dim .save-btn(+states) and the .modal-* sheet chrome.
+   The overlay + sheet shell now come from <bottom-sheet>.
+
+   Removed as dead code (no matching markup in event-edit.wxml):
+   .tab-bar / .tab / .tab--active(+::after), .package-row / .package-info /
+   .package-name / .package-meta / .package-actions, .pkg-btn--edit,
+   .field-textarea, .field-value. */
+
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.header-container {
+  flex-shrink: 0;
+  background: var(--bg-card);
+  border-bottom: 0.5px solid var(--border);
+}
+
+.content-area {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* No background/border here on purpose — .header-container above draws
+   them. This is why .nav-bar must stay page-local. */
+.nav-bar {
+  padding: 20rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-btn {
+  padding: 10rpx 16rpx;
+}
+
+.nav-btn-text {
+  font-size: 30rpx;
+  color: var(--blue);
+  font-weight: 600;
+}
+
+/* ── Media grid ── */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16rpx;
+  margin-top: 12rpx;
+}
+
+.media-item {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+}
+
+.media-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+  background: var(--text-3);
+}
+
+.media-remove {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  width: 36rpx;
+  height: 36rpx;
+  background: rgba(0, 0, 0, 0.5);
+  color: #FFFFFF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20rpx;
+  z-index: 10;
+}
+
+.media-add {
+  background: var(--text-3);
+  border-radius: 12rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+}
+
+.add-plus {
+  font-size: 40rpx;
+  color: var(--text-2);
+  line-height: 1;
+}
+
+.add-label {
+  font-size: 20rpx;
+  color: var(--text-2);
+  margin-top: 4rpx;
+}
+
+/* ── Content ── */
+.tab-content {
+  padding-bottom: 40rpx;
+}
+
+.section {
+  padding: 24rpx 24rpx 0;
+}
+
+/* ── Field rows ── */
+/* This page's field rows sit directly on the card background rather than
+   inside a .card wrapper, hence the extra background. */
+.field-row {
+  background: var(--bg-card);
+}
+
+.field-row--area {
+  align-items: flex-start;
+  padding: 20rpx 28rpx;
+}
+
+.field-label { min-width: 160rpx; flex-shrink: 0; }
+
+/* line-height + padding-left are hand-tuned so the Title input's baseline
+   matches the Description preview's. Do not "normalise" these. */
+.field-input {
+  flex: 1;
+  text-align: left;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  color: var(--text);
+  height: 88rpx;
+  padding-left: 20rpx;
+}
+
+.field-value-preview {
+  flex: 1;
+  text-align: right;
+  font-size: 28rpx;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-left: 20rpx;
+}
+
+/* ── Packages ── */
+.pkg-btn {
+  padding: 10rpx 20rpx;
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pkg-btn--delete { background: #FFEBE9; color: #FF3B30; }
+
+.paid-package-block {
+  margin-top: 20rpx;
+}
+
+.paid-package-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4rpx 12rpx;
+}
+
+.paid-package-num {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.add-btn {
+  margin-top: 16rpx;
+  background: var(--bg-card);
+  border-radius: 20rpx;
+  padding: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border);
+}
+
+.add-btn:active { opacity: 0.6; }
+.add-btn-text { font-size: 28rpx; color: var(--blue); font-weight: 500; }
+
+.safe-area-bottom {
+  height: calc(40rpx + env(safe-area-inset-bottom));
+}
+
+/* ── Description editor (inside <bottom-sheet position="top">) ── */
+.editor-toolbar {
+  display: flex;
+  gap: 8rpx;
+  padding: 16rpx 20rpx;
+  border-bottom: 0.5px solid var(--bg);
+}
+
+.toolbar-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 12rpx;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-btn--active {
+  background: var(--blue);
+}
+
+.toolbar-btn-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.toolbar-btn--active .toolbar-btn-text {
+  color: #FFFFFF;
+}
+
+.toolbar-btn-text--bold {
+  font-weight: 900;
+}
+
+.toolbar-btn-text--italic {
+  font-style: italic;
+}
+
+.desc-editor {
+  min-height: 320rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  color: var(--text);
+}

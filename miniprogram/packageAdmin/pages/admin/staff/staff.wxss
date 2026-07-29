@@ -1,0 +1,127 @@
+/* Shared with venue-list + promoters and hoisted to app.wxss:
+   .scroll-content .nav-add-text .list .item-card .item-top .item-name
+   .item-info .item-sub .item-avatar .item-avatar-text .empty-icon
+   .field-row .field-label .field-placeholder .section-title
+   and the .modal-* sheet chrome. Only the deltas live here. */
+
+page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* .nav-bar is deliberately NOT global: nine pages use that class name for
+   visually different bars (some centered, some space-between, some with
+   no border of their own). */
+.nav-bar {
+  background: var(--bg-card);
+  padding: 24rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.nav-bar:active { background: var(--bg); }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 40rpx;
+  gap: 20rpx;
+}
+
+/* literal #8E8E93 rather than var(--text-2), preserved as-is: in dark mode
+   var(--text-2) is #AEAEB2, so switching would change this page. */
+.empty-text { font-size: 28rpx; color: #8E8E93; }
+
+.item-avatar { border-radius: 50%; }
+
+.avatar--admin { background: #E8F0FB; }
+.avatar--counter { background: var(--bg); }
+
+.item-avatar-text { color: var(--text); }
+
+.item-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.role-badge {
+  padding: 4rpx 14rpx;
+  border-radius: 10rpx;
+}
+
+.badge-admin { background: #E8F0FB; }
+.badge-counter { background: var(--bg); }
+
+.role-badge-text {
+  font-size: 22rpx;
+  font-weight: 500;
+  color: #8E8E93;
+  text-transform: uppercase;
+  letter-spacing: 0.5rpx;
+}
+
+.modal-delete-row {
+  margin: 0 24rpx 0;
+  background: #FFF1F0;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  text-align: center;
+}
+
+.modal-delete-row:active { opacity: 0.7; }
+
+.modal-delete-text {
+  font-size: 28rpx;
+  color: #FF3B30;
+  font-weight: 500;
+}
+
+.safe-area-bottom {
+  height: calc(32rpx + env(safe-area-inset-bottom));
+}
+
+/* ── Modal ── */
+
+.field-label { min-width: 160rpx; }
+
+.field-input {
+  flex: 1;
+  text-align: right;
+  font-size: 28rpx;
+  color: var(--text);
+  height: 88rpx;
+}
+
+.role-section { padding: 24rpx 24rpx 0; }
+
+.role-options { display: flex; gap: 16rpx; }
+
+.role-option {
+  flex: 1;
+  background: var(--bg-card);
+  border-radius: 16rpx;
+  padding: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  border: 2rpx solid transparent;
+}
+
+.role-option--active { border-color: var(--blue); background: #E8F0FB; }
+.role-option-text { font-size: 28rpx; font-weight: 600; color: var(--text); }
+.role-option-sub { font-size: 22rpx; color: var(--text-2); }

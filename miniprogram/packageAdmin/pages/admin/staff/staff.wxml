@@ -1,0 +1,125 @@
+<view class="page">
+
+<view class="nav-bar" bindtap="openCreateModal">
+  <text class="nav-add-text">+ Add Counter</text>
+</view>
+
+<scroll-view class="scroll-content" scroll-y>
+
+  <view wx:if="{{loading}}" class="empty-state">
+    <text class="empty-text">Loading...</text>
+  </view>
+
+  <view wx:elif="{{staffList.length === 0}}" class="empty-state">
+    <text class="empty-icon">👤</text>
+    <text class="empty-text">No counters yet</text>
+  </view>
+
+  <view wx:else class="list">
+    <view wx:for="{{staffList}}" wx:key="_id" class="item-card" bindtap="openEditModal" data-id="{{item._id}}">
+      <view class="item-top">
+        <view class="item-avatar {{item.role === 'admin' ? 'avatar--admin' : 'avatar--counter'}}">
+          <text class="item-avatar-text">{{item.name[0]}}</text>
+        </view>
+        <view class="item-info">
+          <view class="item-name-row">
+            <text class="item-name">{{item.name}}</text>
+            <view class="role-badge {{item.role === 'admin' ? 'badge-admin' : 'badge-counter'}}">
+              <text class="role-badge-text">{{item.role || 'counter'}}</text>
+            </view>
+          </view>
+          <text class="item-sub">Pass: {{item.password || '—'}}</text>
+          <text wx:if="{{item.phone}}" class="item-sub">{{item.phone}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="safe-area-bottom" />
+
+</scroll-view>
+
+<!-- Modal -->
+<bottom-sheet show="{{showModal}}" bind:close="closeModal">
+
+    <view class="modal-header">
+      <text class="modal-title">{{editingId ? 'Edit Counter' : 'New Counter'}}</text>
+      <view bindtap="closeModal">
+        <text class="modal-close">✕</text>
+      </view>
+    </view>
+
+    <view class="modal-body">
+      <view class="field-row">
+        <text class="field-label">Name</text>
+        <input
+          class="field-input"
+          placeholder="Full name"
+          placeholder-class="field-placeholder"
+          value="{{tempName}}"
+          bindinput="onInputName"
+          confirm-type="next"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Phone</text>
+        <input
+          class="field-input"
+          type="number"
+          placeholder="Phone number"
+          placeholder-class="field-placeholder"
+          value="{{tempPhone}}"
+          bindinput="onInputPhone"
+          confirm-type="next"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Password</text>
+        <input
+          class="field-input"
+          placeholder="Set password"
+          placeholder-class="field-placeholder"
+          value="{{tempPassword}}"
+          bindinput="onInputPassword"
+          confirm-type="done"
+        />
+      </view>
+    </view>
+
+    <view class="role-section">
+      <text class="section-title">Role</text>
+      <view class="role-options">
+        <view
+          class="role-option {{tempRole === 'counter' ? 'role-option--active' : ''}}"
+          bindtap="selectRole"
+          data-role="counter"
+        >
+          <text class="role-option-text">Counter</text>
+          <text class="role-option-sub">Door check-in</text>
+        </view>
+        <view
+          class="role-option {{tempRole === 'admin' ? 'role-option--active' : ''}}"
+          bindtap="selectRole"
+          data-role="admin"
+        >
+          <text class="role-option-text">Admin</text>
+          <text class="role-option-sub">Full access</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{editingId}}" class="modal-delete-row" catchtap="deleteEditing">
+      <text class="modal-delete-text">Delete Counter</text>
+    </view>
+    <view class="modal-footer">
+      <view class="modal-cancel" bindtap="closeModal">
+        <text>Cancel</text>
+      </view>
+      <view class="modal-save" bindtap="confirmSave">
+        <text>Save</text>
+      </view>
+    </view>
+
+</bottom-sheet>
+
+</view>

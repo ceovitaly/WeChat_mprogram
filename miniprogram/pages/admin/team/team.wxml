@@ -6,7 +6,7 @@
     <text class="section-title">Manage</text>
     <view class="card">
 
-      <view class="card-row" bindtap="goTo" data-url="/pages/admin/venue-list/venue-list">
+      <view class="card-row" bindtap="goTo" data-url="/packageAdmin/pages/admin/venue-list/venue-list">
         <view class="row-left">
           <view class="row-icon" style="background:#E8F0FB">
             <text class="row-icon-emoji">🏛</text>
@@ -21,7 +21,7 @@
         </view>
       </view>
 
-      <view class="card-row" bindtap="goTo" data-url="/pages/admin/staff/staff">
+      <view class="card-row" bindtap="goTo" data-url="/packageAdmin/pages/admin/staff/staff">
         <view class="row-left">
           <view class="row-icon" style="background:#E8F8F0">
             <text class="row-icon-emoji">👤</text>
@@ -36,7 +36,7 @@
         </view>
       </view>
 
-      <view class="card-row" bindtap="goTo" data-url="/pages/admin/promoters/promoters">
+      <view class="card-row" bindtap="goTo" data-url="/packageAdmin/pages/admin/promoters/promoters">
         <view class="row-left">
           <view class="row-icon" style="background:#FFF3E0">
             <text class="row-icon-emoji">⭐</text>
@@ -54,7 +54,7 @@
         </view>
       </view>
 
-      <view class="card-row" bindtap="goTo" data-url="/pages/admin/guests/guests">
+      <view class="card-row" bindtap="goTo" data-url="/packageAdmin/pages/admin/guests/guests">
         <view class="row-left">
           <view class="row-icon" style="background:#F0E8FB">
             <text class="row-icon-emoji">👥</text>

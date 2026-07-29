@@ -1,0 +1,9 @@
+{
+  "usingComponents": {
+    "bottom-sheet": "/packageAdmin/components/bottom-sheet/index"
+  },
+  "navigationBarTitleText": "Promoters",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black",
+  "disableScroll": true
+}

@@ -1,3 +1,13 @@
+/* Hoisted to app.wxss: .section-title.
+
+   Removed as dead code — stats.wxml contains no matching markup for any
+   of these (the guest-check-in modal, the metric tiles and the report
+   detail view all live on other pages now):
+     .metrics-grid .metric-card .metric-value .metric-label
+     .modal-overlay .modal-close .guest-modal .gm-* .duty-*
+     .rpt-* .section-header .gm-close-event-*
+   Verified with a grep of stats.wxml and every page .js. */
+
 .page {
   height: 100vh;
   background: var(--bg);
@@ -74,72 +84,6 @@
   padding: 24rpx 24rpx 0;
 }
 
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 4rpx 12rpx;
-}
-
-.section-header .section-title {
-  padding: 0;
-}
-
-.refresh-btn {
-  padding: 8rpx 12rpx;
-}
-
-.refresh-btn:active { opacity: 0.5; }
-
-.refresh-icon {
-  font-size: 36rpx;
-  color: var(--blue);
-  display: block;
-}
-
-.section-title {
-  font-size: 22rpx;
-  font-weight: 500;
-  color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 1rpx;
-  padding: 0 4rpx 12rpx;
-  display: block;
-}
-
-/* Metric tiles */
-.metrics-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-}
-
-.metric-card {
-  flex: 1;
-  min-width: 140rpx;
-  background: var(--bg-card);
-  border-radius: 20rpx;
-  padding: 28rpx 24rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-
-.metric-card:active { opacity: 0.7; }
-
-.metric-value {
-  font-size: 52rpx;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -1rpx;
-}
-
-.metric-label {
-  font-size: 24rpx;
-  color: var(--text-2);
-  font-weight: 500;
-}
-
 /* Today's events */
 .today-list {
   display: flex;
@@ -197,6 +141,8 @@
   margin-top: 4rpx;
 }
 
+/* inherits display/flex-direction/align-items/colour from app.wxss's
+   .empty-state; only the tighter padding differs */
 .empty-state {
   padding: 48rpx 0;
   text-align: center;
@@ -207,229 +153,8 @@
   color: var(--text-3);
 }
 
-/* Modal overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  z-index: 100;
-}
-
-/* Guest modal — full work area */
-.guest-modal {
-  background: var(--bg);
-  border-radius: 32rpx 32rpx 0 0;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.gm-header {
-  background: var(--bg-card);
-  padding: 24rpx 28rpx 20rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: 32rpx 32rpx 0 0;
-  flex-shrink: 0;
-  border-bottom: 0.5px solid var(--border);
-}
-
-.gm-header-info { flex: 1; display: flex; flex-direction: column; gap: 4rpx; }
-.gm-title { font-size: 30rpx; font-weight: 700; color: var(--text); }
-.gm-sub { font-size: 24rpx; color: var(--text-2); }
-
-.duty-pill {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-  padding: 12rpx 20rpx;
-  border-radius: 20rpx;
-  flex-shrink: 0;
-  margin-left: 16rpx;
-}
-.duty-pill--on { background: #E8F8F0; }
-.duty-pill--off { background: #FFEBE9; }
-.duty-dot { width: 14rpx; height: 14rpx; border-radius: 50%; }
-.duty-pill--on .duty-dot { background: #34C759; }
-.duty-pill--off .duty-dot { background: #FF3B30; }
-.duty-label { font-size: 24rpx; font-weight: 600; }
-.duty-pill--on .duty-label { color: #1D9E75; }
-.duty-pill--off .duty-label { color: #FF3B30; }
-
-.gm-search-wrap { background: var(--bg); padding: 16rpx 24rpx; flex-shrink: 0; }
-.gm-search-input {
-  height: 72rpx;
-  background: var(--bg-card);
-  border-radius: 16rpx;
-  padding: 0 24rpx;
-  font-size: 28rpx;
-  color: var(--text);
-  width: 100%;
-  box-sizing: border-box;
-}
-.gm-search-ph { color: var(--text-3); }
-
-.gm-chips-bar { background: var(--bg); flex-shrink: 0; padding-bottom: 12rpx; }
-.gm-chips-inner { display: flex; flex-direction: row; padding: 0 24rpx; gap: 12rpx; }
-.gm-chip { height: 56rpx; padding: 0 28rpx; border-radius: 28rpx; background: var(--bg-card); display: flex; align-items: center; flex-shrink: 0; }
-.gm-chip--on { background: var(--blue); }
-.gm-chip-text { font-size: 26rpx; font-weight: 500; color: var(--text); }
-.gm-chip--on .gm-chip-text { color: #FFFFFF; }
-
-.gm-stats-row { background: var(--bg); padding: 0 28rpx 16rpx; display: flex; align-items: center; gap: 12rpx; flex-shrink: 0; }
-.gm-stat-green { font-size: 24rpx; font-weight: 600; color: var(--green); }
-.gm-stat-sep { font-size: 24rpx; color: var(--text-3); }
-.gm-stat-grey { font-size: 24rpx; color: var(--text-2); flex: 1; }
-.gm-close-btn { font-size: 26rpx; color: var(--blue); font-weight: 500; }
-
-.gm-scroll { flex: 1; max-height: 55vh; }
-.gm-body { padding: 16rpx 24rpx 0; }
-.gm-group { margin-bottom: 20rpx; }
-.gm-group-hd { display: flex; align-items: center; justify-content: space-between; padding: 0 4rpx 10rpx; }
-.gm-group-name { font-size: 22rpx; font-weight: 600; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.5rpx; }
-.gm-group-count { font-size: 22rpx; color: #C7C7CC; }
-.gm-card { background: var(--bg-card); border-radius: 20rpx; overflow: hidden; }
-.gm-row { display: flex; align-items: center; padding: 20rpx 24rpx; gap: 20rpx; border-bottom: 0.5px solid var(--bg); }
-.gm-row:last-child { border-bottom: none; }
-.gm-row:active { background: var(--bg); }
-.gm-row--done { background: #FAFFFE; }
-.gm-checkbox { width: 48rpx; height: 48rpx; border-radius: 50%; border: 2rpx solid var(--text-3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.gm-checkbox--checked { background: #34C759; border-color: #34C759; }
-.gm-checkbox-tick { font-size: 26rpx; color: #FFFFFF; font-weight: 700; }
-.gm-checkbox-empty { font-size: 28rpx; color: var(--text-3); }
-.gm-guest-info { flex: 1; display: flex; flex-direction: column; gap: 4rpx; }
-.gm-guest-name { font-size: 30rpx; font-weight: 500; color: var(--text); }
-.gm-guest-name--done { color: var(--text-green); }
-.gm-guest-sub { font-size: 22rpx; color: var(--text-2); }
-.gm-empty { padding: 48rpx; text-align: center; }
-.gm-empty-text { font-size: 28rpx; color: var(--text-3); }
-.gm-bottom-pad { height: 32rpx; }
-
+/* flat value, not the shared calc() — this page's spacer sits inside a
+   scroll-view that already clears the safe area */
 .tab-bar-spacer {
   height: 160rpx;
-}
-
-/* Close event button inside guest modal */
-.gm-close-event-wrap {
-  padding: 0 16rpx 12rpx;
-  flex-shrink: 0;
-}
-
-.gm-close-event-btn {
-  height: 72rpx;
-  background: rgba(255, 59, 48, 0.08);
-  border-radius: 16rpx;
-  border: 1rpx solid rgba(255, 59, 48, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.gm-close-event-btn:active { opacity: 0.7; }
-
-.gm-close-event-text {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #FF3B30;
-}
-
-/* Report detail */
-.rpt-stats-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  background: var(--bg-card);
-  padding: 24rpx 32rpx;
-  border-bottom: 0.5px solid var(--bg);
-  flex-shrink: 0;
-}
-
-.rpt-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6rpx;
-}
-
-.rpt-stat-num {
-  font-size: 48rpx;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1;
-}
-
-.rpt-stat-label {
-  font-size: 22rpx;
-  color: var(--text-2);
-  font-weight: 500;
-}
-
-.rpt-stat-div {
-  width: 1rpx;
-  height: 60rpx;
-  background: var(--border);
-}
-
-.rpt-ticket {
-  font-size: 22rpx;
-  color: var(--text-2);
-  flex-shrink: 0;
-}
-
-/* Export button */
-.rpt-export-wrap {
-  padding: 16rpx 24rpx;
-  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  background: var(--bg);
-  flex-shrink: 0;
-}
-
-.rpt-export-btn {
-  height: 96rpx;
-  background: #34C759;
-  border-radius: 20rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.rpt-export-btn:active { opacity: 0.8; }
-
-.rpt-export-text {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #FFFFFF;
-}
-
-.modal-close {
-  font-size: 32rpx;
-  color: var(--text-2);
-  padding: 8rpx;
-}
-
-/* Arrival number and time in guest rows */
-.gm-arrival-num {
-  font-size: 28rpx;
-  font-weight: 700;
-  color: #34C759;
-  min-width: 44rpx;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.gm-arrival-time {
-  font-size: 24rpx;
-  color: var(--text-2);
-  flex-shrink: 0;
-}
-
-.gm-arrival-time--duty {
-  color: #34C759;
-  font-weight: 600;
-  font-size: 22rpx;
 }

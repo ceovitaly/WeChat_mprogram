@@ -1,0 +1,92 @@
+/* Shared with promoters + staff and hoisted to app.wxss:
+   .scroll-content .nav-add-text .list .item-card .item-top .item-name
+   .item-info .item-sub .item-avatar .item-avatar-text .empty-icon
+   .empty-btn .empty-btn-text. Only the deltas live here. */
+
+page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* .nav-bar is deliberately NOT global — nine pages use the name for
+   visually different bars. */
+.nav-bar {
+  background: var(--bg-card);
+  padding: 24rpx 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+
+.nav-bar:active { background: var(--bg); }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 40rpx;
+  gap: 20rpx;
+}
+
+/* literal #8E8E93 rather than var(--text-2), preserved as-is: in dark mode
+   var(--text-2) is #AEAEB2, so switching would change this page. */
+.empty-text { font-size: 28rpx; color: #8E8E93; }
+
+/* rounded-square logo tile rather than the circular avatar the other two
+   list pages use */
+.item-avatar {
+  border-radius: 20rpx;
+  background: #E8F0FB;
+  overflow: hidden;
+}
+
+.venue-logo-img {
+  width: 88rpx;
+  height: 88rpx;
+}
+
+.item-avatar-text { color: #185FA5; }
+
+.item-info { overflow: hidden; }
+
+.item-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-actions {
+  display: flex;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 22rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 500;
+  border-right: 0.5px solid var(--bg);
+}
+
+.action-btn:last-child { border-right: none; }
+.action-btn:active { opacity: 0.6; }
+
+.action-btn--primary { color: var(--blue); }
+.action-btn--danger { color: var(--red); }
+
+.safe-area-bottom {
+  height: calc(32rpx + env(safe-area-inset-bottom));
+}
