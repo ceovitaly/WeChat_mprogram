@@ -1,6 +1,16 @@
 <view class="container">
 
-<scroll-view class="content-scroll" scroll-y enhanced show-scrollbar="false" bindscroll="onContentScroll">
+<!-- The event document couldn't be read (deleted, or no access). Replaces
+     the whole page rather than rendering an empty shell with a dead CTA. -->
+<view wx:if="{{loadError}}" class="load-error">
+  <text class="load-error-title">Event unavailable</text>
+  <text class="load-error-sub">This event is no longer available. It may have been removed.</text>
+  <view class="load-error-btn" bindtap="goBackFromError">
+    <text class="load-error-btn-txt">Go back</text>
+  </view>
+</view>
+
+<scroll-view wx:else class="content-scroll" scroll-y enhanced show-scrollbar="false" bindscroll="onContentScroll">
 
 <view class="hero-section" style="height:{{heroHeight}}rpx">
   <block wx:if="{{event.promoImages && event.promoImages.length > 1}}">
@@ -139,7 +149,7 @@
   </view>
 </scroll-view>
 
-<view class="action-bar">
+<view class="action-bar" wx:if="{{!loadError}}">
   <view wx:if="{{isRegistered}}" class="registered-bar">
     <view class="registered-status">
       <text class="registered-icon">✓</text>

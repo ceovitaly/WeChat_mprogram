@@ -57,6 +57,12 @@ function stripInlineStyles(html) {
 Page({
   data: {
     event: null,
+    // Set when the event document can't be read at all — most often a
+    // registration in My List pointing at an event that has since been
+    // deleted, since registrations keep their own copy of eventId and
+    // nothing clears them when the event goes away. Without this the page
+    // rendered an empty shell plus a dead "Get on list" bar.
+    loadError: false,
     isRegistered: false,
     hasProfile: null,
     showTicketModal: false,
@@ -144,7 +150,8 @@ Page({
       },
       fail: err => {
         wx.hideLoading();
-        console.error(err);
+        console.error('[event-detail] event not available:', err);
+        this.setData({ loadError: true });
       }
     });
   },
@@ -463,6 +470,15 @@ Page({
   // Fade the hero in on first load (see .hero-image in event-detail.wxss).
   // One shared flag: only the initially-visible image's pop-in is user-
   // visible; later swiper slides load offscreen.
+  // Falls back to the feed rather than navigateBack alone, since this page
+  // can also be the entry point (opened from a share link), where there is
+  // no previous page to return to.
+  goBackFromError: function() {
+    wx.navigateBack({
+      fail: function() { wx.reLaunch({ url: '/pages/feed/feed' }); }
+    });
+  },
+
   onHeroLoad: function() {
     if (!this.data.heroLoaded) this.setData({ heroLoaded: true });
   },
