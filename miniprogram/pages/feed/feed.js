@@ -48,11 +48,6 @@ Page({
   },
 
   onLoad: function() {
-    // Which card images have finished loading, keyed by event _id. Lives
-    // outside data so applyFilters() rebuilding filteredEvents doesn't
-    // reset the flags (which would re-fade already-visible images).
-    this._imgLoaded = {};
-
     var info = wx.getWindowInfo();
 
     // The nav-bar's icon row must occupy the SAME vertical band as the
@@ -281,11 +276,8 @@ Page({
     // cards past the cap all share the same (max) delay.
     var maxStaggerIndex = 9;
     var staggerStepMs = 60;
-    var loadedMap = this._imgLoaded || {};
     filtered.forEach(function(e, i) {
       e.animDelay = Math.min(i, maxStaggerIndex) * staggerStepMs;
-      // Carry the image fade-in state across list rebuilds (see onLoad)
-      e.imgLoaded = !!loadedMap[e._id];
     });
 
     this.setData({ filteredEvents: filtered });
@@ -441,25 +433,6 @@ Page({
 
     this.setData({ eventDates: eventDates });
     this.initCalendar(this.data.calendarYear, this.data.calendarMonth);
-  },
-
-  // Fade a card image in once loaded (see .card-img in feed.wxss). The
-  // per-id map is authoritative; the setData only patches the item that
-  // is still at the same index (the list may have been re-filtered
-  // between render and load — applyFilters re-derives the flag then).
-  onCardImgLoad: function(e) {
-    var id = e.currentTarget.dataset.id;
-    if (!id) return;
-    if (!this._imgLoaded) this._imgLoaded = {};
-    if (this._imgLoaded[id]) return;
-    this._imgLoaded[id] = true;
-    var idx = e.currentTarget.dataset.index;
-    var item = this.data.filteredEvents[idx];
-    if (item && item._id === id && !item.imgLoaded) {
-      var patch = {};
-      patch['filteredEvents[' + idx + '].imgLoaded'] = true;
-      this.setData(patch);
-    }
   },
 
   onPullDownRefresh: function() {

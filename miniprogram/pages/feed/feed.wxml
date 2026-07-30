@@ -190,14 +190,12 @@
              edge, over a dark gradient scrim (see .card-poster-scrim). -->
         <view class="card-media-wrap" style="min-height:{{cardImgHeight}}rpx">
           <image
-            src="{{item.promoImages[0] || '/images/placeholder.png'}}"
+            wx:if="{{item.promoImages[0]}}"
+            src="{{item.promoImages[0]}}"
             mode="widthFix"
-            class="card-img {{item.imgLoaded ? 'card-img--loaded' : ''}}"
-            lazy-load="{{true}}"
-            bindload="onCardImgLoad"
-            data-id="{{item._id}}"
-            data-index="{{index}}"
+            class="card-img"
           />
+          <view wx:else class="card-img-empty"></view>
           <view wx:if="{{item.promoImages.length > 1}}" class="img-count-badge">
             <text class="img-count-txt">{{item.promoImages.length}}</text>
             <view class="icon icon--camera img-count-icon"></view>
