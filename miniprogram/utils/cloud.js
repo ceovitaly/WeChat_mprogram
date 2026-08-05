@@ -80,11 +80,14 @@ async function resolveEventImages(events) {
 
   if (allCloudUrls.length === 0) return events
 
+  console.log('[cloud] resolveEventImages: resolving', allCloudUrls.length, 'cloud URLs; sample:', allCloudUrls[0])
+
   var urlMap = {}
   // Primary: cloud function resolves server-side (reliable cross-account).
   try {
     var result = await callFunction('clientAuth', { action: 'resolveImages', fileList: allCloudUrls })
     urlMap = (result && result.urlMap) || {}
+    console.log('[cloud] CF resolveImages returned', Object.keys(urlMap).length, 'URLs; result:', JSON.stringify(result).substring(0, 200))
   } catch (err) {
     console.error('[cloud] resolveEventImages CF error:', err)
   }
@@ -92,13 +95,17 @@ async function resolveEventImages(events) {
   // Fallback: direct client-side resolution if the CF didn't resolve everything.
   var unresolved = allCloudUrls.filter(function(u) { return !urlMap[u] })
   if (unresolved.length > 0) {
+    console.log('[cloud] trying direct getTempFileURL for', unresolved.length, 'unresolved')
     try {
       var directMap = await getTempUrls(unresolved)
+      console.log('[cloud] direct resolved', Object.keys(directMap).length, 'URLs')
       Object.keys(directMap).forEach(function(k) { if (directMap[k]) urlMap[k] = directMap[k] })
     } catch (err2) {
       console.error('[cloud] resolveEventImages direct error:', err2)
     }
   }
+
+  console.log('[cloud] resolveEventImages: final urlMap size', Object.keys(urlMap).length)
 
   list.forEach(function(event) {
     if (!event) return
