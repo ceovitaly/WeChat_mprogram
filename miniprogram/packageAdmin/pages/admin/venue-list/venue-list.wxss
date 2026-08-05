@@ -17,19 +17,9 @@ page {
   overflow: hidden;
 }
 
-/* .nav-bar is deliberately NOT global — nine pages use the name for
-   visually different bars. */
-.nav-bar {
-  background: var(--bg-card);
-  padding: 24rpx 32rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 0.5px solid var(--border);
-  flex-shrink: 0;
-}
-
-.nav-bar:active { background: var(--bg); }
+/* The nine hand-rolled .nav-bar variants are gone — this page's header
+   is <nav-bar> (/components/nav-bar) and its "+ Add Venue" action uses
+   the shared .nav-action / .nav-action-text pair from app.wxss. */
 
 .empty-state {
   display: flex;

@@ -1,0 +1,91 @@
+/* Host is a flex item of the page's flex column — it must never be
+   squeezed by the scrolling sibling below it. */
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Guest-app spacing conventions: 24rpx sides, 12rpx bottom, inset
+   hairline (::after at left/right 24rpx) rather than a full-bleed
+   border-bottom. */
+.nav-bar {
+  position: relative;
+  background: var(--bg-card);
+  padding-left: 24rpx;
+  padding-right: 24rpx;
+  padding-bottom: 12rpx;
+}
+
+.nav-bar::after {
+  content: '';
+  position: absolute;
+  left: 24rpx;
+  right: 24rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--border);
+}
+
+/* Width is bound in the wxml (rowWidth, px) so trailing actions stop
+   short of the WeChat capsule. Height is the capsule's own height. */
+.nav-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+/* Pulled left by its own optical padding so the chevron's glyph, not its
+   box, lines up with the container's 24rpx edge. */
+.nav-back {
+  width: 56rpx;
+  align-self: stretch;
+  margin-left: -14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
+}
+
+.nav-back:active { opacity: 0.5; }
+
+/* Vector chevron rendered via -webkit-mask-image (same mask-icon
+   technique as the guest app's .icon--* classes). The view's
+   background-color is the chevron's colour; the SVG mask supplies
+   the shape — a Feather-style chevron-left that reads as the native
+   system back arrow rather than a thin typographic glyph.
+   backColor overrides background-color (not color) inline, since
+   masks paint background, not text. */
+.nav-back-icon {
+  width: 40rpx;
+  height: 40rpx;
+  background-color: var(--text);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpolyline%20points='15%2018%209%2012%2015%206'/%3E%3C/svg%3E");
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpolyline%20points='15%2018%209%2012%2015%206'/%3E%3C/svg%3E");
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+.nav-back-pad {
+  width: 56rpx;
+  flex-shrink: 0;
+}
+
+.nav-title-txt {
+  flex: 1;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-title-txt--center { text-align: center; }
+
+/* Stand-in for the title when a page has none, so a right-slot action
+   still gets pushed to the trailing edge. */
+.nav-fill { flex: 1; }

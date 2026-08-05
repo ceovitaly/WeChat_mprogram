@@ -13,34 +13,21 @@
   background: var(--bg);
 }
 
-.top-bar {
-  background: var(--bg-card);
-  padding: 20rpx 28rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 0.5px solid var(--border);
-  flex-shrink: 0;
-}
+/* .top-bar / .top-bar-left / .event-title are gone — the header row is
+   now <nav-bar> (/components/nav-bar), which owns the background, the
+   inset hairline and the title. Only the pieces placed in its slots are
+   styled here, since slot content renders in the page's scope. */
 
-.top-bar-left {
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
-  flex: 1;
-}
-
-.event-title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: var(--text);
-}
-
+/* default slot: the venue line, directly under the capsule band */
 .event-sub {
+  display: block;
   font-size: 24rpx;
   color: var(--text-2);
+  margin-top: 2rpx;
 }
 
+/* "right" slot: compact header chips, deliberately NOT the 76rpx house
+   CTA pill — they have to fit inside the capsule's own band. */
 .close-event-btn {
   background: rgba(255, 59, 48, 0.1);
   border: 1rpx solid rgba(255, 59, 48, 0.25);

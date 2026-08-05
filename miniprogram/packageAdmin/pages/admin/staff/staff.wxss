@@ -18,20 +18,9 @@ page {
   overflow: hidden;
 }
 
-/* .nav-bar is deliberately NOT global: nine pages use that class name for
-   visually different bars (some centered, some space-between, some with
-   no border of their own). */
-.nav-bar {
-  background: var(--bg-card);
-  padding: 24rpx 32rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 0.5px solid var(--border);
-  flex-shrink: 0;
-}
-
-.nav-bar:active { background: var(--bg); }
+/* The nine hand-rolled .nav-bar variants are gone — this page's header
+   is <nav-bar> (/components/nav-bar) and its "+ Add Counter" action uses
+   the shared .nav-action / .nav-action-text pair from app.wxss. */
 
 .empty-state {
   display: flex;
@@ -75,12 +64,16 @@ page {
   letter-spacing: 0.5rpx;
 }
 
+/* House CTA geometry (76rpx / 999rpx pill / 28rpx / 600) — see app.wxss.
+   Destructive, so it keeps its red tint + red label. */
 .modal-delete-row {
   margin: 0 24rpx 0;
   background: #FFF1F0;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  text-align: center;
+  border-radius: 999rpx;
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-delete-row:active { opacity: 0.7; }
@@ -88,7 +81,7 @@ page {
 .modal-delete-text {
   font-size: 28rpx;
   color: #FF3B30;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .safe-area-bottom {

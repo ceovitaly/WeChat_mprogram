@@ -7,16 +7,23 @@
      .empty-state .empty-text
    Verified with a grep of team.wxml and every page .js. */
 
+/* Fixed 100vh + height:0 on the scroller (rather than the previous
+   min-height:100vh + bare flex:1) now that <nav-bar> occupies a
+   non-scrolling band at the top: without it the scroll-view would size
+   to its content and push the list past the bottom of the screen. This
+   matches every other list page in the app. */
 .page {
   background: var(--bg);
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* Scroll */
 .scroll {
   flex: 1;
+  height: 0;
 }
 
 /* Section */

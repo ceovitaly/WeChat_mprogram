@@ -112,10 +112,13 @@ page {
 
 .input-placeholder { color: rgba(255, 255, 255, 0.2); }
 
+/* House CTA geometry (76rpx / 999rpx pill / 28rpx / 600) — see app.wxss.
+   This card sits on a fixed dark background, so both buttons keep their
+   literal colours rather than the theme vars. */
 .primary-btn {
-  height: 96rpx;
+  height: 76rpx;
   background: #007AFF;
-  border-radius: 16rpx;
+  border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,16 +127,16 @@ page {
 .primary-btn:active { opacity: 0.8; }
 
 .primary-btn-text {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: #FFFFFF;
 }
 
 .danger-btn {
-  height: 96rpx;
+  height: 76rpx;
   background: rgba(255, 59, 48, 0.15);
   border: 1rpx solid rgba(255, 59, 48, 0.3);
-  border-radius: 16rpx;
+  border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -142,7 +145,7 @@ page {
 .danger-btn:active { opacity: 0.7; }
 
 .danger-btn-text {
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: #FF3B30;
 }

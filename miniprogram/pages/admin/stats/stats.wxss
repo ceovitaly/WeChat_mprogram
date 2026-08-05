@@ -6,7 +6,12 @@
      .metrics-grid .metric-card .metric-value .metric-label
      .modal-overlay .modal-close .guest-modal .gm-* .duty-*
      .rpt-* .section-header .gm-close-event-*
-   Verified with a grep of stats.wxml and every page .js. */
+   Verified with a grep of stats.wxml and every page .js.
+
+   The header row moved to <nav-bar> (/components/nav-bar), taking
+   .nav-bar / .nav-username / .nav-btn-logout with it — the username is
+   now the component's `title` and Log out is the shared
+   .nav-action / .nav-action-text--danger pair from app.wxss. */
 
 .page {
   height: 100vh;
@@ -16,64 +21,65 @@
   overflow: hidden;
 }
 
-.nav-bar {
-  background: var(--bg-card);
-  padding: 20rpx 32rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 0.5px solid var(--border);
-  flex-shrink: 0;
-}
-
-.nav-username {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.nav-btn-logout {
-  font-size: 28rpx;
-  color: var(--red);
-  font-weight: 700;
-}
-
+/* ── Segmented control ──────────────────────────────────────────
+   House "pick one of N" style, ported from the guest app's
+   .nav-seg-row: ONE bordered pill around all segments, with dividers
+   drawn as 20%-inset ::after hairlines rather than border-rights.
+   align-items:stretch lets those dividers span the pill edge to edge
+   while each segment still centres its own label. overflow:hidden
+   clips the flat-edged segments to the pill's rounded ends.
+   ─────────────────────────────────────────────────────────────── */
 .sub-tabs {
   display: flex;
-  background: var(--bg-card);
-  border-bottom: 0.5px solid var(--border);
+  align-items: stretch;
+  margin: 16rpx 24rpx;
+  border: 1rpx solid var(--border);
+  border-radius: 999rpx;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
 .sub-tab {
+  position: relative;
   flex: 1;
-  height: 80rpx;
+  height: 76rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  gap: 6rpx;
+  padding: 0 12rpx;
+}
+
+.sub-tab:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 1rpx;
+  background: var(--border);
 }
 
 .sub-tab-text {
   font-size: 28rpx;
-  color: var(--text-2);
-}
-
-.sub-tab--active .sub-tab-text {
-  color: var(--blue);
   font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+  text-align: center;
 }
 
-.sub-tab--active::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 20%;
-  right: 20%;
-  height: 4rpx;
-  background: var(--blue);
-  border-radius: 2rpx;
-}
+/* Selected = the segment fills solid var(--blue), label flips to white.
+   Chosen over the previous underline (which reads as a stray tick inside
+   a pill outline) and over a tinted fill (which would need separate
+   light/dark opacities to stay visible). A solid fill is the one
+   treatment that needs no per-theme tuning: --blue is #007AFF in light
+   and #0A84FF in dark, and #FFFFFF clears 4.5:1 on both, so the active
+   segment reads identically in either mode. */
+.sub-tab--active { background: var(--blue); }
+.sub-tab--active .sub-tab-text { color: #FFFFFF; }
+
+/* The active segment's own divider would otherwise sit on the blue fill. */
+.sub-tab--active::after { display: none; }
 
 .scroll {
   flex: 1;

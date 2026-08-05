@@ -1,5 +1,10 @@
 <view class="page">
 
+<!-- Capsule-aligned header. This page previously had NO header row of its
+     own and relied on the system bar's "Team" title; with a custom nav
+     that title has to be drawn here. Tab page — no back affordance. -->
+<nav-bar title="Team" />
+
 <scroll-view class="scroll" scroll-y>
 
   <view class="section" style="padding-top: 32rpx;">

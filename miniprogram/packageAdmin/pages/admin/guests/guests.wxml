@@ -1,5 +1,10 @@
 <view class="page">
 
+<!-- Reached via navigateTo from Team. This page previously had NO header
+     row of its own and relied on the system bar (title + back button);
+     with a custom nav both have to be drawn here. -->
+<nav-bar title="All Guests" show-back />
+
 <view class="search-wrap">
   <input
     class="search-input"
@@ -32,6 +37,14 @@
   </view>
 </scroll-view>
 
+<!-- The list moved into its own scroll-view (it used to ride the page's
+     native scroll). With navigationStyle:custom a natively-scrolling page
+     would have carried <nav-bar> up under the status bar and left the
+     rows running beneath the capsule; keeping the nav + search + chips as
+     fixed siblings above a flex:1 scroller is the same structure the
+     three neighbouring list pages already use. -->
+<scroll-view class="scroll-content" scroll-y>
+
 <view wx:if="{{isLoading && filteredGuests.length === 0}}" class="empty-state">
   <text class="empty-text">Loading...</text>
 </view>
@@ -59,6 +72,8 @@
 </view>
 
 <view class="safe-area-bottom" />
+
+</scroll-view>
 
 <!-- Change Promoter Sheet -->
 <bottom-sheet show="{{showPromoterSheet}}" bind:close="closePromoterSheet">

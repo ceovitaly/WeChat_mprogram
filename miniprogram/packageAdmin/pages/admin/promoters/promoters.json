@@ -1,7 +1,9 @@
 {
   "usingComponents": {
-    "bottom-sheet": "/packageAdmin/components/bottom-sheet/index"
+    "bottom-sheet": "/packageAdmin/components/bottom-sheet/index",
+    "nav-bar": "/components/nav-bar/index"
   },
+  "navigationStyle": "custom",
   "navigationBarTitleText": "Promoters",
   "navigationBarBackgroundColor": "#ffffff",
   "navigationBarTextStyle": "black",

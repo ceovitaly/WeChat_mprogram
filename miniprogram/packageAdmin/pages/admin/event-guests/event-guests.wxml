@@ -1,17 +1,22 @@
 <view class="page">
 
-  <view class="top-bar">
-    <view class="top-bar-left">
-      <text class="event-title">{{eventTitle}}</text>
-      <text class="event-sub">{{venueName}}</text>
+  <!-- Reached via navigateTo from Schedule / Stats. navigationStyle is
+       now custom, so the system back button is gone — show-back restores
+       it (the component calls wx.navigateBack() itself).
+       The event title takes the capsule band; the venue line goes in the
+       component's default slot, i.e. directly beneath that band inside
+       the same padded container. -->
+  <nav-bar title="{{eventTitle}}" show-back>
+    <view slot="right">
+      <view wx:if="{{!isClosed && isAdmin}}" class="close-event-btn" bindtap="confirmCloseEvent">
+        <text class="close-event-text">Close Event</text>
+      </view>
+      <view wx:elif="{{isClosed}}" class="export-btn" bindtap="exportCSV">
+        <text class="export-btn-text">Export</text>
+      </view>
     </view>
-    <view wx:if="{{!isClosed && isAdmin}}" class="close-event-btn" bindtap="confirmCloseEvent">
-      <text class="close-event-text">Close Event</text>
-    </view>
-    <view wx:elif="{{isClosed}}" class="export-btn" bindtap="exportCSV">
-      <text class="export-btn-text">Export</text>
-    </view>
-  </view>
+    <text class="event-sub">{{venueName}}</text>
+  </nav-bar>
 
   <view class="stats-bar {{isClosed ? 'stats-bar--closed' : ''}}">
     <view class="stat-item">

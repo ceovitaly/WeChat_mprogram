@@ -82,16 +82,67 @@ button::after {
   display: block;
 }
 
-/* was duplicated in: event-edit, venue-edit, counter/stats.
-   counter/work overrides font-size + adds flex/centering. */
+/* counter/work is the last page still hand-rolling a header row (it is
+   NOT on the shared <nav-bar> component — see components/nav-bar), so
+   this is now used by that page alone. */
 .nav-title {
   font-size: 34rpx;
   font-weight: 700;
   color: var(--text);
 }
 
-/* was duplicated in: event-edit, venue-edit */
-.nav-btn-text--dim { opacity: 0.4; }
+/* Trailing actions placed in <nav-bar>'s "right" slot. Slot content is
+   rendered in the HOST PAGE's scope, so these must be global — the
+   component's own .wxss cannot reach them. */
+.nav-action { padding: 0 8rpx; }
+.nav-action:active { opacity: 0.5; }
+
+.nav-action-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+/* in-flight Save */
+.nav-action-text--dim { opacity: 0.4; }
+/* destructive trailing action (Log out) — red, not blue */
+.nav-action-text--danger { color: var(--red); }
+
+/* Page header toolbar ───────────────────────────────────────── */
+/* Sits BETWEEN </nav-bar> and the scroll-view on list pages, as a
+   flex-shrink:0 sibling of both (part of the page's fixed header,
+   NOT inside the scroll-view). Holds the primary action that used
+   to live in <nav-bar>'s right slot — given its own row so it gets
+   a proper pill shape and full touch width instead of the
+   capsule-aligned text label. */
+.page-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 24rpx;
+  background: var(--bg-card);
+}
+
+.page-add-btn {
+  height: 76rpx;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  background: var(--blue);
+  border-radius: 999rpx;
+  border: none;
+}
+
+.page-add-btn:active { opacity: 0.8; }
+
+.page-add-btn-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
 
 /* was duplicated in: calendar, team, counter/work.
    stats and counter/stats keep their own flat 160rpx value. */
@@ -104,12 +155,6 @@ button::after {
 .scroll-content {
   flex: 1;
   height: 0;
-}
-
-.nav-add-text {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: var(--blue);
 }
 
 .list {
@@ -179,18 +224,31 @@ button::after {
 /* calendar keeps a local 64rpx override. */
 .empty-icon { font-size: 80rpx; }
 
+/* ── House CTA geometry ──────────────────────────────────────────
+   Every rectangular action button in this app is 76rpx tall, a full
+   999rpx pill, with a 28rpx/600 label. Height comes from `height`
+   plus flex centring — never from vertical padding — so labels stay
+   optically centred at any font size.
+   ──────────────────────────────────────────────────────────────── */
+
 /* was duplicated in: calendar, promoters, venue-list */
 .empty-btn {
   margin-top: 8rpx;
-  padding: 16rpx 40rpx;
+  height: 76rpx;
+  padding: 0 40rpx;
   background: var(--blue);
-  border-radius: 20rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.empty-btn:active { opacity: 0.8; }
 
 .empty-btn-text {
   font-size: 28rpx;
   color: #FFFFFF;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* Form field rows ──────────────────────────────────────────── */
@@ -229,8 +287,8 @@ button::after {
 /* was duplicated in: event-edit, venue-edit */
 .save-btn {
   background: var(--blue);
-  border-radius: 20rpx;
-  padding: 28rpx;
+  border-radius: 999rpx;
+  height: 76rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -239,7 +297,7 @@ button::after {
 
 .save-btn:active { opacity: 0.8; }
 .save-btn--dim { opacity: 0.5; }
-.save-btn-text { font-size: 30rpx; color: #FFFFFF; font-weight: 600; }
+.save-btn-text { font-size: 28rpx; color: #FFFFFF; font-weight: 600; }
 
 /* Sheet / modal contents ───────────────────────────────────── */
 /* The overlay + sheet shell now live in packageAdmin/components/bottom-sheet.
@@ -274,21 +332,21 @@ button::after {
 .modal-cancel {
   flex: 1;
   background: var(--bg-card);
-  border-radius: 16rpx;
-  padding: 24rpx;
+  border-radius: 999rpx;
+  height: 76rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28rpx;
   color: var(--text-2);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .modal-save {
   flex: 2;
   background: var(--blue);
-  border-radius: 16rpx;
-  padding: 24rpx;
+  border-radius: 999rpx;
+  height: 76rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -371,13 +429,19 @@ button::after {
 
 /* Buttons ──────────────────────────────────────────────────── */
 
+/* NOTE: counter/work is the only page with .primary-btn markup and it
+   defines its own .primary-btn + .primary-btn-text locally, so this rule
+   is currently shadowed. Kept (and brought to house geometry) so the next
+   page that reaches for the name gets the right shape by default. */
 .primary-btn {
   background: var(--blue);
-  border-radius: 24rpx;
-  padding: 26rpx;
-  text-align: center;
+  border-radius: 999rpx;
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #FFFFFF;
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
   border: none;
   width: 100%;

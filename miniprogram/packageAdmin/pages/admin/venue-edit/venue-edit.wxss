@@ -1,6 +1,11 @@
 /* Hoisted to app.wxss: .section-title .card .field-row .field-label
-   .field-placeholder .field-picker .nav-title .nav-btn-text--dim
-   .save-btn(+states). Only the deltas live here.
+   .field-placeholder .field-picker .save-btn(+states) and the
+   .nav-action* trio. Only the deltas live here.
+
+   The header row is now <nav-bar> (/components/nav-bar); its Save action
+   uses .nav-action / .nav-action-text / .nav-action-text--dim, which
+   replaced the page-local .nav-bar / .nav-btn / .nav-btn-text and the
+   old shared .nav-title / .nav-btn-text--dim.
 
    Removed as dead code: the .logo-row/.logo-img/.logo-placeholder/
    .logo-plus/.logo-info/.logo-title/.logo-sub block — venue-edit.wxml
@@ -8,26 +13,6 @@
 
 .page {
   background: var(--bg);
-}
-
-/* ── Nav bar ── */
-.nav-bar {
-  background: var(--bg-card);
-  padding: 20rpx 32rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 0.5px solid var(--border);
-}
-
-.nav-btn {
-  padding: 10rpx 16rpx;
-}
-
-.nav-btn-text {
-  font-size: 30rpx;
-  color: var(--blue);
-  font-weight: 600;
 }
 
 /* ── Sections ── */

@@ -1,0 +1,35 @@
+<!-- padding-top clears down to the capsule's top edge; .nav-row's explicit
+     height equals the capsule's own height, so the row lands in exactly
+     the capsule's band instead of below it (see index.js _measure). -->
+<view class="nav-bar" style="padding-top:{{navPadTop}}px">
+
+  <view class="nav-row" style="height:{{navBarHeight}}px;width:{{rowWidth}}px">
+
+    <view wx:if="{{showBack}}" class="nav-back" bindtap="onBackTap">
+      <view class="nav-back-icon" style="{{backColor ? 'background-color:' + backColor : ''}}"></view>
+    </view>
+
+    <!-- Left slot: for pages whose leading control is interactive and
+         isn't a plain title (calendar's date dropdown). -->
+    <slot name="left"></slot>
+
+    <text
+      wx:if="{{title}}"
+      class="nav-title-txt {{align === 'center' ? 'nav-title-txt--center' : ''}}"
+    >{{title}}</text>
+    <view wx:else class="nav-fill"></view>
+
+    <!-- Right slot: trailing action(s) — "+ Add", "Save", "Log out", ... -->
+    <slot name="right"></slot>
+
+    <!-- Balances the back chevron so a centred title stays optically
+         centred rather than shifted by the chevron's width. -->
+    <view wx:if="{{showBack && align === 'center'}}" class="nav-back-pad"></view>
+
+  </view>
+
+  <!-- Default slot: optional secondary content directly under the capsule
+       band, inside the same padded container (event-guests' venue line). -->
+  <slot></slot>
+
+</view>

@@ -118,14 +118,18 @@ page {
 
 /* ── Button ── */
 
+/* House CTA geometry (76rpx / 999rpx pill / 28rpx / 600) — see app.wxss.
+   This is a native <button> whose label is its own text node, so the
+   label is centred with line-height rather than flexbox. Colour is the
+   literal blue, not var(--blue): this screen is always dark. */
 .login-btn {
-  height: 96rpx;
-  line-height: 96rpx;
+  height: 76rpx;
+  line-height: 76rpx;
   background: #007AFF;
-  border-radius: 28rpx;
+  border-radius: 999rpx;
   text-align: center;
   color: #FFFFFF;
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
   border: none;
   margin: 8rpx 0 0;

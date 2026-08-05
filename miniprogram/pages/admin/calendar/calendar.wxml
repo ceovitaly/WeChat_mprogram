@@ -1,13 +1,16 @@
 <view class="page">
 
-<!-- Fixed Header -->
-<view class="nav-bar">
-  <view class="nav-date" bindtap="toggleCalendar">
+<!-- Capsule-aligned header. Tab page — no back affordance by design. -->
+<nav-bar>
+  <view slot="left" class="nav-date" bindtap="toggleCalendar">
     <text class="nav-date-text">{{selectedDateLabel}}</text>
     <text class="nav-chevron">{{calendarVisible ? '▲' : '▼'}}</text>
   </view>
-  <view class="nav-btn" bindtap="goCreateEvent">
-    <text class="nav-btn-text">+ Add</text>
+</nav-bar>
+
+<view class="page-toolbar">
+  <view class="page-add-btn" bindtap="goCreateEvent">
+    <text class="page-add-btn-text">+ Add</text>
   </view>
 </view>
 

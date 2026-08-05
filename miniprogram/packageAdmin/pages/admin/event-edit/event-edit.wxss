@@ -1,7 +1,9 @@
 /* Hoisted to app.wxss: .section-title .card .field-row(+:last-child)
-   .field-label .field-placeholder .field-picker .nav-title
-   .nav-btn-text--dim .save-btn(+states) and the .modal-* sheet chrome.
-   The overlay + sheet shell now come from <bottom-sheet>.
+   .field-label .field-placeholder .field-picker .save-btn(+states),
+   the .nav-action* trio and the .modal-* sheet chrome.
+   The overlay + sheet shell now come from <bottom-sheet>, and the header
+   row from <nav-bar> (/components/nav-bar) — which took .header-container,
+   .nav-bar, .nav-btn and .nav-btn-text with it.
 
    Removed as dead code (no matching markup in event-edit.wxml):
    .tab-bar / .tab / .tab--active(+::after), .package-row / .package-info /
@@ -15,34 +17,9 @@
   background: var(--bg);
 }
 
-.header-container {
-  flex-shrink: 0;
-  background: var(--bg-card);
-  border-bottom: 0.5px solid var(--border);
-}
-
 .content-area {
   flex: 1;
   overflow: hidden;
-}
-
-/* No background/border here on purpose — .header-container above draws
-   them. This is why .nav-bar must stay page-local. */
-.nav-bar {
-  padding: 20rpx 32rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.nav-btn {
-  padding: 10rpx 16rpx;
-}
-
-.nav-btn-text {
-  font-size: 30rpx;
-  color: var(--blue);
-  font-weight: 600;
 }
 
 /* ── Media grid ── */

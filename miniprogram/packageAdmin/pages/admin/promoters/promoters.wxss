@@ -19,19 +19,9 @@ page {
   overflow: hidden;
 }
 
-/* .nav-bar is deliberately NOT global — nine pages use the name for
-   visually different bars. */
-.nav-bar {
-  background: var(--bg-card);
-  padding: 24rpx 32rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 0.5px solid var(--border);
-  flex-shrink: 0;
-}
-
-.nav-bar:active { background: var(--bg); }
+/* The nine hand-rolled .nav-bar variants are gone — this page's header
+   is <nav-bar> (/components/nav-bar) and its "+ Add Promoter" action uses
+   the shared .nav-action / .nav-action-text pair from app.wxss. */
 
 .empty-state {
   display: flex;
@@ -125,11 +115,15 @@ page {
   padding: 16rpx 24rpx 0;
 }
 
+/* House CTA geometry (76rpx / 999rpx pill / 28rpx / 600) — see app.wxss.
+   Stays an OUTLINED blue button; only shape/size changed. */
 .code-save-btn {
   background: var(--bg-card);
-  border-radius: 16rpx;
-  padding: 24rpx;
-  text-align: center;
+  border-radius: 999rpx;
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 1.5rpx solid var(--blue);
 }
 
@@ -158,31 +152,10 @@ page {
 .action-row--orange .action-row-text { color: #FF9500; font-weight: 600; font-size: 28rpx; }
 .action-row--red .action-row-text { color: #FF3B30; font-weight: 600; font-size: 28rpx; }
 
-/* Kept page-local on purpose. app.wxss's shared .modal-cancel/.modal-save
-   centre their label with flexbox; this page has always centred it with
-   text-align, so its own definitions stay to preserve that exactly. */
-.modal-cancel {
-  flex: 1;
-  background: var(--bg-card);
-  border-radius: 16rpx;
-  padding: 24rpx;
-  text-align: center;
-  font-size: 28rpx;
-  color: var(--text-2);
-  font-weight: 500;
-  display: block;
-}
-
+/* These used to be page-local text-align-centred copies of the shared
+   .modal-cancel/.modal-save. The house CTA geometry needs an explicit
+   height with flex centring (padding-driven height can't centre a label
+   reliably), which is exactly what app.wxss now does — so the local
+   copies are gone and this page inherits the shared rules. Only the
+   full-width Close variant remains. */
 .modal-cancel--full { flex: 1; }
-
-.modal-save {
-  flex: 2;
-  background: var(--blue);
-  border-radius: 16rpx;
-  padding: 24rpx;
-  text-align: center;
-  font-size: 28rpx;
-  color: #FFFFFF;
-  font-weight: 600;
-  display: block;
-}

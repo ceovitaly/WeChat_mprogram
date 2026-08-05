@@ -1,5 +1,8 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index"
+  },
+  "navigationStyle": "custom",
   "navigationBarTitleText": "Venues",
   "navigationBarBackgroundColor": "#ffffff",
   "navigationBarTextStyle": "black",

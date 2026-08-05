@@ -1,6 +1,9 @@
 {
   "usingComponents": {
-    "bottom-sheet": "/packageAdmin/components/bottom-sheet/index"
+    "bottom-sheet": "/packageAdmin/components/bottom-sheet/index",
+    "nav-bar": "/components/nav-bar/index"
   },
-  "navigationBarTitleText": "All Guests"
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "All Guests",
+  "disableScroll": true
 }

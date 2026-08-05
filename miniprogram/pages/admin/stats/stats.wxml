@@ -1,11 +1,11 @@
 <view class="page">
 
-<view class="nav-bar">
-  <text class="nav-username">{{userName}}</text>
-  <view class="nav-btn" bindtap="confirmLogout">
-    <text class="nav-btn-logout">Log out</text>
+<!-- Capsule-aligned header. Tab page — no back affordance by design. -->
+<nav-bar title="{{userName}}">
+  <view slot="right" class="nav-action" bindtap="confirmLogout">
+    <text class="nav-action-text nav-action-text--danger">Log out</text>
   </view>
-</view>
+</nav-bar>
 
 <!-- Sub-tabs -->
 <view class="sub-tabs">

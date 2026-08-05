@@ -1,7 +1,14 @@
 <view class="page">
 
-  <view class="nav-bar" bindtap="openAddModal">
-    <text class="nav-add-text">+ Add Promoter</text>
+  <!-- Reached via navigateTo from Team. navigationStyle is now custom, so
+       the system back button is gone — show-back restores it (the
+       component calls wx.navigateBack() itself). -->
+  <nav-bar title="Promoters" show-back />
+
+  <view class="page-toolbar">
+    <view class="page-add-btn" bindtap="openAddModal">
+      <text class="page-add-btn-text">+ Add Promoter</text>
+    </view>
   </view>
 
   <scroll-view class="scroll-content" scroll-y>
