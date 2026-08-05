@@ -230,11 +230,15 @@ exports.main = async (event, context) => {
     if (action === 'resolveImages') {
       const fileList = event.fileList || [];
       if (fileList.length === 0) return { urlMap: {} };
-      const tempRes = await cloud.getTempFileURL({ fileList });
       const urlMap = {};
-      tempRes.fileList.forEach(f => {
-        if (f.tempFileURL) urlMap[f.fileID] = f.tempFileURL;
-      });
+      // getTempFileURL accepts max 50 file IDs per call — batch them.
+      for (let i = 0; i < fileList.length; i += 50) {
+        const batch = fileList.slice(i, i + 50);
+        const tempRes = await cloud.getTempFileURL({ fileList: batch });
+        tempRes.fileList.forEach(f => {
+          if (f.tempFileURL) urlMap[f.fileID] = f.tempFileURL;
+        });
+      }
       return { urlMap };
     }
 
