@@ -76,24 +76,40 @@ async function resolveEventImages(events) {
 
   if (allCloudUrls.length === 0) return events
 
+  var urlMap = {}
   try {
     var result = await callFunction('clientAuth', { action: 'resolveImages', fileList: allCloudUrls })
-    var urlMap = (result && result.urlMap) || {}
-
-    list.forEach(function(event) {
-      if (!event) return
-      SINGLE_IMAGE_FIELDS.forEach(function(field) {
-        if (event[field]) event[field] = urlMap[event[field]] || event[field]
-      })
-      IMAGE_LIST_FIELDS.forEach(function(field) {
-        if (Array.isArray(event[field])) {
-          event[field] = event[field].map(function(url) { return urlMap[url] || url })
-        }
-      })
-    })
+    urlMap = (result && result.urlMap) || {}
   } catch (err) {
-    console.error('[cloud] resolveEventImages error:', err)
+    console.error('[cloud] resolveEventImages cloud-function error, trying direct:', err)
   }
+
+  // Fallback: if the cloud function didn't resolve anything (not deployed,
+  // timed out, or returned empty), resolve directly via the cross-account
+  // cloud instance's getTempFileURL. This is the same API the cloud function
+  // uses server-side — it works from the client too once cloud.init() has
+  // completed on the resourceEnv.
+  var unresolved = allCloudUrls.filter(function(u) { return !urlMap[u] })
+  if (unresolved.length > 0) {
+    try {
+      var directMap = await getTempUrls(unresolved)
+      Object.keys(directMap).forEach(function(k) { urlMap[k] = directMap[k] })
+    } catch (err2) {
+      console.error('[cloud] resolveEventImages direct fallback error:', err2)
+    }
+  }
+
+  list.forEach(function(event) {
+    if (!event) return
+    SINGLE_IMAGE_FIELDS.forEach(function(field) {
+      if (event[field]) event[field] = urlMap[event[field]] || event[field]
+    })
+    IMAGE_LIST_FIELDS.forEach(function(field) {
+      if (Array.isArray(event[field])) {
+        event[field] = event[field].map(function(url) { return urlMap[url] || url })
+      }
+    })
+  })
 
   return events
 }
