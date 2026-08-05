@@ -69,9 +69,7 @@
 <!-- ══ STEP 3: GUESTS ══ -->
 <view wx:if="{{step === 'guests'}}" class="step-guests">
 
-  <nav-bar title="{{staffName}}" show-back bind:back="backToEvents">
-    <text class="nav-sub">{{venueName}} · {{currentEvent.title}}</text>
-  </nav-bar>
+  <nav-bar title="{{venueName}} · {{currentEvent.title}}" show-back bind:back="backToEvents" />
 
   <!-- Search bar -->
   <view class="search-wrap">
