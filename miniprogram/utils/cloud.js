@@ -80,27 +80,17 @@ async function resolveEventImages(events) {
 
   if (allCloudUrls.length === 0) return events
 
+  // Resolve directly via the cross-account cloud instance's getTempFileURL.
+  // The previous approach routed through the clientAuth cloud function, but
+  // that added a deployment dependency (the function must exist in the
+  // resource env) and a failure point for zero benefit — getTempFileURL
+  // works identically from the client once cloud.init() has completed on
+  // the resourceEnv. Batched in chunks of 50 (API limit per call).
   var urlMap = {}
   try {
-    var result = await callFunction('clientAuth', { action: 'resolveImages', fileList: allCloudUrls })
-    urlMap = (result && result.urlMap) || {}
+    urlMap = await getTempUrls(allCloudUrls)
   } catch (err) {
-    console.error('[cloud] resolveEventImages cloud-function error, trying direct:', err)
-  }
-
-  // Fallback: if the cloud function didn't resolve anything (not deployed,
-  // timed out, or returned empty), resolve directly via the cross-account
-  // cloud instance's getTempFileURL. This is the same API the cloud function
-  // uses server-side — it works from the client too once cloud.init() has
-  // completed on the resourceEnv.
-  var unresolved = allCloudUrls.filter(function(u) { return !urlMap[u] })
-  if (unresolved.length > 0) {
-    try {
-      var directMap = await getTempUrls(unresolved)
-      Object.keys(directMap).forEach(function(k) { urlMap[k] = directMap[k] })
-    } catch (err2) {
-      console.error('[cloud] resolveEventImages direct fallback error:', err2)
-    }
+    console.error('[cloud] resolveEventImages error:', err)
   }
 
   list.forEach(function(event) {
