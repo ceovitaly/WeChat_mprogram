@@ -32,13 +32,7 @@
 
 <!-- ══ STEP 2: EVENTS ══ -->
 <view wx:if="{{step === 'event'}}" class="step-event">
-  <view class="nav-bar">
-    <view class="nav-back-red" bindtap="leaveVenue">
-      <text class="nav-back-red-arrow">‹</text>
-    </view>
-    <text class="nav-title">{{venueName}}</text>
-    <view class="nav-back-placeholder"></view>
-  </view>
+  <nav-bar title="{{venueName}}" show-back back-color="#FF3B30" auto-back="{{false}}" bind:back="leaveVenue" />
   <scroll-view class="step-scroll" scroll-y>
     <view wx:if="{{isLoading}}" class="empty-state">
       <text class="empty-text">Loading...</text>
@@ -75,16 +69,9 @@
 <!-- ══ STEP 3: GUESTS ══ -->
 <view wx:if="{{step === 'guests'}}" class="step-guests">
 
-  <!-- Fixed header with back arrow -->
-  <view class="guest-header">
-    <view class="header-back" bindtap="backToEvents">
-      <text class="header-back-arrow">‹</text>
-    </view>
-    <view class="header-info">
-      <text class="header-name">{{staffName}}</text>
-      <text class="header-venue">{{venueName}} · {{currentEvent.title}}</text>
-    </view>
-  </view>
+  <nav-bar title="{{staffName}}" show-back bind:back="backToEvents">
+    <text class="nav-sub">{{venueName}} · {{currentEvent.title}}</text>
+  </nav-bar>
 
   <!-- Search bar -->
   <view class="search-wrap">
