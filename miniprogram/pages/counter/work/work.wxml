@@ -161,16 +161,8 @@
                 <text class="tier-badge-text">{{guest.group || 'E'}}</text>
               </view>
               <text class="arrival-time">{{guest.arrivedAt}}</text>
-              <view
-                wx:if="{{guest.internalRole}}"
-                class="attend-btn {{guest.attendancePresent ? 'attend-btn--marked' : ''}}"
-                catchtap="toggleAttendance"
-                data-type="{{guest.internalRole}}"
-                data-id="{{guest.internalId}}"
-                data-gid="{{guest._id}}"
-                data-present="{{guest.attendancePresent}}"
-              >
-                <text class="attend-btn-icon">{{guest.attendancePresent ? '✓' : ''}}</text>
+              <view wx:if="{{guest.internalRole}}" class="staff-badge">
+                <text class="staff-badge-text">{{guest.internalLabel}}</text>
               </view>
             </view>
           </view>
@@ -212,16 +204,8 @@
               <text class="checkbox-empty">○</text>
             </view>
             <text class="guest-name">{{guest.guestName}}</text>
-            <view
-              wx:if="{{guest.internalRole}}"
-              class="attend-btn {{guest.attendancePresent ? 'attend-btn--marked' : ''}}"
-              catchtap="toggleAttendance"
-              data-type="{{guest.internalRole}}"
-              data-id="{{guest.internalId}}"
-              data-gid="{{guest._id}}"
-              data-present="{{guest.attendancePresent}}"
-            >
-              <text class="attend-btn-icon">{{guest.attendancePresent ? '✓' : ''}}</text>
+            <view wx:if="{{guest.internalRole}}" class="staff-badge">
+              <text class="staff-badge-text">{{guest.internalLabel}}</text>
             </view>
           </view>
         </view>

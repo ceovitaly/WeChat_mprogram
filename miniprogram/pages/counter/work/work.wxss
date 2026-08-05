@@ -382,20 +382,18 @@ page {
   flex-shrink: 0;
 }
 
-.attend-btn {
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 50%;
-  border: 2rpx solid var(--blue);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.staff-badge {
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(0, 122, 255, 0.12);
   flex-shrink: 0;
   margin-left: auto;
 }
-.attend-btn--marked { background: var(--blue); }
-.attend-btn-icon { font-size: 26rpx; color: var(--blue); font-weight: 700; }
-.attend-btn--marked .attend-btn-icon { color: #FFFFFF; }
+.staff-badge-text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--blue);
+}
 
 .safe-area-bottom { height: calc(32rpx + env(safe-area-inset-bottom)); }
 

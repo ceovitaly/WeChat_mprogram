@@ -538,53 +538,6 @@ Page({
     }
   },
 
-  // Toggles "physically present at this event" for a staff/promoter row found phone-matched
-  // inside the guest list. gid is the registration's own _id (used to find/patch the guest
-  // wherever it currently lives — pending `guests` nested groups or flat `arrivedGuests`);
-  // id/type identify the staff or promoter doc to write to.
-  async toggleAttendance(e) {
-    const { type, id, present, gid } = e.currentTarget.dataset
-    const eventId = this.data.currentEvent && this.data.currentEvent._id
-    if (!type || !id || !eventId) return
-    const nextPresent = !present
-    try {
-      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
-        action: 'markAttendance', targetType: type, targetId: id, eventId, present: nextPresent
-      })
-      if (!res || !res.success) {
-        if (isUnauthorized(res)) { handleAuthFailure(); return }
-        wx.showToast({ title: 'Error', icon: 'none' })
-        return
-      }
-
-      let foundInPending = false
-      const guests = this.data.guests.map(grp => {
-        const idx = grp.guests.findIndex(gg => gg._id === gid)
-        if (idx === -1) return grp
-        foundInPending = true
-        const groupGuests = grp.guests.slice()
-        groupGuests[idx] = { ...groupGuests[idx], attendancePresent: nextPresent }
-        return { ...grp, guests: groupGuests }
-      })
-
-      const arrivedGuests = foundInPending
-        ? this.data.arrivedGuests
-        : this.data.arrivedGuests.map(g => g._id === gid ? { ...g, attendancePresent: nextPresent } : g)
-
-      const ev = this.data.currentEvent || {}
-      const p = Number(ev.partyCapacity) || 0
-      const ap = Number(ev.afterPartyCapacity) || 0
-      const lap = Number(ev.lateAfterPartyCapacity) || 0
-      const arrivedSections = this._buildSections(arrivedGuests, p, ap, lap)
-
-      this.setData({ guests, arrivedGuests, arrivedSections })
-      this._applyFilter(this.data.searchQuery, this.data.selectedPromoter)
-      wx.vibrateShort({ type: 'light' })
-    } catch (err) {
-      wx.showToast({ title: 'Error', icon: 'none' })
-    }
-  },
-
   confirmLogout() {
     wx.showModal({
       title: 'Log out', content: 'Log out from account?',
