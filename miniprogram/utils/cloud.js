@@ -84,10 +84,15 @@ async function resolveEventImages(events) {
 
   var urlMap = {}
   // Primary: cloud function resolves server-side (reliable cross-account).
+  // Batch the calls at 50 to stay under getTempFileURL's per-call limit.
   try {
-    var result = await callFunction('clientAuth', { action: 'resolveImages', fileList: allCloudUrls })
-    urlMap = (result && result.urlMap) || {}
-    console.log('[cloud] CF resolveImages returned', Object.keys(urlMap).length, 'URLs; result:', JSON.stringify(result).substring(0, 200))
+    for (var i = 0; i < allCloudUrls.length; i += 50) {
+      var batch = allCloudUrls.slice(i, i + 50)
+      var result = await callFunction('clientAuth', { action: 'resolveImages', fileList: batch })
+      var batchMap = (result && result.urlMap) || {}
+      Object.keys(batchMap).forEach(function(k) { urlMap[k] = batchMap[k] })
+    }
+    console.log('[cloud] CF resolveImages returned', Object.keys(urlMap).length, 'URLs')
   } catch (err) {
     console.error('[cloud] resolveEventImages CF error:', err)
   }
