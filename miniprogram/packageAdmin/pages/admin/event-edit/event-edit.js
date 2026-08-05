@@ -309,6 +309,13 @@ Page({
 
   noop() {},
 
+  // Tap anywhere on the form background dismisses the keyboard. When the
+  // user taps another input, iOS re-focuses it after hideKeyboard runs,
+  // so this doesn't interfere with moving between fields.
+  dismissKeyboard() {
+    wx.hideKeyboard({ fail() {} })
+  },
+
   // ─── Save ────────────────────────────────────────────────
 
   async onSave() {

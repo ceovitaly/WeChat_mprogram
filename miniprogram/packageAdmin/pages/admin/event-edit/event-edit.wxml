@@ -16,7 +16,7 @@
   </view>
 </nav-bar>
 
-<scroll-view class="content-area" scroll-y show-scrollbar="{{false}}">
+<scroll-view class="content-area" scroll-y show-scrollbar="{{false}}" bindtap="dismissKeyboard">
 <view class="tab-content">
 
   <!-- ── Photos ── -->
