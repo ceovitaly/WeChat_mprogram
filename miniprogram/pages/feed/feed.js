@@ -325,18 +325,32 @@ Page({
       if (cached && cacheTime && age < 10 * 60 * 1000) {
         var events = this.normalizeEventImages(JSON.parse(cached));
         var self = this;
+        
+        // Сначала разрешаем изображения, потом обновляем UI
         resolveEventImages(events).then(function(resolvedEvents) {
           self.processEvents(resolvedEvents);
           self.setData({ events: resolvedEvents, loading: false });
           self.applyFilters();
+          
+          // Обновляем кэш с уже разрешенными изображениями
+          try {
+            wx.setStorageSync('events_cache', JSON.stringify(resolvedEvents));
+            wx.setStorageSync('events_cache_time', Date.now());
+          } catch (e) {}
+          
+          // Фоновое обновление, если кэш старше 2 минут
+          if (age > 2 * 60 * 1000) {
+            self.fetchEvents(false);
+          }
+        }).catch(function(err) {
+          console.error('[feed] resolveEventImages failed from cache:', err);
+          self.fetchEvents(true);
         });
-        // Background refresh only if cache is older than 2 minutes
-        if (age > 2 * 60 * 1000) {
-          self.fetchEvents(false);
-        }
         return;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('[feed] cache access error:', e);
+    }
     this.fetchEvents(true);
   },
 
