@@ -32,9 +32,13 @@ async function getTempUrl(fileID) {
 async function getTempUrls(fileIDs) {
   if (!fileIDs || fileIDs.length === 0) return {}
   const cloud = await getCloud()
-  const res = await cloud.getTempFileURL({ fileList: fileIDs })
-  const map = {}
-  res.fileList.forEach(f => { map[f.fileID] = f.tempFileURL })
+  var map = {}
+  // getTempFileURL accepts at most 50 file IDs per call — batch them.
+  for (var i = 0; i < fileIDs.length; i += 50) {
+    var batch = fileIDs.slice(i, i + 50)
+    var res = await cloud.getTempFileURL({ fileList: batch })
+    res.fileList.forEach(f => { if (f.tempFileURL) map[f.fileID] = f.tempFileURL })
+  }
   return map
 }
 
