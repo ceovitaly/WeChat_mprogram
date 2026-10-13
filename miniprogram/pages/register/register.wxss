@@ -1,5 +1,9 @@
 /* pages/register/index.wxss */
 
+/* Spacing rhythm (all vertical gaps are multiples of 8rpx): step head -> 40rpx
+   to content, between field blocks 28rpx, CTA top gap 32rpx, quiet links
+   28-36rpx. One orange CTA per screen; everything secondary is a text row. */
+
 page {
   height: 100%;
   overflow-y: auto;
@@ -60,7 +64,8 @@ page {
   justify-content: center;
   position: relative;
   z-index: 1;
-  padding-top: 120rpx;
+  padding-top: 96rpx;
+  min-height: 200rpx;
 }
 
 .logo-box {
@@ -71,7 +76,7 @@ page {
 }
 
 .logo-main {
-  font-size: 112rpx;
+  font-size: 96rpx;
   font-weight: 900;
   color: #FFFFFF;
   letter-spacing: -1px;
@@ -91,27 +96,11 @@ page {
   border-right: none;
   border-bottom: none;
   border-radius: 22px 22px 0 0;
-  padding: 28px 22px 0;
-  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  padding: 48rpx 32rpx 0;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.card-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #FFFFFF;
-  text-align: center;
-  margin-bottom: 2px;
-}
-
-.card-desc {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.4);
-  text-align: center;
-  line-height: 1.55;
-  margin-bottom: 18px;
+  box-sizing: border-box;
 }
 
 /* ─── Прогресс (шаг 1 из 2 / 2 из 2) ─── */
@@ -122,7 +111,7 @@ page {
   align-items: center;
   justify-content: center;
   gap: 12rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 40rpx;
 }
 
 .progress-dot {
@@ -143,14 +132,13 @@ page {
   opacity: 0.5;
 }
 
-/* ─── Переход между шагами ─── */
-/* Step content swap replaces the old wx.navigateTo push transition — the
-   incoming step fades + slides up with the same spring/overshoot easing
-   used by the bottom-sheet component, instead of an instant swap. */
+/* ─── Переход между шагами / режимами ─── */
+/* Content swap fades + slides up with the same spring/overshoot easing used
+   by the bottom-sheet component — fires for the step change AND for the
+   wechat/manual sign-in mode switch inside step 1. */
 .step-content {
   display: flex;
   flex-direction: column;
-  gap: 6px;
   animation: stepEnter 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -159,44 +147,102 @@ page {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ─── Главная кнопка (шаг 1) ─── */
-/* Primary onboarding CTA — brand emphasis, promoted from --blue to --accent */
-.btn-phone-main {
-  width: calc(100% - 48rpx) !important;
-  height: 76rpx;
+/* ─── Заголовок шага ─── */
+.step-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.card-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.card-desc {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  line-height: 1.55;
+  margin-top: 12rpx;
+}
+
+/* ─── Главная кнопка (единственная оранжевая на экране) ─── */
+.btn-primary {
+  width: 100% !important;
+  height: 88rpx;
   background: linear-gradient(135deg, #FF8F5E 0%, #FF6B35 100%);
   border-radius: 999rpx;
   color: #FFFFFF;
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 24rpx !important;
+  margin: 24rpx 0 0 !important;
   padding: 0 !important;
   box-sizing: border-box;
+  line-height: 1;
 }
-.btn-phone-main::after { border: none; }
+.btn-primary::after { border: none; }
 
-.btn-phone-main[disabled] {
+.btn-primary[disabled] {
   opacity: 0.4;
 }
 
-/* ─── Согласие на конфиденциальность (шаг 1) ───
-   Explicit opt-in row above the Sign In CTA: a tappable checkbox + caption,
-   read before you agree rather than an implied "by continuing" notice.
-   The whole row toggles the checkbox (bindtap on .consent-row); the two
-   links use catchtap so tapping them navigates to the legal page without
-   also flipping the checkbox via bubbling. Links use --accent per the app's
-   link-affordance convention, plain text uses --text-secondary (the same
-   value in both themes, so it reads fine against this page's always-dark
-   card). */
+/* ─── Тихая строка-переключатель под CTA ─── */
+/* Mode switch (wechat <-> manual): hint + accent link on one centered line,
+   weight clearly below the CTA so the two never compete. */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  margin-top: 28rpx;
+  padding: 8rpx 0;
+}
+
+.switch-hint {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.switch-link {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* ─── Выход без входа ─── */
+/* Demoted from a full-width button to a quiet link: it's an escape hatch,
+   not an action we want to advertise with button chrome. */
+.skip-link {
+  display: flex;
+  justify-content: center;
+  margin-top: 36rpx;
+  padding: 8rpx 0;
+}
+
+.skip-link-text {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ─── Согласие на конфиденциальность ───
+   Explicit opt-in row above the CTA: a tappable checkbox + caption, read
+   before you agree rather than an implied "by continuing" notice. The whole
+   row toggles the checkbox (bindtap on .consent-row); the two links use
+   catchtap so tapping them navigates to the legal page without also flipping
+   the checkbox via bubbling. */
 .consent-row {
-  width: calc(100% - 48rpx);
   display: flex;
   align-items: flex-start;
   gap: 16rpx;
-  margin: 4rpx 24rpx 24rpx;
   padding: 20rpx 24rpx;
   background: rgba(255, 255, 255, 0.06);
   border-radius: 20rpx;
@@ -247,37 +293,30 @@ page {
   color: var(--accent);
 }
 
-/* ─── Skip / Back (шаг 1) ─── */
-.btn-skip {
-  width: calc(100% - 48rpx);
-  height: 76rpx;
-  margin: 24rpx 24rpx 0;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 999rpx;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
+/* ─── Поля (шаг 2 и ручной ввод телефона) ─── */
+.field-block {
+  margin-bottom: 28rpx;
 }
 
-.btn-skip-text {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.75);
+.field-label {
+  display: block;
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0 8rpx 12rpx;
 }
 
-/* ─── Поля профиля (шаг 2) ─── */
 .field-wrap {
   background: rgba(255, 255, 255, 0.07);
-  border-radius: 28rpx;
+  border-radius: 24rpx;
   padding: 0 32rpx;
   height: 96rpx;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  margin-bottom: 20rpx;
 }
 
 .field-valid {
@@ -298,60 +337,40 @@ page {
   font-weight: 400;
 }
 
-/* ─── Статус-текст (шаг 2) ─── */
+/* ─── Статус-текст под полем ─── */
+/* Left-aligned with its field (not centered): the message refers to the
+   input directly above it. */
 .error-text {
   display: block;
-  font-size: 13px;
+  font-size: 24rpx;
   color: #FF453A;
-  text-align: center;
-  margin-bottom: 4px;
+  text-align: left;
+  line-height: 1.5;
 }
 
 .success-text {
   display: block;
-  font-size: 13px;
+  font-size: 24rpx;
   color: #34C759;
-  text-align: center;
-  margin-bottom: 4px;
+  text-align: left;
+  line-height: 1.5;
 }
 
-/* ─── Кнопка отправки (шаг 2) ─── */
-/* Registration submit button — the explicit "primary CTA" example from the
-   token task; promoted from --blue to --accent */
-.btn-submit {
-  width: calc(100% - 48rpx);
-  height: 76rpx;
-  line-height: 76rpx;
-  background: linear-gradient(135deg, #FF8F5E 0%, #FF6B35 100%);
-  color: #FFFFFF;
-  font-size: 28rpx;
-  font-weight: 600;
-  border-radius: 999rpx;
-  border: none;
-  margin: 16rpx 24rpx 0;
-  text-align: center;
-  box-sizing: border-box;
-  padding: 0;
-  display: block;
-}
-.btn-submit::after { border: none; }
-
-button[disabled].btn-submit {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: rgba(255, 255, 255, 0.25) !important;
+.field-status {
+  margin: 12rpx 8rpx 0;
 }
 
 /* ─── Слоган ─── */
 .footer {
-  padding: 20px 0 4px;
+  padding: 40rpx 0 8rpx;
   margin-top: auto;
   text-align: center;
 }
 
 .footer-text {
-  font-size: 11px;
+  font-size: 22rpx;
   color: rgba(255, 255, 255, 0.15);
-  letter-spacing: 1.5px;
+  letter-spacing: 3rpx;
 }
 
 @media (prefers-color-scheme: dark) {

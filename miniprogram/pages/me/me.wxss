@@ -120,6 +120,21 @@ page {
   gap: 10rpx;
 }
 
+/* Unset value reads as a placeholder, not as data */
+.info-value--empty {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* <picker> is a block child of the flex row — let it take the free space
+   so its value group still sits flush right like the tappable rows. */
+.info-row-picker {
+  flex: 1;
+}
+.info-row-picker .info-row-value-group {
+  justify-content: flex-end;
+}
+
 .safe-bottom {
   height: calc(120rpx + env(safe-area-inset-bottom));
 }
@@ -211,6 +226,37 @@ page {
 
 .name-input-ph {
   color: #C7C7CC;
+}
+
+/* Music multi-select chips (music sheet) */
+.genre-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  padding: 8rpx 0 16rpx;
+}
+
+.genre-chip {
+  border-radius: 999rpx;
+  padding: 16rpx 28rpx;
+  background: var(--bg-inset);
+  border: 1px solid transparent;
+}
+
+.genre-chip--on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.genre-chip-txt {
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+/* Selection reads by weight too, never color alone */
+.genre-chip--on .genre-chip-txt {
+  color: #FFFFFF;
+  font-weight: 600;
 }
 
 /* Settings-level utility action (not a funnel CTA) — stays on --blue */

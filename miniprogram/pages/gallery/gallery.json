@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "Gallery",
+  "navigationBarBackgroundColor": "@navBgColor",
+  "navigationBarTextStyle": "@navTextStyle",
+  "backgroundColor": "@bgColor"
+}

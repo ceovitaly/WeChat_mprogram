@@ -3,7 +3,7 @@
 
 <!-- Nav bar: content-first redesign — the old avatar/search/calendar/my-list
      row is gone. This is now a single WeChat-capsule-style segmented control
-     (Profile, Search, Lists text labels sharing one pill outline),
+     (Wallet, Events and Profile sharing one pill outline),
      left-aligned clear of the WeChat capsule (top-right), so cards start
      much higher on screen. A normal flex sibling ABOVE the scroll-view
      (not inside it), so it stays fully visible and fixed in place;
@@ -20,17 +20,17 @@
   style="padding-top:{{navPadTop}}px"
 >
   <view class="nav-seg-row" style="height:{{navBarHeight}}px; width:{{navSegRowWidth}}px">
+    <view class="nav-seg pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToTickets">
+      <view class="icon icon--list nav-seg-icon"></view>
+      <text class="nav-seg-label">Wallet</text>
+    </view>
+    <view class="nav-seg {{showPaidEvents ? 'nav-seg--active' : ''}} pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="togglePaidEvents">
+      <view class="icon icon--calendar nav-seg-icon"></view>
+      <text class="nav-seg-label">Events</text>
+    </view>
     <view class="nav-seg pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToProfile">
       <view class="icon icon--user nav-seg-icon"></view>
       <text class="nav-seg-label">Profile</text>
-    </view>
-    <view class="nav-seg pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="toggleSearchPanel">
-      <view class="icon icon--search nav-seg-icon"></view>
-      <text class="nav-seg-label">Search</text>
-    </view>
-    <view class="nav-seg pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToTickets">
-      <view class="icon icon--list nav-seg-icon"></view>
-      <text class="nav-seg-label">Lists</text>
     </view>
   </view>
 </view>
@@ -132,11 +132,11 @@
     </view>
   </view>
 
-  <view class="event-list-container">
+  <view class="event-list-container {{showPaidEvents ? 'event-grid-container' : ''}}">
 
     <!-- Loading skeleton -->
     <block wx:if="{{loading && events.length === 0}}">
-      <view wx:for="{{[1,2,3]}}" wx:key="*this" class="skeleton-card">
+      <view wx:for="{{[1,2,3,4]}}" wx:key="*this" class="skeleton-card">
         <view class="skeleton-img"></view>
         <view class="skeleton-body">
           <view class="skeleton-line skeleton-line-lg"></view>
@@ -145,23 +145,8 @@
       </view>
     </block>
 
-    <!-- Event Cards -->
-    <block wx:if="{{filteredEvents.length > 0}}">
-      <!-- Press feedback (Task 2, this round): hover-class="pressed" (the
-           shared, app-wide CSS-transition press mechanism — app.wxss) is
-           deliberately NOT used on this element anymore; a card-specific
-           spring mechanism replaces it (see .event-card/.event-card--pressed
-           in feed.wxss and onCardTouchStart/onCardTouchEnd in feed.js) so
-           the press-then-release feel is one cohesive spring, not the flat
-           shared .pressed effect plus a second competing spring stacked on
-           top. Implementation tier: CSS-bezier-fallback — plain touch
-           handlers toggle a class via ordinary setData; the spring
-           overshoot comes entirely from a CSS transition using the same
-           cubic-bezier(0.34, 1.56, 0.64, 1) curve already trusted elsewhere
-           in this app (bottom-sheet / register consent-sheet), not from a
-           worklet. This tier was chosen over a worklet-driven approach
-           because it is guaranteed to work without live DevTools
-           verification. -->
+    <!-- Default full-width event feed -->
+    <block wx:if="{{!showPaidEvents && filteredEvents.length > 0}}">
       <view
         wx:for="{{filteredEvents}}"
         wx:key="_id"
@@ -173,35 +158,17 @@
         bindtouchcancel="onCardTouchEnd"
         data-id="{{item._id}}"
       >
-        <!-- Header row: venue (left) + date (right), plain text on the
-             card's own background, sitting above the photo instead of
-             overlaid on it. Replaces the old date-chip/venue-chip/gradient
-             scrim that used to live inside .card-media-wrap. -->
         <view class="card-header">
           <text class="card-header-venue">{{item.venueName || 'Venue'}}</text>
           <text class="card-header-date">{{item.chipDay}} {{item.chipMonth}}</text>
         </view>
-
-        <!-- Image; count badge (top-right) and the title+CTA overlay
-             (bottom, .card-poster-overlay) both live inside this wrapper so
-             they stack visually on top of the photo. Title/button used to be
-             plain-background siblings below .card-media-wrap; they're now
-             absolutely positioned children anchored to the wrap's bottom
-             edge, over a dark gradient scrim (see .card-poster-scrim). -->
-        <view class="card-media-wrap" style="min-height:{{cardImgHeight}}rpx">
-          <image
-            wx:if="{{item.promoImages[0]}}"
-            src="{{item.promoImages[0]}}"
-            mode="widthFix"
-            class="card-img"
-          />
+        <view class="card-media-wrap" style="height:{{cardImgHeight}}rpx">
+          <image wx:if="{{item.promoImages[0]}}" src="{{item.promoImages[0]}}" mode="aspectFill" class="card-img" />
           <view wx:else class="card-img-empty"></view>
           <view wx:if="{{item.promoImages.length > 1}}" class="img-count-badge">
             <text class="img-count-txt">{{item.promoImages.length}}</text>
             <view class="icon icon--camera img-count-icon"></view>
           </view>
-
-          <!-- Bottom scrim + title/CTA overlay -->
           <view class="card-poster-scrim"></view>
           <view class="card-poster-overlay">
             <view class="card-info">
@@ -209,36 +176,71 @@
               <view class="card-title-divider"></view>
             </view>
             <view class="card-btn-wrap">
-              <button
-                wx:if="{{!item.isRegistered}}"
-                class="get-ticket-btn pressable"
-                hover-class="pressed"
-                hover-start-time="20"
-                hover-stay-time="80"
-                catchtap="goToTicketDirect"
-                data-id="{{item._id}}"
-              >
+              <button wx:if="{{!item.isRegistered}}" class="get-ticket-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" catchtap="goToTicketDirect" data-id="{{item._id}}">
                 <view class="icon icon--list btn-list-icon"></view>
                 <text>ADD ME ON GUESTS LIST</text>
               </button>
-              <view
-                wx:else
-                class="registered-badge"
-              >
-                <text class="registered-badge-txt">✓ You're on the list</text>
-              </view>
+              <button wx:else class="get-ticket-btn wallet-btn pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" catchtap="goToTickets">
+                <view class="icon icon--list btn-list-icon"></view>
+                <text>VIEW IN WALLET</text>
+              </button>
             </view>
           </view>
         </view>
-
       </view>
     </block>
 
-    <!-- Empty State -->
-    <view wx:if="{{filteredEvents.length === 0 && !loading}}" class="empty-state">
+    <!-- Paid events: compact two-column tiles -->
+    <block wx:if="{{showPaidEvents && paidEvents.length > 0}}">
+      <view
+        wx:for="{{paidEvents}}"
+        wx:key="_id"
+        class="event-tile {{pressedCardId === item._id ? 'event-tile--pressed' : ''}}"
+        style="animation-delay: {{item.animDelay}}ms"
+        bindtap="goToDetail"
+        bindtouchstart="onCardTouchStart"
+        bindtouchend="onCardTouchEnd"
+        bindtouchcancel="onCardTouchEnd"
+        data-id="{{item._id}}"
+      >
+        <view class="event-tile-media">
+          <image wx:if="{{item.promoImages[0]}}" src="{{item.promoImages[0]}}" mode="aspectFill" class="event-tile-img" />
+          <view wx:else class="event-tile-img event-tile-img--empty">
+            <view class="icon icon--calendar event-tile-placeholder-icon"></view>
+          </view>
+          <view class="event-tile-date">
+            <text class="event-tile-day">{{item.chipDay}}</text>
+            <text class="event-tile-month">{{item.chipMonth}}</text>
+          </view>
+          <view wx:if="{{item.promoImages.length > 1}}" class="event-tile-count">
+            <view class="icon icon--camera event-tile-count-icon"></view>
+            <text>{{item.promoImages.length}}</text>
+          </view>
+        </view>
+        <view class="event-tile-body">
+          <text class="event-tile-venue">{{item.venueName || 'Venue'}}</text>
+          <text class="event-tile-title">{{item.title}}</text>
+          <view class="event-tile-footer">
+            <text wx:if="{{!item.isRegistered}}" class="event-tile-time">{{item.startTime || 'View event'}}</text>
+            <button wx:if="{{!item.isRegistered}}" class="event-tile-join" catchtap="goToTicketDirect" data-id="{{item._id}}">Join</button>
+            <button wx:else class="event-tile-wallet" catchtap="goToTickets">View in Wallet</button>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <view wx:if="{{!showPaidEvents && filteredEvents.length === 0 && !loading}}" class="empty-state">
       <view class="icon icon--list icon-empty"></view>
       <text class="empty-title">No events found</text>
       <text class="empty-sub">Try adjusting your search or date filter</text>
+      <view wx:if="{{selectedDate || searchKeyword}}" class="empty-clear-btn" bindtap="clearAllFilters">
+        <text class="empty-clear-txt">Clear filters</text>
+      </view>
+    </view>
+    <view wx:if="{{showPaidEvents && paidEvents.length === 0 && !loading}}" class="empty-state">
+      <view class="icon icon--calendar icon-empty"></view>
+      <text class="empty-title">No paid events found</text>
+      <text class="empty-sub">{{selectedDate || searchKeyword ? 'Try adjusting your search or date filter' : 'Paid events will appear here when available'}}</text>
       <view wx:if="{{selectedDate || searchKeyword}}" class="empty-clear-btn" bindtap="clearAllFilters">
         <text class="empty-clear-txt">Clear filters</text>
       </view>

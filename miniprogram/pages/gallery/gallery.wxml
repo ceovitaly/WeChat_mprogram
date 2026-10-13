@@ -1,0 +1,57 @@
+<!--pages/gallery/gallery.wxml-->
+<view class="page">
+
+  <!-- Venue tiles -->
+  <scroll-view wx:if="{{view === 'tiles'}}" class="gallery-scroll" scroll-y>
+    <view wx:if="{{loading}}" class="empty">
+      <text class="empty-text">Loading...</text>
+    </view>
+    <view wx:elif="{{venues.length === 0}}" class="empty">
+      <text class="empty-text">No venues yet</text>
+    </view>
+    <view wx:else class="grid">
+      <view
+        wx:for="{{venues}}"
+        wx:key="_id"
+        class="tile"
+        hover-class="tile--pressed"
+        hover-start-time="20"
+        hover-stay-time="80"
+        bindtap="openVenue"
+        data-id="{{item._id}}"
+      >
+        <image wx:if="{{item.preview}}" class="tile-logo" src="{{item.preview}}" mode="aspectFill" />
+        <image wx:elif="{{item.logo}}" class="tile-logo" src="{{item.logo}}" mode="aspectFill" />
+        <view wx:else class="tile-placeholder">
+          <text class="tile-letter">{{item.letter}}</text>
+        </view>
+        <view class="tile-cap">
+          <text class="tile-name">{{item.name}}</text>
+          <text class="tile-count">{{item.photos.length}} photos</text>
+        </view>
+      </view>
+    </view>
+    <view class="bottom-pad"></view>
+  </scroll-view>
+
+  <!-- One venue's photos: the system nav bar's title switches to the venue
+       name and its back button returns to the tiles (onUnload-free swap). -->
+  <scroll-view wx:else class="gallery-scroll" scroll-y>
+    <view wx:if="{{currentVenue.photos.length === 0}}" class="empty">
+      <text class="empty-text">No photos yet</text>
+    </view>
+    <view wx:else class="grid">
+      <view
+        wx:for="{{currentVenue.photos}}"
+        wx:key="*this"
+        class="cell"
+        bindtap="previewPhoto"
+        data-url="{{item}}"
+      >
+        <image class="cell-img" src="{{item}}" mode="aspectFill" lazy-load />
+      </view>
+    </view>
+    <view class="bottom-pad"></view>
+  </scroll-view>
+
+</view>

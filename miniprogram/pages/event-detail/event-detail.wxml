@@ -19,21 +19,25 @@
         <image src="{{img}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight + 24}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{img}}" />
       </swiper-item>
     </swiper>
-    <view class="hero-scrim"></view>
   </block>
   <block wx:elif="{{event.promoImage}}">
     <image src="{{event.promoImage}}" class="hero-image {{heroLoaded ? 'hero-image--loaded' : ''}}" style="height:{{heroHeight + 24}}rpx" mode="aspectFill" bindload="onHeroLoad" catchtap="previewHeroImage" data-url="{{event.promoImage}}" />
-    <view class="hero-scrim"></view>
   </block>
   <view wx:else class="image-placeholder">
     <text class="placeholder-text">No Image</text>
   </view>
+
+  <!-- Readability scrim for the title zone. Lives INSIDE the hero section
+       (not the z-10 title block) so the description card below paints OVER
+       it — see the layering note in the wxss. -->
+  <view wx:if="{{event.promoImage || (event.promoImages && event.promoImages.length > 0)}}" class="hero-overlay-scrim"></view>
 </view>
 
 <view class="hero-overlay {{(headerPinned || !(event.promoImage || (event.promoImages && event.promoImages.length > 0))) ? 'hero-overlay--pinned' : ''}}" wx:if="{{event}}">
-  <text wx:if="{{event.displayDatetimeShort || event.date}}" class="info-datetime">{{event.displayDatetimeShort || event.date}}</text>
-  <text class="info-title">{{event.title}}</text>
-  <view class="info-title-divider"></view>
+  <view class="hero-overlay-anchor">
+    <text wx:if="{{event.displayDatetimeShort || event.date}}" class="info-datetime">{{event.displayDatetimeShort || event.date}}</text>
+    <text class="info-title">{{event.title}}</text>
+  </view>
 </view>
 
 <view class="main-card">
@@ -77,6 +81,23 @@
     </view>
 
     <view class="venue-card-divider"></view>
+
+    <view class="section" wx:if="{{venuePhotos.length > 0}}">
+      <text class="section-label">VENUE PHOTOS</text>
+      <scroll-view scroll-x class="venue-photo-scroll" enhanced show-scrollbar="{{false}}">
+        <view class="venue-photo-list">
+          <image
+            wx:for="{{venuePhotos}}"
+            wx:key="*this"
+            src="{{item}}"
+            class="venue-photo-thumb"
+            mode="aspectFill"
+            bindtap="previewVenuePhoto"
+            data-url="{{item}}"
+          />
+        </view>
+      </scroll-view>
+    </view>
 
     <view class="section" wx:if="{{event.promoMaterials && event.promoMaterials.length > 0}}">
       <text class="section-label">PROMO</text>
@@ -146,23 +167,40 @@
       </scroll-view>
     </view>
 
+    <!-- Refund policy — bottom of every event page, free or paid alike -->
+    <view class="refund-policy">
+      <text class="refund-policy-title">REFUND POLICY</text>
+      <text class="refund-policy-text">No refunds. All ticket sales are final.</text>
+    </view>
+
   </view>
 </scroll-view>
 
 <view class="action-bar" wx:if="{{!loadError}}">
-  <view wx:if="{{isRegistered}}" class="registered-bar">
-    <view class="registered-status">
-      <text class="registered-icon">✓</text>
-      <text class="registered-text">You're on the list</text>
-    </view>
+  <!-- canUpgrade: holds a FREE ticket + priced tickets exist → the CTA
+       comes back so they can buy an upgrade (free row greys out inside
+       the sheet). -->
+  <view wx:if="{{isRegistered && !canUpgrade}}" class="registered-bar">
+    <button class="btn-register pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToTickets">
+      <view class="icon icon--list btn-register-icon"></view>
+      <text>View in Wallet</text>
+    </button>
+    <button wx:if="{{event.externalLink}}" class="btn-share btn-copy-link pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="copyExternalLink">
+      <text class="btn-share-text">Copy link</text>
+    </button>
     <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
       <view class="icon icon--share btn-share-icon"></view>
+      <text class="btn-share-text">Share</text>
     </button>
   </view>
   <view wx:elif="{{event.isEventOver}}" class="ended-bar">
     <text class="ended-text">Registration closed</text>
+    <button wx:if="{{event.externalLink}}" class="btn-share btn-copy-link pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="copyExternalLink">
+      <text class="btn-share-text">Copy link</text>
+    </button>
     <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
       <view class="icon icon--share btn-share-icon"></view>
+      <text class="btn-share-text">Share</text>
     </button>
   </view>
   <view wx:else class="action-row">
@@ -170,8 +208,12 @@
       <view class="icon icon--list btn-register-icon"></view>
       <text>Get on list</text>
     </button>
+    <button wx:if="{{event.externalLink}}" class="btn-share btn-copy-link pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="copyExternalLink">
+      <text class="btn-share-text">Copy link</text>
+    </button>
     <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
       <view class="icon icon--share btn-share-icon"></view>
+      <text class="btn-share-text">Share</text>
     </button>
   </view>
 </view>
@@ -194,12 +236,13 @@
 
     <block wx:else>
     <text class="modal-title">ADD ME ON GUESTS LIST</text>
-    <text class="modal-subtitle">SELECT TICKET TYPE</text>
+    <text class="modal-subtitle">{{isRegistered ? 'UPGRADE YOUR TICKET' : 'SELECT TICKET TYPE'}}</text>
 
-    <!-- Free entry option -->
+    <!-- Free entry option. Greyed out for a registered guest: it's their
+         current ticket (tap is a no-op, see selectTicket). -->
     <view
       wx:if="{{event.isFree}}"
-      class="ticket-option pressable {{selectedTicketId === 'free' ? 'ticket-selected' : ''}}"
+      class="ticket-option pressable {{selectedTicketId === 'free' ? 'ticket-selected' : ''}} {{isRegistered ? 'ticket-option--owned' : ''}} {{(!isRegistered && availability && !availability.available) ? 'ticket-option--soldout' : ''}}"
       hover-class="pressed-soft"
       hover-start-time="20"
       hover-stay-time="80"
@@ -213,7 +256,7 @@
       </view>
       <view class="ticket-left">
         <text class="ticket-name">Free Entry</text>
-        <text class="ticket-desc">Standard guest list</text>
+        <text class="ticket-desc">{{isRegistered ? 'Your current ticket' : (!isRegistered && availability && !availability.available ? 'Free entry is closed' : 'Standard guest list')}}</text>
       </view>
       <text class="ticket-price-tag free-tag">FREE</text>
     </view>
@@ -222,7 +265,7 @@
     <view
       wx:for="{{event.tickets}}"
       wx:key="id"
-      class="ticket-option pressable {{selectedTicketId === item.id ? 'ticket-selected' : ''}}"
+      class="ticket-option pressable {{selectedTicketId === item.id ? 'ticket-selected' : ''}} {{soldOut[item.id] ? 'ticket-option--soldout' : ''}}"
       hover-class="pressed-soft"
       hover-start-time="20"
       hover-stay-time="80"
@@ -239,31 +282,34 @@
         <text class="ticket-name">{{item.name}}</text>
         <text class="ticket-desc" wx:if="{{item.description}}">{{item.description}}</text>
       </view>
-      <text class="ticket-price-tag paid-tag">¥ {{item.price}}</text>
+      <text class="ticket-price-tag paid-tag">{{soldOut[item.id] ? 'SOLD OUT' : '¥ ' + item.price}}</text>
     </view>
 
-    <!-- Paid packages -->
+    <!-- Paid packages / tickets: price > 0 → in-app WeChat Pay, otherwise
+         the legacy external-link flow (link opens after registration) -->
     <view
       wx:for="{{event.paidPackages}}"
       wx:for-index="idx"
       wx:key="idx"
-      class="ticket-option pressable {{selectedTicketId === 'pkg_' + idx ? 'ticket-selected' : ''}}"
+      class="ticket-option pressable {{selectedTicketId === (item.id || 'pkg_' + idx) ? 'ticket-selected' : ''}} {{soldOut[item.id] ? 'ticket-option--soldout' : ''}}"
       hover-class="pressed-soft"
       hover-start-time="20"
       hover-stay-time="80"
       bindtap="selectPackage"
       data-idx="{{idx}}"
+      data-pkg-id="{{item.id}}"
       data-name="{{item.name}}"
+      data-price="{{item.price}}"
       data-link="{{item.paymentLink}}"
     >
-      <view class="ticket-check {{selectedTicketId === 'pkg_' + idx ? 'ticket-check--on' : ''}}">
-        <text wx:if="{{selectedTicketId === 'pkg_' + idx}}" class="check-mark">✓</text>
+      <view class="ticket-check {{selectedTicketId === (item.id || 'pkg_' + idx) ? 'ticket-check--on' : ''}}">
+        <text wx:if="{{selectedTicketId === (item.id || 'pkg_' + idx)}}" class="check-mark">✓</text>
       </view>
       <view class="ticket-left">
         <text class="ticket-name">{{item.name}}</text>
         <text class="ticket-desc">Paid package</text>
       </view>
-      <text class="ticket-price-tag paid-tag">PAID</text>
+      <text class="ticket-price-tag paid-tag">{{soldOut[item.id] ? 'SOLD OUT' : (item.price > 0 ? '¥ ' + item.price : 'PAID')}}</text>
     </view>
 
     <view wx:if="{{!event.isFree && (!event.tickets || event.tickets.length === 0) && (!event.paidPackages || event.paidPackages.length === 0)}}" class="no-tickets">
@@ -279,7 +325,7 @@
       style="width:100%;margin:0;box-sizing:border-box;"
       bindtap="handleJoin"
     >
-      Join
+      {{selectedTicketPrice > 0 ? 'Pay ¥ ' + selectedTicketPrice : 'Join'}}
     </button>
 
     <view class="modal-cancel pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="closeTicketModal">

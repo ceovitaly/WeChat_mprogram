@@ -25,20 +25,52 @@
       <view class="content">
 
         <view class="info-list">
-          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openNameEdit">
+          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openFieldEdit" data-field="nickName" data-title="Edit Name">
             <text class="info-label">Name</text>
             <view class="info-row-value-group">
               <text class="info-value">{{userInfo.nickName || userInfo.name || 'Set name'}}</text>
               <view class="icon icon--edit edit-pencil"></view>
             </view>
           </view>
-          <view class="info-row" wx:if="{{userInfo.phone}}">
-            <text class="info-label">Phone</text>
-            <text class="info-value">{{userInfo.phone}}</text>
-          </view>
           <view class="info-row" wx:if="{{userInfo.promoCode}}">
             <text class="info-label">Promoter</text>
             <text class="info-value">{{userInfo.promoCode}}</text>
+          </view>
+
+          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80">
+            <text class="info-label">Birthday</text>
+            <picker class="info-row-picker" mode="date" value="{{userInfo.birthday}}" end="{{today}}" bindchange="onBirthdayChange">
+              <view class="info-row-value-group">
+                <text class="info-value {{userInfo.birthday ? '' : 'info-value--empty'}}">{{userInfo.birthday || 'Add birthday'}}</text>
+                <view class="icon icon--edit edit-pencil"></view>
+              </view>
+            </picker>
+          </view>
+
+          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80">
+            <text class="info-label">Gender</text>
+            <picker class="info-row-picker" mode="selector" range="{{genders}}" bindchange="onGenderChange">
+              <view class="info-row-value-group">
+                <text class="info-value {{userInfo.gender ? '' : 'info-value--empty'}}">{{userInfo.gender || 'Add gender'}}</text>
+                <view class="icon icon--edit edit-pencil"></view>
+              </view>
+            </picker>
+          </view>
+
+          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openFieldEdit" data-field="country" data-title="Home Country">
+            <text class="info-label">Country</text>
+            <view class="info-row-value-group">
+              <text class="info-value {{userInfo.country ? '' : 'info-value--empty'}}">{{userInfo.country || 'Add country'}}</text>
+              <view class="icon icon--edit edit-pencil"></view>
+            </view>
+          </view>
+
+          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openMusicEdit">
+            <text class="info-label">Music i like</text>
+            <view class="info-row-value-group">
+              <text class="info-value {{musicText ? '' : 'info-value--empty'}}">{{musicText || 'Add music'}}</text>
+              <view class="icon icon--edit edit-pencil"></view>
+            </view>
           </view>
         </view>
 
@@ -53,25 +85,53 @@
     </view>
   </block>
 
-  <!-- Name edit sheet -->
-  <bottom-sheet show="{{showNameEdit}}" bind:close="closeNameEdit">
+  <!-- Generic field edit sheet -->
+  <bottom-sheet show="{{showFieldEdit}}" bind:close="closeFieldEdit">
     <view class="name-sheet">
       <view class="name-sheet-handle"></view>
-      <text class="name-sheet-title">Edit Name</text>
+      <text class="name-sheet-title">{{editingTitle}}</text>
       <input
         class="name-input"
-        value="{{editingName}}"
-        bindinput="onNameInput"
-        placeholder="Your name"
+        value="{{editingValue}}"
+        bindinput="onFieldInput"
+        placeholder="{{editingTitle}}"
         placeholder-class="name-input-ph"
-        maxlength="30"
+        maxlength="60"
         confirm-type="done"
-        bindconfirm="saveNameEdit"
+        bindconfirm="saveFieldEdit"
       />
-      <view class="name-save-btn" bindtap="saveNameEdit">
+      <view class="name-save-btn" bindtap="saveFieldEdit">
         <text class="name-save-text">Save</text>
       </view>
-      <view class="name-cancel-btn pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="closeNameEdit">
+      <view class="name-cancel-btn pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="closeFieldEdit">
+        <text class="name-cancel-text">Cancel</text>
+      </view>
+    </view>
+  </bottom-sheet>
+
+  <!-- Music multi-select sheet -->
+  <bottom-sheet show="{{showMusicEdit}}" bind:close="closeMusicEdit">
+    <view class="name-sheet">
+      <view class="name-sheet-handle"></view>
+      <text class="name-sheet-title">Favourite Music</text>
+      <view class="genre-grid">
+        <view
+          wx:for="{{musicGenres}}"
+          wx:key="*this"
+          class="genre-chip {{genreOn[item] ? 'genre-chip--on' : ''}}"
+          hover-class="pressed-soft"
+          hover-start-time="20"
+          hover-stay-time="80"
+          bindtap="toggleGenre"
+          data-genre="{{item}}"
+        >
+          <text class="genre-chip-txt">{{item}}</text>
+        </view>
+      </view>
+      <view class="name-save-btn" bindtap="saveMusicEdit">
+        <text class="name-save-text">Save</text>
+      </view>
+      <view class="name-cancel-btn pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="closeMusicEdit">
         <text class="name-cancel-text">Cancel</text>
       </view>
     </view>

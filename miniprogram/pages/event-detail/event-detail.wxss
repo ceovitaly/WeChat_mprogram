@@ -44,27 +44,9 @@ page {
 .hero-image--loaded {
   opacity: 1;
 }
-/* Bottom scrim behind the title/datetime overlay — same visual language as
-   the feed page's .card-poster-scrim (feed.wxss), scaled to the hero's
-   larger size. Rendered in both the swiper and single-image branches (not
-   just multi-image) since it now also backs the overlaid title/datetime,
-   not just the swiper's indicator dots. Non-interactive so it never blocks
-   tap-to-preview or the swipe. */
-.hero-scrim {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 55%;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.25) 40%,
-    rgba(0, 0, 0, 0.55) 70%,
-    rgba(0, 0, 0, 0.8) 100%
-  );
-  pointer-events: none;
-}
+/* .hero-scrim removed by request: the bottom darkening gradient over the
+   cover rendered as a stray dark band (the title block sits below the
+   image, not on top of it, so the scrim had nothing to back). */
 
 /* Title + datetime "header" bar — a sibling of .hero-section (not nested
    inside it anymore) rendered once regardless of which image branch is
@@ -84,13 +66,57 @@ page {
   position: sticky;
   top: 0;
   z-index: 10;
+  /* Fixed-height title zone: the block occupies exactly the bottom 184rpx
+     of the hero photo, CONSTANT regardless of title length — which pins
+     the card top (and the divider on it) to one unchanging position.
+     border-box is load-bearing: without it the padding adds ON TOP of the
+     height and the box grows past 184rpx. The datetime+title themselves
+     are NOT flex-anchored here (see .hero-overlay-anchor): the webview's
+     flex-end overflow direction is unreliable, absolute bottom-anchoring
+     guarantees the text grows UP. */
+  box-sizing: border-box;
   margin-top: -184rpx;
-  padding: 0 40rpx 24rpx;
+  height: 184rpx;
+  pointer-events: none;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Readability scrim for the title zone: a smooth dark gradient over the
+   photo's bottom 400rpx. Layering: it lives inside .hero-section (NOT in
+   the z-10 title block), so paint order is photo → scrim → description
+   card (later sibling, positioned) → title text (z-10) — the card sits
+   ON TOP of the scrim and the title stays above everything. It scrolls
+   away together with the photo, so no pinned-state handling is needed. */
+.hero-overlay-scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 400rpx;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.18) 35%,
+    rgba(0, 0, 0, 0.45) 75%,
+    rgba(0, 0, 0, 0.65) 100%
+  );
+  pointer-events: none;
+}
+
+/* The actual title anchor. Absolutely positioned with a FIXED bottom edge:
+     the element's bottom never moves, and because its height is auto, any
+     extra line makes the box grow UPWARD over the photo — the CSS
+     positioning model guarantees this, with no flex-overflow quirks for
+     the webview to get wrong. The title itself is capped at 3 lines with
+     an ellipsis (.info-title), so the anchor can't run away either. */
+.hero-overlay-anchor {
+  position: absolute;
+  left: 40rpx;
+  right: 40rpx;
+  bottom: 48rpx;
   display: flex;
   flex-direction: column;
   gap: 12rpx;
-  pointer-events: none;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Pinned state — toggled by JS (event-detail.js onContentScroll) once the
@@ -98,10 +124,16 @@ page {
    from the start when there's no hero image to overlay transparently
    over (see the wx:else image-placeholder branch and the WXML class
    binding). Solid card-colored background + normal on-card text colors,
-   replacing the transparent/white/text-shadow "over a photo" look. */
+   replacing the transparent/white/text-shadow "over a photo" look.
+   Same fixed height as the resting state (no layout jump when pinning);
+   the anchor flips to top-alignment so the pinned header reads normally. */
 .hero-overlay--pinned {
   background: var(--bg-elevated);
   border-radius: 0;
+}
+.hero-overlay--pinned .hero-overlay-anchor {
+  bottom: auto;
+  top: 12rpx;
 }
 .hero-overlay--pinned::after {
   content: '';
@@ -131,13 +163,34 @@ page {
   color: #c7c7cc;
 }
 
+/* .info-title-divider removed from the title block: the title's height
+   varies (1–3 lines), so a divider pinned to its bottom kept drifting and
+   colliding with the description. The separating hairline now lives on
+   the CARD itself (main-card::before) — always exactly between the title
+   zone and the description. */
+
 /* Main card */
 .main-card {
   background: var(--bg-elevated);
   border-radius: 40rpx 40rpx 0 0;
-  margin-top: -40rpx;
+  /* The title zone above has a FIXED height now, so a constant −24rpx
+     keeps the card top (and the divider on it) at one unchanging position,
+     overlapping the photo bottom just enough for the rounded corners. */
+  margin-top: -24rpx;
   padding: 32rpx 40rpx 48rpx;
   position: relative;
+}
+
+/* Title/description separator — the card's top hairline (inset like the
+   rest of the page's 40rpx gutters). */
+.main-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 40rpx;
+  right: 40rpx;
+  height: 1rpx;
+  background: var(--border);
 }
 
 /* Block 1: info (date + title) — sits inside the sticky .hero-overlay bar
@@ -175,16 +228,6 @@ page {
    page's .card-title-divider (feed.wxss). Switches to the normal
    var(--border) token once .hero-overlay--pinned is active, matching how
    .info-title/.info-datetime already get color overrides in that state. */
-.info-title-divider {
-  width: calc(100% + 16rpx);
-  height: 1rpx;
-  background: rgba(255, 255, 255, 0.25);
-  margin: 24rpx -8rpx 0;
-}
-.hero-overlay--pinned .info-title-divider {
-  background: var(--border);
-}
-
 /* Block 2: venue card — top-map/bottom-text stacked card. A map preview
    strip sits on top (no cover-view, no text overlaid on it — see below),
    the venue name/address sit in a plain solid-background strip
@@ -328,6 +371,28 @@ page {
   bottom: 0;
   height: 1rpx;
   background: var(--border);
+}
+
+/* Venue photos — horizontally scrollable because galleries can contain many
+   images. The data source is matched to the current event's venue only. */
+.venue-photo-scroll {
+  width: auto;
+  margin: 0 -40rpx;
+  white-space: nowrap;
+}
+
+.venue-photo-list {
+  display: flex;
+  gap: 16rpx;
+  padding: 0 40rpx;
+}
+
+.venue-photo-thumb {
+  width: 260rpx;
+  height: 200rpx;
+  flex-shrink: 0;
+  border-radius: 18rpx;
+  background: var(--bg-inset);
 }
 
 /* Promo scroll */
@@ -479,24 +544,25 @@ page {
   height: 28rpx;
 }
 
-/* Circular icon-only share button — same 88rpx height as .btn-register
-   so the pair sit flush in the action row. */
+/* Share action with a visible label — same height as .btn-register so the
+   buttons stay aligned in every action-bar state. */
 .btn-share {
-  width: 76rpx;
+  width: auto;
   height: 76rpx;
-  min-width: 76rpx;
-  max-width: 76rpx;
+  min-width: 156rpx;
   line-height: 76rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10rpx;
   background: var(--bg-inset);
-  border-radius: 50%;
+  color: var(--text-primary);
+  border-radius: 999rpx;
   border: none;
   flex-shrink: 0;
   box-sizing: border-box;
   margin: 0;
-  padding: 0;
+  padding: 0 24rpx;
   overflow: hidden;
 }
 .btn-share::after {
@@ -504,9 +570,17 @@ page {
   display: none;
 }
 .btn-share-icon {
-  width: 36rpx;
-  height: 36rpx;
+  width: 28rpx;
+  height: 28rpx;
   background-color: var(--text-primary);
+}
+.btn-share-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.btn-copy-link {
+  min-width: 174rpx;
 }
 button::after { border: none; }
 .no-profile-bar {
@@ -542,21 +616,6 @@ button::after { border: none; }
   justify-content: space-between;
   gap: 16rpx;
 }
-.registered-status {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  flex: 1;
-}
-.registered-icon {
-  font-size: 40rpx;
-  color: #34c759;
-}
-.registered-text {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #34c759;
-}
 
 /* Ended/closed state — event's date has passed, registration no longer
    available. Mirrors .registered-bar's layout (flex row, space-between,
@@ -570,6 +629,8 @@ button::after { border: none; }
   gap: 16rpx;
 }
 .ended-text {
+  flex: 1;
+  min-width: 0;
   font-size: 30rpx;
   font-weight: 600;
   color: var(--text-secondary);
@@ -839,9 +900,6 @@ button::after { border: none; }
   .action-bar { background: rgba(28,28,30,0.97); }
   .action-bar::after { background: var(--border); }
 
-  .registered-icon { color: #30D158; }
-  .registered-text { color: #30D158; }
-
   .modal-handle { background: #3A3A3C; }
 
   .ticket-selected { background: rgba(10,132,255,0.15); }
@@ -889,4 +947,40 @@ button::after { border: none; }
   font-size: 28rpx;
   font-weight: 600;
   color: #ffffff;
+}
+
+/* The free row for a guest who already holds it: visibly inert (their
+   current ticket), taps are no-ops in selectTicket. */
+.ticket-option--owned {
+  opacity: 0.45;
+}
+
+/* Refund policy note — bottom of the event page content, same look as the
+   My Tickets one. Inside .main-card, so it uses margins rather than the
+   page-gutter margins of the mytickets copy. */
+.refund-policy {
+  margin: 32rpx 0 8rpx;
+  padding: 24rpx 28rpx;
+  background: var(--bg-inset);
+  border-radius: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.refund-policy-title {
+  font-size: 20rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  color: var(--text-secondary);
+}
+
+.refund-policy-text {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+
+/* Sold-out / closed rows in the ticket sheet: greyed, unselectable. */
+.ticket-option--soldout {
+  opacity: 0.45;
 }

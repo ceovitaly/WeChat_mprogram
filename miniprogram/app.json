@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/feed/feed",
+    "pages/gallery/gallery",
     "pages/event-detail/event-detail",
     "pages/mytickets/mytickets",
     "pages/me/me",

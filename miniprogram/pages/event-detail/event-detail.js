@@ -1,6 +1,7 @@
 const app = getApp();
 const auth = require('../../utils/auth.js');
-const { resolveEventImages, callFunction } = require('../../utils/cloud.js');
+const { resolveEventImages, callFunction, getTempUrls } = require('../../utils/cloud.js');
+const pay = require('../../utils/pay.js');
 
 // Short competitor-style datetime line ("Sat, Jul 18 • 22:00") for the
 // info block and the related-events cards. Rendered uppercase via CSS
@@ -64,6 +65,8 @@ Page({
     // rendered an empty shell plus a dead "Get on list" bar.
     loadError: false,
     isRegistered: false,
+    registrationPaid: false,
+    canUpgrade: false,
     hasProfile: null,
     showTicketModal: false,
     showRegisterPrompt: false,
@@ -75,6 +78,7 @@ Page({
     heroHeight: 750,
     heroLoaded: false,
     headerPinned: false,
+    venuePhotos: [],
     relatedEvents: []
   },
 
@@ -137,6 +141,7 @@ Page({
         wx.setNavigationBarTitle({ title: event.title || '' });
 
         this.loadVenueInfo(event);
+        this.loadVenuePhotos(event);
 
         wx.hideLoading();
         this.checkIfRegistered(id);
@@ -194,6 +199,57 @@ Page({
     this.setData(patch);
   },
 
+  // Match the admin-managed gallery to this event's venue. venueId is the
+  // primary key; venueName keeps older event documents working.
+  loadVenuePhotos: function(event) {
+    if (!event || (!event.venueId && !event.venueName)) return;
+    var self = this;
+    this.setData({ venuePhotos: [] });
+    callFunction('clientAuth', { action: 'getVenueGalleries' })
+      .then(async function(res) {
+        var venues = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+        var venue = null;
+        if (event.venueId) {
+          venue = venues.find(function(v) { return v._id === event.venueId; });
+        }
+        if (!venue && event.venueName) {
+          venue = venues.find(function(v) { return v.name === event.venueName; });
+        }
+        var fileIDs = venue && Array.isArray(venue.photos) ? venue.photos.filter(Boolean) : [];
+        if (fileIDs.length === 0) return;
+
+        var cloudIDs = fileIDs.filter(function(fileID) {
+          return typeof fileID === 'string' && fileID.indexOf('cloud://') === 0;
+        });
+        var urlMap = {};
+        if (cloudIDs.length > 0) {
+          try {
+            var resolved = await callFunction('clientAuth', { action: 'resolveImages', fileList: cloudIDs });
+            urlMap = (resolved && resolved.urlMap) || {};
+          } catch (err) {
+            console.error('[event-detail] server photo resolution failed:', err);
+          }
+          var unresolved = cloudIDs.filter(function(fileID) { return !urlMap[fileID]; });
+          if (unresolved.length > 0) {
+            try {
+              var directMap = await getTempUrls(unresolved);
+              Object.keys(directMap).forEach(function(fileID) {
+                if (directMap[fileID]) urlMap[fileID] = directMap[fileID];
+              });
+            } catch (_) { /* venue photos are optional */ }
+          }
+        }
+
+        var photos = fileIDs.map(function(fileID) {
+          return fileID.indexOf('cloud://') === 0 ? (urlMap[fileID] || '') : fileID;
+        }).filter(Boolean);
+        self.setData({ venuePhotos: photos });
+      })
+      .catch(function(err) {
+        console.error('[event-detail] loadVenuePhotos failed:', err);
+      });
+  },
+
   checkProfile: function() {
     // hasProfile mirrors the central auth state: anonymous (no guest
     // record, or explicitly logged out) sees the register prompt.
@@ -210,13 +266,24 @@ Page({
     wx.navigateTo({ url: '/pages/register/register' });
   },
 
+  // Upgrade eligibility: a guest holding a FREE registration may buy a
+  // priced ticket for the same event — their registration is upgraded in
+  // place (server-side, see payments.createOrder / issuePaidRegistration).
+  // Only priced, admin-authored packages qualify; ended events never do.
+  _computeCanUpgrade: function(paid) {
+    const ev = this.data.event;
+    if (!ev || paid || ev.isEventOver) return false;
+    const pkgs = ev.paidPackages || [];
+    return pkgs.some(function(p) { return p && p.name && (Number(p.price) || 0) > 0; });
+  },
+
   checkIfRegistered: function(eventId) {
     // Gate on auth state: anonymous users never see "on the list".
     // Waiting on getAuth (which itself awaits openid) fixes the cold-start
     // race where a sync globalData.openid read silently skipped the check.
     auth.getAuth((profile) => {
       if (!profile) {
-        this.setData({ isRegistered: false });
+        this.setData({ isRegistered: false, registrationPaid: false, canUpgrade: false });
         return;
       }
       const db = this.cloud.database();
@@ -226,7 +293,8 @@ Page({
       }).get({
         success: res => {
           if (res.data.length > 0) {
-            this.setData({ isRegistered: true });
+            const paid = !!res.data[0].paid;
+            this.setData({ isRegistered: true, registrationPaid: paid, canUpgrade: this._computeCanUpgrade(paid) });
           }
         },
         fail: err => console.error('Check registration failed:', err)
@@ -246,24 +314,47 @@ Page({
     var event = this.data.event;
     var autoId = '';
     var autoName = '';
-    if (event && event.isFree && (!event.tickets || event.tickets.length === 0)) {
+    // Upgrade mode (already registered free): nothing auto-selects — the
+    // free row shows as their current ticket, priced options wait for a pick.
+    if (!this.data.isRegistered && event && event.isFree && (!event.tickets || event.tickets.length === 0)) {
       autoId = 'free';
       autoName = 'Free Entry';
     }
     this.setData({ showTicketModal: true, selectedTicketId: autoId, selectedTicketName: autoName, selectedTicketPrice: 0 });
+    this._loadAvailability();
   },
 
   selectTicket: function(e) {
     const { id, name, price, link } = e.currentTarget.dataset;
+    // A registered guest can't (re)pick the free row — that's their
+    // current ticket; only a priced upgrade selection is meaningful.
+    if (id === 'free' && this.data.isRegistered) return;
+    // Free entry closed (time switch or limit): the row is greyed out and
+    // a tap explains why instead of selecting.
+    if (id === 'free' && this.data.availability && !this.data.availability.available) {
+      wx.showToast({ title: 'Free entry is closed', icon: 'none' });
+      return;
+    }
+    if (this.data.soldOut && this.data.soldOut[id]) {
+      wx.showToast({ title: 'Sold out', icon: 'none' });
+      return;
+    }
     this.setData({ selectedTicketId: id, selectedTicketName: name, selectedTicketPrice: price || 0, selectedPackageLink: link || '' });
   },
 
   selectPackage: function(e) {
-    const { idx, name, link } = e.currentTarget.dataset;
+    const { idx, name, link, price, pkgId } = e.currentTarget.dataset;
+    const pid = pkgId || ('pkg_' + idx);
+    if (this.data.soldOut && this.data.soldOut[pid]) {
+      wx.showToast({ title: 'Sold out', icon: 'none' });
+      return;
+    }
     this.setData({
-      selectedTicketId: 'pkg_' + idx,
+      // pkgId is the stable id the admin editor stamps on every paid
+      // package — orders must reference it, never the shifting index.
+      selectedTicketId: pkgId || ('pkg_' + idx),
       selectedTicketName: name,
-      selectedTicketPrice: 0,
+      selectedTicketPrice: Number(price) || 0,
       selectedPackageLink: link || ''
     });
   },
@@ -286,11 +377,12 @@ Page({
     if (!pkg) return;
     this.setData({
       showTicketModal: true,
-      selectedTicketId: 'pkg_' + idx,
+      selectedTicketId: pkg.id || ('pkg_' + idx),
       selectedTicketName: pkg.name,
-      selectedTicketPrice: 0,
+      selectedTicketPrice: Number(pkg.price) || 0,
       selectedPackageLink: pkg.paymentLink || ''
     });
+    this._loadAvailability();
   },
 
   closeTicketModal: function() {
@@ -306,7 +398,10 @@ Page({
       wx.showToast({ title: 'Registration is closed for this event', icon: 'none' });
       return;
     }
-    if (this.data.isRegistered) {
+    // Registered and NOT upgradable → nothing to do. Registered with a
+    // FREE ticket while priced tickets exist → fall through to the paid
+    // path below (upgrade: the server swaps the ticket in place).
+    if (this.data.isRegistered && !this.data.canUpgrade) {
       this.setData({ showTicketModal: false });
       wx.showToast({ title: 'Already registered!', icon: 'none' });
       return;
@@ -315,6 +410,13 @@ Page({
     const type = this.data.selectedTicketId;
     if (!type) {
       wx.showToast({ title: 'Select a ticket type', icon: 'none' });
+      return;
+    }
+
+    // Paid ticket → order + WeChat Pay first; the registration is issued by
+    // the server only after the payment is confirmed (utils/pay.js).
+    if (this.data.selectedTicketPrice > 0) {
+      this._payAndJoin();
       return;
     }
 
@@ -328,67 +430,137 @@ Page({
       }
 
       wx.showLoading({ title: 'Registering...', mask: true });
-      const db = this.cloud.database();
       const eventId = this.data.event._id;
 
-      // Just-in-time dedup: re-query right before the add in case the
-      // isRegistered flag was stale (explicitly filtered by this guest's
-      // _openid, so only this user's registration can match).
-      db.collection('registrations').where({ eventId, _openid: guest._openid }).get({
-        success: dupRes => {
-          if (dupRes.data.length > 0) {
-            wx.hideLoading();
+      // Server-side registration (clientAuth.submitRegistration): limits,
+      // the timed free→paid switch and duplicate protection all live on the
+      // server now — the direct client write is retired.
+      this.cloud.callFunction({
+        name: 'clientAuth',
+        data: { action: 'submitRegistration', eventId },
+        success: (res) => {
+          wx.hideLoading();
+          const r = (res && res.result) || {};
+          if (!r.success) {
+            console.error('Registration failed:', r);
+            wx.showToast({ title: 'Registration failed', icon: 'none' });
+            return;
+          }
+          if (r.code === 'ALREADY_REGISTERED') {
             this.setData({ isRegistered: true, showTicketModal: false, selectedTicketId: '' });
             wx.showToast({ title: 'Already registered!', icon: 'none' });
             return;
           }
-
-          db.collection('registrations').add({
-            data: {
-              eventId,
-              eventTitle: this.data.event.title,
-              eventDate: this.data.event.date,
-              guestName: guest.nickName || guest.name || guest.phone || '',
-              guestAvatar: guest.avatarUrl || '',
-              promoCode: guest.promoCode || '',
-              promoterId: guest.promoterId || '',
-              promoterName: guest.promoterName || '',
-              ticketType: this.data.selectedTicketName || type,
-              status: 'confirmed',
-              createdAt: db.serverDate()
-            },
-            success: () => {
-              wx.hideLoading();
-              // Presentation change only: the sheet's content swaps to an
-              // animated "You're on the list" state (see .join-success in
-              // the wxss) for ~1.2s instead of a toast, then the sheet
-              // closes and the same navigation as before happens.
-              this.setData({ isRegistered: true, joinSuccess: true, selectedTicketId: '' });
-              wx.vibrateShort();
-              const pkgLink = this.data.selectedPackageLink;
-              setTimeout(() => {
-                this.setData({ showTicketModal: false, joinSuccess: false });
-                if (pkgLink) {
-                  wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(pkgLink) });
-                } else {
-                  wx.navigateTo({ url: '/pages/mytickets/mytickets' });
-                }
-              }, 1200);
-            },
-            fail: err => {
-              wx.hideLoading();
-              console.error('Registration failed:', err);
-              wx.showToast({ title: 'Registration failed', icon: 'none' });
+          if (r.code === 'EVENT_OVER') {
+            this.setData({ showTicketModal: false, selectedTicketId: '' });
+            wx.showToast({ title: 'Event has ended', icon: 'none' });
+            return;
+          }
+          if (r.code === 'FREE_CLOSED_BY_TIME' || r.code === 'FREE_SOLD_OUT') {
+            wx.showToast({ title: 'Free entry is closed', icon: 'none' });
+            this._loadAvailability();
+            return;
+          }
+          // Presentation change only: the sheet's content swaps to an
+          // animated "You're on the list" state (see .join-success in the
+          // wxss) for ~1.2s, then the sheet closes and the same navigation
+          // as before happens.
+          this.setData({ isRegistered: true, joinSuccess: true, selectedTicketId: '' });
+          wx.vibrateShort();
+          const pkgLink = this.data.selectedPackageLink;
+          setTimeout(() => {
+            this.setData({ showTicketModal: false, joinSuccess: false });
+            if (pkgLink) {
+              wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(pkgLink) });
+            } else {
+              wx.navigateTo({ url: '/pages/mytickets/mytickets' });
             }
-          });
+          }, 1200);
         },
-        fail: err => {
+        fail: (err) => {
           wx.hideLoading();
-          console.error('Registration dedup check failed:', err);
+          console.error('Registration failed:', err);
           wx.showToast({ title: 'Registration failed', icon: 'none' });
         }
       });
     });
+  },
+
+  // Ticket availability (limits / timed switch): feeds the SOLD OUT states
+  // in the sheet. Refreshed on every sheet open and after a refused
+  // registration.
+  _loadAvailability: function() {
+    const eventId = this.data.event && this.data.event._id;
+    if (!eventId) return;
+    this.cloud.callFunction({
+      name: 'clientAuth',
+      data: { action: 'getTicketAvailability', eventId },
+      success: (res) => {
+        const r = (res && res.result) || {};
+        if (!r.success) return;
+        const soldOut = {};
+        (r.tickets || []).forEach(t => { soldOut[t.id] = !!t.soldOut; });
+        this.setData({ availability: r.free || null, soldOut });
+      },
+      fail: () => {}
+    });
+  },
+
+  // ─── Paid tickets (WeChat Pay) ──────────────────────────────────────────
+  // Order → wx.requestPayment → server-confirmed ticket. A cancelled payment
+  // leaves the pending order in My Tickets for a retry; the registration only
+  // appears once the server has seen the payment (never on the client's word).
+  _payAndJoin: function() {
+    wx.showLoading({ title: 'Preparing...', mask: true });
+    pay.createOrder(this.data.event._id, this.data.selectedTicketId)
+      .then((res) => {
+        wx.hideLoading();
+        if (res.status === 'paid') { this._onPaidDone(); return; }
+        if (res.status === 'not_configured') {
+          wx.showToast({ title: 'Payments coming soon', icon: 'none' });
+          return;
+        }
+        if (res.status !== 'params') {
+          wx.showToast({ title: res.message || 'Order failed', icon: 'none' });
+          return;
+        }
+        pay.requestPayment(res.payment)
+          .then(() => this._afterPaySuccess(res.orderId))
+          .catch(() => {
+            wx.showToast({ title: 'Payment cancelled', icon: 'none' });
+            this.setData({ showTicketModal: false });
+          });
+      })
+      .catch(() => {
+        wx.hideLoading();
+        wx.showToast({ title: 'Connection error', icon: 'none' });
+      });
+  },
+
+  _afterPaySuccess: function(orderId) {
+    wx.showLoading({ title: 'Confirming...', mask: true });
+    pay.confirmOrder(orderId)
+      .then((res) => {
+        wx.hideLoading();
+        if (res.status === 'paid') { this._onPaidDone(); return; }
+        // Money moved but the record isn't queryable yet — the server-side
+        // payment callback still issues the ticket; never fake success here.
+        wx.showModal({
+          title: 'Payment received',
+          content: 'Your ticket will appear in My Tickets in a moment.',
+          showCancel: false,
+          success: () => this.setData({ showTicketModal: false })
+        });
+      });
+  },
+
+  _onPaidDone: function() {
+    this.setData({ isRegistered: true, registrationPaid: true, canUpgrade: false, joinSuccess: true, selectedTicketId: '', selectedTicketPrice: 0 });
+    wx.vibrateShort();
+    setTimeout(() => {
+      this.setData({ showTicketModal: false, joinSuccess: false });
+      wx.navigateTo({ url: '/pages/mytickets/mytickets' });
+    }, 1200);
   },
 
   // "You May Also Like": other upcoming events from the same source as
@@ -417,7 +589,9 @@ Page({
       .get()
       .then(function(res) {
         var events = (res.data || [])
-          .filter(function(e) { return e._id !== currentId; })
+          // Closed events are never a suggestion — a closed duplicate of
+          // tonight's party used to show here looking "visitable".
+          .filter(function(e) { return e._id !== currentId && !e.isClosed; })
           .slice(0, 8);
         if (events.length === 0) return;
 
@@ -452,6 +626,25 @@ Page({
     var id = e.currentTarget.dataset.id;
     if (!id) return;
     wx.navigateTo({ url: '/pages/event-detail/event-detail?id=' + id });
+  },
+
+  goToTickets: function() {
+    wx.navigateTo({ url: '/pages/mytickets/mytickets' });
+  },
+
+  copyExternalLink: function() {
+    var event = this.data.event || {};
+    var link = typeof event.externalLink === 'string' ? event.externalLink.trim() : '';
+    if (!link) return;
+    wx.setClipboardData({
+      data: link,
+      success: function() {
+        wx.showToast({ title: 'Link copied', icon: 'success' });
+      },
+      fail: function() {
+        wx.showToast({ title: 'Copy failed', icon: 'none' });
+      }
+    });
   },
 
   // Tracks whether the sticky title/datetime bar (.hero-overlay) has
@@ -497,6 +690,13 @@ Page({
       current: url,
       urls: this.data.event.promoMaterials
     });
+  },
+
+  previewVenuePhoto: function(e) {
+    var url = e.currentTarget.dataset.url;
+    var urls = (this.data.venuePhotos || []).filter(Boolean);
+    if (!url || urls.length === 0) return;
+    wx.previewImage({ current: url, urls: urls });
   },
 
   onShareAppMessage: function() {

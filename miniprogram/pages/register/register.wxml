@@ -17,7 +17,10 @@
     </view>
   </view>
 
-  <!-- Onboarding card: phone sign-in, then profile — one in-page step at a time -->
+  <!-- Onboarding card: phone sign-in, then profile — one in-page step at a time.
+       Layout rules: exactly one orange CTA per screen, secondary actions are
+       quiet text rows, and the manual-entry fallback REPLACES the WeChat block
+       (signInMode) rather than expanding underneath it, so nothing jumps. -->
   <view class="card">
 
     <view class="progress-dots">
@@ -25,10 +28,42 @@
       <view class="progress-dot {{step === 'profile' ? 'progress-dot-active' : ''}}" />
     </view>
 
+    <!-- ── Step 1: sign-in ── -->
     <block wx:if="{{step === 'phone'}}">
       <view class="step-content">
-        <text class="card-title">Welcome</text>
 
+        <block wx:if="{{signInMode === 'wechat'}}">
+          <view class="step-head">
+            <text class="card-title">Welcome</text>
+            <text class="card-desc">Sign in to join the guest list</text>
+          </view>
+        </block>
+
+        <block wx:else>
+          <view class="step-head">
+            <text class="card-title">Your phone</text>
+            <text class="card-desc">For WeChat accounts with a number from outside mainland China</text>
+          </view>
+
+          <view class="field-block">
+            <text class="field-label">Phone number</text>
+            <view class="field-wrap">
+              <input
+                class="field-input"
+                type="text"
+                value="{{manualPhoneInput}}"
+                bindinput="onManualPhoneInput"
+                placeholder="+852 9123 4567"
+                placeholder-class="field-placeholder"
+                maxlength="20"
+                confirm-type="done"
+              />
+            </view>
+            <text wx:if="{{manualPhoneError}}" class="error-text field-status">{{manualPhoneError}}</text>
+          </view>
+        </block>
+
+        <!-- Consent gate — shared by both sign-in modes -->
         <view class="consent-row" bindtap="toggleConsent">
           <view class="consent-checkbox {{consentChecked ? 'consent-checkbox--checked' : ''}}">
             <text wx:if="{{consentChecked}}" class="consent-checkbox-mark">✓</text>
@@ -38,60 +73,88 @@
           </view>
         </view>
 
-        <button
-          class="btn-phone-main"
-          open-type="getPhoneNumber"
-          bindgetphonenumber="onGetPhoneNumber"
-          disabled="{{!consentChecked}}"
-        >Sign In</button>
+        <block wx:if="{{signInMode === 'wechat'}}">
+          <button
+            class="btn-primary"
+            open-type="getPhoneNumber"
+            bindgetphonenumber="onGetPhoneNumber"
+            disabled="{{!consentChecked}}"
+          >Quick login</button>
 
-        <view class="btn-skip" bind:tap="goBack">
-          <text class="btn-skip-text">Browse without signing in</text>
+          <view class="switch-row">
+            <text class="switch-hint">Foreign number?</text>
+            <text class="switch-link" catchtap="showManualPhone">Enter it manually</text>
+          </view>
+        </block>
+
+        <block wx:else>
+          <button
+            class="btn-primary"
+            bindtap="submitManualPhone"
+            disabled="{{!consentChecked}}"
+          >Continue</button>
+
+          <view class="switch-row">
+            <text class="switch-link" catchtap="hideManualPhone">Use WeChat sign-in instead</text>
+          </view>
+        </block>
+
+        <view class="skip-link" bindtap="goBack">
+          <text class="skip-link-text">Browse without signing in</text>
         </view>
+
       </view>
     </block>
 
+    <!-- ── Step 2: profile ── -->
     <block wx:elif="{{step === 'profile'}}">
       <view class="step-content">
-        <text class="card-title">Your Profile</text>
-        <text class="card-desc">Set your photo and name, then enter who invited you</text>
 
-        <!-- Nickname -->
-        <view class="field-wrap">
-          <input
-            class="field-input"
-            type="nickname"
-            value="{{nickName}}"
-            bindinput="onNickNameInput"
-            placeholder="Your name"
-            placeholder-class="field-placeholder"
-            maxlength="30"
-          />
+        <view class="step-head">
+          <text class="card-title">Your profile</text>
+          <text class="card-desc">Set your name, then enter who invited you</text>
         </view>
 
-        <!-- Promo code -->
-        <view class="field-wrap {{promoValid ? 'field-valid' : ''}}">
-          <input
-            class="field-input"
-            placeholder="Invite by"
-            placeholder-class="field-placeholder"
-            value="{{promoInput}}"
-            bindinput="onPromoInput"
-            maxlength="20"
-            auto-capitalize="characters"
-          />
+        <view class="field-block">
+          <text class="field-label">Name</text>
+          <view class="field-wrap">
+            <input
+              class="field-input"
+              type="text"
+              value="{{nickName}}"
+              bindinput="onNickNameInput"
+              placeholder="Your name"
+              placeholder-class="field-placeholder"
+              maxlength="30"
+            />
+          </view>
         </view>
 
-        <text wx:if="{{promoError}}" class="error-text">{{promoError}}</text>
-        <text wx:if="{{promoValid}}" class="success-text">✓ Code accepted</text>
+        <view class="field-block">
+          <text class="field-label">Invite code</text>
+          <view class="field-wrap {{promoValid ? 'field-valid' : ''}}">
+            <input
+              class="field-input"
+              placeholder="Who invited you?"
+              placeholder-class="field-placeholder"
+              value="{{promoInput}}"
+              bindinput="onPromoInput"
+              maxlength="20"
+              auto-capitalize="characters"
+            />
+          </view>
+          <text wx:if="{{promoError}}" class="error-text field-status">{{promoError}}</text>
+          <text wx:if="{{promoValid}}" class="success-text field-status">✓ Code accepted</text>
+        </view>
 
         <button
-          class="btn-submit"
+          class="btn-primary"
           bindtap="onSubmit"
           disabled="{{!promoInput || !nickName || submitting}}"
         >
           {{submitting ? 'Saving...' : promoValid ? 'Continue' : 'Verify & Join'}}
         </button>
+
       </view>
     </block>
 
@@ -110,7 +173,7 @@
      Mask tap counts as "Not now" / disagree, same as every other sheet. -->
 <bottom-sheet show="{{showPrivacyModal}}" bind:close="onDisagreePrivacyAuthorization">
   <view class="privacy-modal">
-    <view class="modal-handle"></view>
+    <view class="modal-handle" />
     <text class="privacy-title">Your Privacy</text>
     <text class="privacy-desc">The List needs your phone number to verify your identity and complete registration. Please review our Privacy Policy before continuing.</text>
     <button

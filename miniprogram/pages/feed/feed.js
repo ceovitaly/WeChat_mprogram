@@ -6,6 +6,7 @@ Page({
   data: {
     events: [],
     filteredEvents: [],
+    paidEvents: [],
     loading: true,
     refreshing: false,
     userInfo: null,
@@ -44,7 +45,8 @@ Page({
     // Content-first redesign: no permanent header row anymore — Profile
     // and Tickets nav-bar buttons navigate directly (goToProfile/
     // goToTickets), and an expand-down search panel, closed by default.
-    showSearchPanel: false
+    showSearchPanel: false,
+    showPaidEvents: false
   },
 
   onLoad: function() {
@@ -280,15 +282,20 @@ Page({
       e.animDelay = Math.min(i, maxStaggerIndex) * staggerStepMs;
     });
 
-    this.setData({ filteredEvents: filtered });
-
     var regIds = this.data.myRegistrationIds;
-    if (regIds && regIds.length > 0) {
-      var marked = filtered.map(function(e) {
-        return Object.assign({}, e, { isRegistered: regIds.indexOf(e._id) !== -1 });
+    var paidEvents = filtered.filter(function(e) {
+      return e.isPaid === true || e.hasPaidPackages === true;
+    }).map(function(e) {
+      return Object.assign({}, e, {
+        isRegistered: !!(regIds && regIds.indexOf(e._id) !== -1)
       });
-      this.setData({ filteredEvents: marked });
-    }
+    });
+    var marked = filtered.map(function(e) {
+      return Object.assign({}, e, {
+        isRegistered: !!(regIds && regIds.indexOf(e._id) !== -1)
+      });
+    });
+    this.setData({ filteredEvents: marked, paidEvents: paidEvents });
   },
 
   // ===== REGISTRATIONS =====
@@ -322,30 +329,14 @@ Page({
       var cached = wx.getStorageSync('events_cache');
       var cacheTime = wx.getStorageSync('events_cache_time');
       var age = Date.now() - cacheTime;
-      if (cached && cacheTime && age < 10 * 60 * 1000) {
-        var events = this.normalizeEventImages(JSON.parse(cached));
-        var self = this;
-        
-        // Сначала разрешаем изображения, потом обновляем UI
-        resolveEventImages(events).then(function(resolvedEvents) {
-          self.processEvents(resolvedEvents);
-          self.setData({ events: resolvedEvents, loading: false });
-          self.applyFilters();
-          
-          // Обновляем кэш с уже разрешенными изображениями
-          try {
-            wx.setStorageSync('events_cache', JSON.stringify(resolvedEvents));
-            wx.setStorageSync('events_cache_time', Date.now());
-          } catch (e) {}
-          
-          // Фоновое обновление, если кэш старше 2 минут
-          if (age > 2 * 60 * 1000) {
-            self.fetchEvents(false);
-          }
-        }).catch(function(err) {
-          console.error('[feed] resolveEventImages failed from cache:', err);
-          self.fetchEvents(true);
-        });
+      var cachedEvents = cached ? JSON.parse(cached) : null;
+      // Never let a recently cached empty/error result suppress a real fetch.
+      if (Array.isArray(cachedEvents) && cachedEvents.length > 0 && cacheTime && age < 10 * 60 * 1000) {
+        var events = this.normalizeEventImages(cachedEvents);
+        // Content first: cards must not wait for cloud image URL resolution.
+        this.renderEvents(events, false);
+        this.enrichEventImages(events);
+        if (age > 2 * 60 * 1000) this.fetchEvents(false);
         return;
       }
     } catch (e) {
@@ -360,37 +351,88 @@ Page({
     if (showLoading) this.setData({ loading: true });
 
     var self = this;
-    var db = this.cloud.database();
-    var _ = db.command;
 
     // Fetch from 14 days ago so past-date calendar filter works
     var fetchFrom = new Date();
     fetchFrom.setDate(fetchFrom.getDate() - 14);
     var fetchFromStr = fetchFrom.toISOString().split('T')[0];
 
-    db.collection('events')
+    this.cloud.callFunction({
+      name: 'clientAuth',
+      data: { action: 'getEvents', dateFrom: fetchFromStr }
+    })
+      .then(function(res) {
+        var result = (res && res.result) || {};
+        if (!result.success || !Array.isArray(result.data)) {
+          throw new Error(result.message || 'Invalid events response');
+        }
+        var events = self.normalizeEventImages(result.data);
+        self.renderEvents(events, true);
+        self.enrichEventImages(events);
+      })
+      .catch(function(err) {
+        // Compatibility fallback for DevTools/environments where the updated
+        // clientAuth bundle has not been uploaded yet. The cloud function is
+        // primary because client-side DB queries have a lower document cap.
+        console.warn('[feed] clientAuth getEvents failed, using DB fallback:', err);
+        self.fetchEventsDirect(fetchFromStr).catch(function(fallbackErr) {
+          console.error('fetchEvents error:', fallbackErr);
+          self.setData({ loading: false, refreshing: false });
+          wx.showToast({ title: 'Failed to load events', icon: 'none' });
+        });
+      });
+  },
+
+  fetchEventsDirect: function(fetchFromStr) {
+    var self = this;
+    var db = this.cloud.database();
+    var _ = db.command;
+    return db.collection('events')
       .where({ date: _.gte(fetchFromStr) })
       .orderBy('date', 'asc')
       .limit(100)
       .get()
       .then(function(res) {
-        var events = self.normalizeEventImages(res.data);
-        return resolveEventImages(events);
-      })
-      .then(function(events) {
-        self.processEvents(events);
-        self.setData({ events: events, loading: false, refreshing: false });
-        self.applyFilters();
-        try {
-          wx.setStorageSync('events_cache', JSON.stringify(events));
-          wx.setStorageSync('events_cache_time', Date.now());
-        } catch (e) {}
-      })
-      .catch(function(err) {
-        console.error('fetchEvents error:', err);
-        self.setData({ loading: false, refreshing: false });
-        wx.showToast({ title: 'Failed to load events', icon: 'none' });
+        var events = self.normalizeEventImages((res && res.data) || []);
+        self.renderEvents(events, true);
+        self.enrichEventImages(events);
       });
+  },
+
+  // Render event data immediately, before optional cloud:// image enrichment.
+  // A slow/misconfigured image resolver must never leave the feed empty.
+  renderEvents: function(events, updateCache) {
+    this.processEvents(events);
+    this.setData({ events: events, loading: false, refreshing: false });
+    this.applyFilters();
+    if (updateCache) {
+      try {
+        wx.setStorageSync('events_cache', JSON.stringify(events));
+        wx.setStorageSync('events_cache_time', Date.now());
+      } catch (e) {}
+    }
+  },
+
+  // Enrich the already-visible cards in the background. Match by _id so a
+  // delayed response cannot reorder or replace a newer event fetch.
+  enrichEventImages: function(events) {
+    var self = this;
+    resolveEventImages(events).then(function(resolvedEvents) {
+      var byId = {};
+      (resolvedEvents || []).forEach(function(event) { if (event && event._id) byId[event._id] = event; });
+      var merged = self.data.events.map(function(event) {
+        return byId[event._id] ? Object.assign({}, event, byId[event._id]) : event;
+      });
+      self.processEvents(merged);
+      self.setData({ events: merged });
+      self.applyFilters();
+      try {
+        wx.setStorageSync('events_cache', JSON.stringify(merged));
+        wx.setStorageSync('events_cache_time', Date.now());
+      } catch (e) {}
+    }).catch(function(err) {
+      console.error('[feed] image enrichment failed:', err);
+    });
   },
 
   // Normalize each event's images to a canonical `promoImages` array
@@ -542,6 +584,10 @@ Page({
 
   toggleSearchPanel: function() {
     this.setData({ showSearchPanel: !this.data.showSearchPanel });
+  },
+
+  togglePaidEvents: function() {
+    this.setData({ showPaidEvents: !this.data.showPaidEvents });
   },
 
   // Broader "interacting with other elements should hide the search bar"

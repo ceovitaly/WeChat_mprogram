@@ -1,69 +1,37 @@
-```
-# Dependencies
-node_modules/
+# OS
+.DS_Store
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+.fseventsd/
+.Spotlight-V100/
+.TemporaryItems/
+.Trashes/
 
-# Logs and temp files
+# Dependencies and generated artifacts
+node_modules/
+miniprogram_npm/
+.cloudbase/
+dist/
+build/
+coverage/
+
+# Local WeChat DevTools settings
+project.private.config.json
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs and temporary files
 *.log
 *.tmp
-
-# Environment
-.env
-.env.local
-*.env.*
 
 # Editors
 .vscode/
 .idea/
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-selfcheck.json
-
-# Build outputs
-dist/
-build/
-*.egg-info/
-.coverage
-htmlcov/
-coverage.xml
-.tox/
-.nox/
-.pytest_cache/
-.mypy_cache/
-
-# Compression
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
-
-# OS generated
-.DS_Store
-Thumbs.db
-```

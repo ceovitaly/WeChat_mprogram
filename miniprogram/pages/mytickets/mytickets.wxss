@@ -145,6 +145,10 @@ page {
 
 .ticket-title-past { color: var(--text-secondary); }
 
+/* Active card, meta row moved above the title: give the title top spacing
+   (its default margin is bottom-only) without touching past/pending cards. */
+.ticket-title--meta-above { margin-top: 12rpx; }
+
 .ticket-meta {
   display: flex;
   align-items: center;
@@ -174,6 +178,34 @@ page {
 }
 
 .ticket-type-past { color: var(--text-secondary); }
+
+/* Ticket detail block — name / what's included / price, under the base rows */
+.ticket-detail {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.ticket-detail-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ticket-detail-desc {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.ticket-detail-price {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--accent, #FF6B35);
+}
 
 /* Status Badge */
 .status-badge {
@@ -208,27 +240,6 @@ page {
   height: calc(40rpx + env(safe-area-inset-bottom));
 }
 
-.ticket-remove-btn {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  background: rgba(255, 59, 48, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-left: 20rpx;
-  align-self: center;
-}
-
-.ticket-remove-btn:active { opacity: 0.6; }
-
-.ticket-remove-icon {
-  width: 28rpx;
-  height: 28rpx;
-  background-color: #FF3B30;
-}
-
 /* ===== DARK MODE ===== */
 /* Most colors flip automatically via the tokens above. Only genuinely
    page-local shades (out of the token palette, or diverging from the
@@ -246,6 +257,221 @@ page {
   .badge-confirmed { background: rgba(255,255,255,0.08); }
   .badge-past { background: rgba(255,255,255,0.06); }
 
-  .ticket-remove-btn { background: rgba(255, 69, 58, 0.15); }
-  .ticket-remove-icon { background-color: #FF453A; }
+}
+
+/* ─── Door check-in scanner ─── */
+/* Prominent CTA right under the tabs — the page's loudest action on purpose:
+   at the door this is what the guest opens. Brand accent, scanner-frame icon. */
+.scan-btn {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin: 20rpx 32rpx 8rpx;
+  padding: 24rpx 28rpx;
+  background: linear-gradient(135deg, #FF8F5E 0%, #FF6B35 100%);
+  border-radius: 24rpx;
+  flex-shrink: 0;
+}
+
+.scan-btn:active { opacity: 0.85; }
+
+.scan-btn-icon {
+  position: relative;
+  width: 64rpx;
+  height: 64rpx;
+  flex-shrink: 0;
+}
+
+.scan-btn-corner {
+  position: absolute;
+  width: 20rpx;
+  height: 20rpx;
+  border-color: #FFFFFF;
+  border-style: solid;
+  border-width: 0;
+}
+
+.scan-btn-corner--tl { top: 0; left: 0; border-top-width: 4rpx; border-left-width: 4rpx; border-top-left-radius: 8rpx; }
+.scan-btn-corner--tr { top: 0; right: 0; border-top-width: 4rpx; border-right-width: 4rpx; border-top-right-radius: 8rpx; }
+.scan-btn-corner--bl { bottom: 0; left: 0; border-bottom-width: 4rpx; border-left-width: 4rpx; border-bottom-left-radius: 8rpx; }
+.scan-btn-corner--br { bottom: 0; right: 0; border-bottom-width: 4rpx; border-right-width: 4rpx; border-bottom-right-radius: 8rpx; }
+
+.scan-btn-line {
+  position: absolute;
+  left: 12rpx;
+  right: 12rpx;
+  top: 50%;
+  height: 4rpx;
+  margin-top: -2rpx;
+  border-radius: 2rpx;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.scan-btn-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.scan-btn-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.scan-btn-sub {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ─── Pending payment orders ────────────────────────────────────────────── */
+
+.pending-orders {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.pending-title {
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  color: #FFB340;
+  text-transform: uppercase;
+}
+
+.pending-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 28rpx;
+  border-radius: 24rpx;
+  background: var(--bg-elevated);
+  border: 2rpx solid rgba(255, 179, 64, 0.35);
+}
+
+.dot-pending {
+  background: #FFB340;
+}
+
+.pending-pay-btn {
+  padding: 14rpx 32rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #FF8F5E 0%, #FF6B35 100%);
+}
+
+.pending-pay-btn text {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+/* ─── Ticket detail popup ──────────────────────────────────────────────── */
+/* Full-screen dim backdrop; the window sits centered with generous side
+   margins, square-rounded (24rpx) like the rest of the app. */
+.td-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx;
+}
+
+.td-window {
+  width: 100%;
+  background: var(--bg-elevated);
+  border-radius: 24rpx;
+  padding: 36rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  box-sizing: border-box;
+}
+
+.td-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.td-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.td-sub {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+
+.td-ticket {
+  padding-top: 20rpx;
+  border-top: 1rpx solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.td-ticket-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.td-ticket-desc {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.td-ticket-price {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.td-ticket-promoter {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+/* Two side-by-side action buttons: Scan QR (accent) and Cancel (neutral),
+   square-rounded 76rpx like the rest of the app. */
+.td-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.td-btn {
+  flex: 1;
+  height: 76rpx;
+  border-radius: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.td-btn--scan {
+  background: var(--accent);
+}
+
+.td-btn--cancel {
+  background: var(--bg-inset);
+}
+
+.td-btn-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.td-btn-text--scan {
+  color: #FFFFFF;
 }
