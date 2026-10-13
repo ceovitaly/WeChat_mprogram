@@ -138,26 +138,32 @@ page {
 .event-cover {
   background: #1a1a2e;
   padding: 20rpx 24rpx;
+  /* Same stacking as the Events tab card: title on top, "venue · time"
+     below it — not side by side. */
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
   min-height: 96rpx;
-  gap: 16rpx;
+  gap: 8rpx;
 }
 
 .event-cover-title {
   font-size: 30rpx;
   font-weight: 600;
   color: #FFFFFF;
-  flex-shrink: 0;
+  /* Full tile width so long titles wrap line by line; break-all keeps
+     unbroken runs (emoji, long words) from pushing past the tile edge. */
+  align-self: stretch;
+  line-height: 1.4;
+  word-break: break-all;
 }
 
 .event-cover-meta {
   font-size: 24rpx;
   color: #FFFFFF;
-  text-align: right;
-  flex: 1;
+  text-align: left;
+  line-height: 1.4;
 }
 
 .event-card-actions {
@@ -254,4 +260,101 @@ page {
   .event-cover {
     background: linear-gradient(135deg, #1B3A8C 0%, #2D1B69 100%);
   }
+}
+
+/* ── Custom dots pull-to-refresh (guest-feed mechanic, admin blue #007AFF) ── */
+
+.cal-refresher {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* The refresher slot's wrapper shrink-to-fits its content — without an
+     explicit full width the box hugs the left edge and justify-content
+     centers nothing. Same fix as the guest feed's .feed-refresher. */
+  width: 100%;
+  box-sizing: border-box;
+  padding-bottom: 16rpx;
+}
+
+/* Pre-trigger state (pulling): each dot's transform/opacity comes from the
+   inline style driven by dotStyles in onRefresherPulling — dots grow from
+   small/faint to full-size as the user pulls. Once refresher-triggered
+   flips true, .refresh-dot-active's keyframe animation takes over
+   automatically (CSS animations win over a plain inline style). */
+.refresh-dots {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.refresh-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #007AFF;
+  transform: scale(0.4);
+  opacity: 0.25;
+}
+
+.refresh-dot-active {
+  animation: refresh-dot-bounce 1.2s ease-in-out infinite;
+}
+
+.refresh-dot-active:nth-child(2) { animation-delay: 0.15s; }
+.refresh-dot-active:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes refresh-dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40% { transform: translateY(-12rpx); opacity: 1; }
+}
+
+/* Calendar's +Add: square with rounded corners (28rpx radius) instead of the
+   shared capsule in app.wxss, at the app's compact 76rpx toolbar height —
+   scoped to this page; the Team subpages keep the capsule until asked. */
+.page-add-btn {
+  height: 76rpx;
+  border-radius: 28rpx;
+}
+
+/* ── Swipe-to-delete (iOS-style) ── */
+
+.swipe-item {
+  position: relative;
+  border-radius: 24rpx;
+  overflow: hidden;
+  margin-bottom: 20rpx;
+}
+
+/* The wrapper owns the vertical rhythm now. */
+.swipe-item .event-card {
+  margin-bottom: 0;
+}
+
+/* Red Delete revealed behind the card's right edge. */
+.swipe-delete {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 160rpx;
+  background: #FF3B30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.swipe-delete-text {
+  color: #FFFFFF;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+/* Snap animation on release; disabled while the finger is down so the card
+   tracks the drag 1:1. */
+.swipe-content {
+  transition: transform 0.25s ease;
+}
+
+.swipe-content--drag {
+  transition: none;
 }

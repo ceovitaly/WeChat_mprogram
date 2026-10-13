@@ -1,18 +1,3 @@
-/* Hoisted to app.wxss: .section-title.
-
-   Removed as dead code — stats.wxml contains no matching markup for any
-   of these (the guest-check-in modal, the metric tiles and the report
-   detail view all live on other pages now):
-     .metrics-grid .metric-card .metric-value .metric-label
-     .modal-overlay .modal-close .guest-modal .gm-* .duty-*
-     .rpt-* .section-header .gm-close-event-*
-   Verified with a grep of stats.wxml and every page .js.
-
-   The header row moved to <nav-bar> (/components/nav-bar), taking
-   .nav-bar / .nav-username / .nav-btn-logout with it — the username is
-   now the component's `title` and Log out is the shared
-   .nav-action / .nav-action-text--danger pair from app.wxss. */
-
 .page {
   height: 100vh;
   background: var(--bg);
@@ -21,137 +6,94 @@
   overflow: hidden;
 }
 
-/* ── Segmented control ──────────────────────────────────────────
-   House "pick one of N" style, ported from the guest app's
-   .nav-seg-row: ONE bordered pill around all segments, with dividers
-   drawn as 20%-inset ::after hairlines rather than border-rights.
-   align-items:stretch lets those dividers span the pill edge to edge
-   while each segment still centres its own label. overflow:hidden
-   clips the flat-edged segments to the pill's rounded ends.
-   ─────────────────────────────────────────────────────────────── */
-.sub-tabs {
-  display: flex;
-  align-items: stretch;
-  margin: 16rpx 24rpx;
-  border: 1rpx solid var(--border);
-  border-radius: 999rpx;
-  overflow: hidden;
-  flex-shrink: 0;
+.scroll {
+  flex: 1;
+  min-height: 0;
 }
 
-.sub-tab {
-  position: relative;
-  flex: 1;
-  height: 76rpx;
+.body {
+  padding: 24rpx;
+}
+
+.section-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 1rpx;
+  margin: 8rpx 8rpx 16rpx;
+}
+
+.card {
+  background: var(--bg-card, #FFFFFF);
+  border-radius: 28rpx;
+  overflow: hidden;
+}
+
+.row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6rpx;
-  padding: 0 12rpx;
+  gap: 20rpx;
+  padding: 24rpx 28rpx;
+  border-bottom: 1rpx solid var(--border, #E5E5EA);
 }
 
-.sub-tab:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 20%;
-  bottom: 20%;
-  width: 1rpx;
-  background: var(--border);
+.row:last-child {
+  border-bottom: none;
 }
 
-.sub-tab-text {
+.rank {
   font-size: 28rpx;
-  font-weight: 600;
-  color: var(--text-2);
-  white-space: nowrap;
+  font-weight: 700;
+  color: var(--text-3);
+  min-width: 44rpx;
   text-align: center;
 }
 
-/* Selected = the segment fills solid var(--blue), label flips to white.
-   Chosen over the previous underline (which reads as a stray tick inside
-   a pill outline) and over a tinted fill (which would need separate
-   light/dark opacities to stay visible). A solid fill is the one
-   treatment that needs no per-theme tuning: --blue is #007AFF in light
-   and #0A84FF in dark, and #FFFFFF clears 4.5:1 on both, so the active
-   segment reads identically in either mode. */
-.sub-tab--active { background: var(--blue); }
-.sub-tab--active .sub-tab-text { color: #FFFFFF; }
-
-/* The active segment's own divider would otherwise sit on the blue fill. */
-.sub-tab--active::after { display: none; }
-
-.scroll {
-  flex: 1;
-  height: 0;
+/* Top three stand out a little */
+.rank--top {
+  color: #FF6B35;
 }
 
-.section {
-  padding: 24rpx 24rpx 0;
-}
-
-/* Today's events */
-.today-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-}
-
-.today-card {
-  background: var(--bg-card);
-  border-radius: 20rpx;
-  padding: 28rpx 24rpx;
+.avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 16rpx;
+  background: #E8F0FB;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.today-card:active { opacity: 0.7; }
+.avatar-text {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #007AFF;
+}
 
-.today-card-info {
+.name {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
-.today-event-title {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: var(--text);
 }
 
-.today-event-meta {
-  font-size: 26rpx;
-  color: var(--text-2);
-}
-
-.today-card-right {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.today-guest-count {
-  font-size: 40rpx;
+.count {
+  font-size: 30rpx;
   font-weight: 700;
-  color: var(--blue);
-  line-height: 1;
+  color: var(--text);
 }
 
-.today-guest-label {
-  font-size: 20rpx;
-  color: var(--text-2);
-  margin-top: 4rpx;
+/* The leader's number in brand accent — "who is winning" at a glance */
+.count--top {
+  color: #FF6B35;
 }
 
-/* inherits display/flex-direction/align-items/colour from app.wxss's
-   .empty-state; only the tighter padding differs */
 .empty-state {
-  padding: 48rpx 0;
-  text-align: center;
+  padding: 120rpx 48rpx;
+  display: flex;
+  justify-content: center;
 }
 
 .empty-text {
@@ -159,8 +101,6 @@
   color: var(--text-3);
 }
 
-/* flat value, not the shared calc() — this page's spacer sits inside a
-   scroll-view that already clears the safe area */
-.tab-bar-spacer {
-  height: 160rpx;
+.safe-bottom {
+  height: 48rpx;
 }

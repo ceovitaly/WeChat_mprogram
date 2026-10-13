@@ -14,14 +14,29 @@
   </view>
 </view>
 
-<!-- Scrollable content -->
+<!-- Scrollable content. Custom dots refresher (same mechanic as the guest
+     app's feed, admin blue): the native pull-down spinner doesn't render
+     under a custom navigation bar, so refresher-default-style="none" + the
+     slot below draw it ourselves. -->
 <scroll-view
   class="content-scroll"
   scroll-y
   refresher-enabled
+  refresher-default-style="none"
+  refresher-background="transparent"
+  refresher-threshold="{{refresherThreshold}}"
   refresher-triggered="{{refreshing}}"
   bindrefresherrefresh="onRefresh"
+  bindrefresherpulling="onRefresherPulling"
+  bindrefresherrestore="onRefresherRestore"
 >
+  <view slot="refresher" class="cal-refresher" style="height:{{refresherThreshold}}px">
+    <view class="refresh-dots">
+      <view class="refresh-dot {{refreshing ? 'refresh-dot-active' : ''}}" style="{{refreshing ? '' : dotStyles[0]}}"></view>
+      <view class="refresh-dot {{refreshing ? 'refresh-dot-active' : ''}}" style="{{refreshing ? '' : dotStyles[1]}}"></view>
+      <view class="refresh-dot {{refreshing ? 'refresh-dot-active' : ''}}" style="{{refreshing ? '' : dotStyles[2]}}"></view>
+    </view>
+  </view>
 
   <!-- Calendar grid (collapsible) -->
   <view class="calendar-wrap {{calendarVisible ? 'calendar-wrap--visible' : ''}}">
@@ -54,23 +69,29 @@
     <view wx:elif="{{filteredEvents.length === 0}}" class="empty-state">
       <text class="empty-icon">📅</text>
       <text class="empty-text">No events on this date</text>
-      <view class="empty-btn" bindtap="goCreateEvent">
-        <text class="empty-btn-text">Create event</text>
-      </view>
     </view>
 
     <view wx:else>
-      <view wx:for="{{filteredEvents}}" wx:key="_id" class="event-card" bindtap="goEditEvent" data-id="{{item._id}}">
-        <view class="event-cover">
-          <text class="event-cover-title">{{item.title}}</text>
-          <text class="event-cover-meta">{{item.startTime}}{{item.endTime ? ' — ' + item.endTime : ''}}{{item.venueName ? ' · ' + item.venueName : ''}}</text>
+      <view wx:for="{{filteredEvents}}" wx:key="_id" class="swipe-item">
+        <!-- Swipe-to-delete (iOS-style): dragging the card left reveals the
+             Delete button behind it. Tap still opens the editor — the old
+             Edit/Delete row below the cover is gone by design. -->
+        <view class="swipe-delete" catchtap="confirmDelete" data-id="{{item._id}}" data-title="{{item.title}}">
+          <text class="swipe-delete-text">Delete</text>
         </view>
-        <view class="event-card-actions">
-          <view class="event-action-btn event-action-btn--edit" catchtap="goEditEvent" data-id="{{item._id}}">
-            <text class="event-action-text">Edit</text>
-          </view>
-          <view class="event-action-btn event-action-btn--delete" catchtap="confirmDelete" data-id="{{item._id}}" data-title="{{item.title}}">
-            <text class="event-action-text">Delete</text>
+        <view
+          class="event-card swipe-content {{swiping && swipeId === item._id ? 'swipe-content--drag' : ''}}"
+          style="transform: translateX({{swipeId === item._id ? swipeX : 0}}px)"
+          bindtap="goEditEvent"
+          data-id="{{item._id}}"
+          bindtouchstart="onSwipeStart"
+          bindtouchmove="onSwipeMove"
+          bindtouchend="onSwipeEnd"
+          bindtouchcancel="onSwipeEnd"
+        >
+          <view class="event-cover">
+            <text class="event-cover-title">{{item.title}}</text>
+            <text class="event-cover-meta">{{item.venueName || 'Venue'}}{{item.startTime ? ' · ' + item.startTime : ''}}</text>
           </view>
         </view>
       </view>

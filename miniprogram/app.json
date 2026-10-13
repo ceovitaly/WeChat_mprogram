@@ -2,10 +2,14 @@
   "pages": [
     "pages/register/register",
     "pages/admin/calendar/calendar",
+    "pages/admin/events/events",
+    "pages/admin/main/main",
     "pages/admin/team/team",
     "pages/admin/stats/stats",
+    "pages/admin/past-events/past-events",
+    "pages/admin/reports/reports",
     "pages/counter/work/work",
-    "pages/counter/stats/stats"
+    "pages/admin/ads/ads"
   ],
   "subPackages": [
     {
@@ -25,15 +29,21 @@
   "preloadRule": {
     "pages/admin/calendar/calendar": {
       "network": "all",
-      "packages": ["admin"]
+      "packages": [
+        "admin"
+      ]
     },
-    "pages/admin/team/team": {
+    "pages/admin/events/events": {
       "network": "all",
-      "packages": ["admin"]
+      "packages": [
+        "admin"
+      ]
     },
-    "pages/admin/stats/stats": {
+    "pages/admin/main/main": {
       "network": "all",
-      "packages": ["admin"]
+      "packages": [
+        "admin"
+      ]
     }
   },
   "lazyCodeLoading": "requiredComponents",
@@ -43,21 +53,33 @@
     "selectedColor": "#007AFF",
     "backgroundColor": "#ffffff",
     "list": [
-      { "pagePath": "pages/admin/calendar/calendar", "text": "Schedule" },
-      { "pagePath": "pages/admin/team/team", "text": "Team" },
-      { "pagePath": "pages/admin/stats/stats", "text": "Stats" },
-      { "pagePath": "pages/counter/work/work", "text": "Work" },
-      { "pagePath": "pages/counter/stats/stats", "text": "Stats" }
+      {
+        "pagePath": "pages/admin/calendar/calendar",
+        "text": "Schedule"
+      },
+      {
+        "pagePath": "pages/admin/events/events",
+        "text": "Events"
+      },
+      {
+        "pagePath": "pages/admin/main/main",
+        "text": "Main"
+      },
+      {
+        "pagePath": "pages/counter/work/work",
+        "text": "Work"
+      }
     ]
   },
   "window": {
-    "navigationBarBackgroundColor": "#ffffff",
-    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "@navBgColor",
+    "navigationBarTextStyle": "@navTxtStyle",
     "navigationBarTitleText": "THE LIST",
-    "backgroundColor": "#F2F2F7",
+    "backgroundColor": "@bgColor",
     "enablePullDownRefresh": false
   },
   "style": "v2",
   "darkmode": true,
+  "themeLocation": "theme.json",
   "sitemapLocation": "sitemap.json"
 }

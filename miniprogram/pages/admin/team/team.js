@@ -12,15 +12,7 @@ Page({
   },
 
   onShow() {
-    this._syncTabBar()
     this._loadCounts()
-  },
-
-  _syncTabBar() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().updateTabs()
-      this.getTabBar().setData({ selected: 1 })
-    }
   },
 
   async _loadCounts() {

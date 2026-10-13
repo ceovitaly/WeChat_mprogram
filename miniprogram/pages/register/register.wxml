@@ -11,10 +11,9 @@
   <text class="card-desc">Enter credentials provided by your administrator</text>
 
   <view class="input-group">
-    <text class="input-label">LOGIN</text>
     <input
       class="ios-input"
-      placeholder="Username"
+      placeholder="Login"
       placeholder-class="placeholder"
       bindinput="onInputUser"
       value="{{username}}"
@@ -23,7 +22,6 @@
   </view>
 
   <view class="input-group">
-    <text class="input-label">PASSWORD</text>
     <input
       class="ios-input"
       placeholder="Password"
@@ -36,15 +34,20 @@
     />
   </view>
 
-  <button
+  <!-- Plain view, not a native <button>: the button component carries built-in
+       WeChat UA margins that made it render narrower than the input rows no
+       matter the overrides. A view shares the inputs' block geometry exactly;
+       the JS loading guard replaces `disabled`. -->
+  <view
     class="login-btn {{loading ? 'login-btn--loading' : ''}}"
+    hover-class="login-btn--hover"
     bindtap="handleLogin"
-    disabled="{{loading}}"
-  >{{loading ? 'Connecting...' : 'Sign In'}}</button>
+  >{{loading ? 'Connecting...' : 'Sign In'}}</view>
 </view>
 
 <view class="footer">
-  <text class="version">THE LIST · Admin · v2.0</text>
+  <text class="version">THE LIST | 2026</text>
+  <text class="version version--num">v. 4.1</text>
 </view>
 
 </view>

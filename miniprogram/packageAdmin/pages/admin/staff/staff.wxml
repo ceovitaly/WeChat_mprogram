@@ -35,7 +35,6 @@
               <text class="role-badge-text">{{item.role || 'counter'}}</text>
             </view>
           </view>
-          <text class="item-sub">Pass: {{item.password || '—'}}</text>
           <text wx:if="{{item.phone}}" class="item-sub">{{item.phone}}</text>
         </view>
       </view>
@@ -84,7 +83,8 @@
         <text class="field-label">Password</text>
         <input
           class="field-input"
-          placeholder="Set password"
+          password
+          placeholder="{{editingId ? 'Leave blank to keep current password' : 'Leave blank to generate password'}}"
           placeholder-class="field-placeholder"
           value="{{tempPassword}}"
           bindinput="onInputPassword"

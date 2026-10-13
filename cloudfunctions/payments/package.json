@@ -1,0 +1,9 @@
+{
+  "name": "payments",
+  "version": "1.0.0",
+  "description": "Paid tickets: order lifecycle + WeChat Pay gateway seam",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

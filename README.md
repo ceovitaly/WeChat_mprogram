@@ -1,12 +1,22 @@
-# 云开发 quickstart
+# Be Social (Admin)
 
-这是云开发的快速启动指引，其中演示了如何上手使用云开发的三大基础能力：
+Admin and staff WeChat Mini Program for The List.
 
-- 数据库：一个既可在小程序前端操作，也能在云函数中读写的 JSON 文档型数据库
-- 文件存储：在小程序前端直接上传/下载云端文件，在云开发控制台可视化管理
-- 云函数：在云端运行的代码，微信私有协议天然鉴权，开发者只需编写业务逻辑代码
+Release: **4.1**
 
-## 参考文档
+## Open in WeChat DevTools
 
-- [云开发文档](https://developers.weixin.qq.com/miniprogram/dev/wxcloud/basis/getting-started.html)
+- AppID: `wxb3ff00281bf0dca9`
+- Mini-program root: `miniprogram/`
+- Cloud-function root: `cloudfunctions/`
+- Environment: `cloud1-9g2yewom6a2d5467`
 
+There is no separate build command. Upload cloud functions individually from WeChat DevTools.
+
+Before deployment, read `../DEPLOYMENT.md` and configure the variables in `../SECURITY.md`.
+
+## Local verification
+
+```bash
+node --test tests/*.test.js
+```

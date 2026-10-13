@@ -1,0 +1,32 @@
+.page {
+  height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 0 64rpx;
+}
+
+.placeholder-icon {
+  font-size: 72rpx;
+}
+
+.placeholder-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.placeholder-sub {
+  font-size: 28rpx;
+  color: var(--text-3);
+}

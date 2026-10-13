@@ -1,0 +1,10 @@
+{
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index"
+  },
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "Past Events",
+  "navigationBarBackgroundColor": "#ffffff",
+  "navigationBarTextStyle": "black",
+  "disableScroll": true
+}

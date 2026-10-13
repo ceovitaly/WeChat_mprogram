@@ -224,3 +224,7 @@
   font-size: 28rpx;
   color: var(--text);
 }
+
+.field-picker--empty {
+  color: var(--text-3, rgba(0, 0, 0, 0.3));
+}

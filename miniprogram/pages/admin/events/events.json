@@ -1,0 +1,10 @@
+{
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index"
+  },
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "Events",
+  "navigationBarBackgroundColor": "@navBgColor",
+  "navigationBarTextStyle": "@navTxtStyle",
+  "disableScroll": true
+}

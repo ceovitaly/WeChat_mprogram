@@ -23,11 +23,12 @@ const buildInternalRoleMap = (staffList, promoterList) => {
   const map = {}
   ;(promoterList || []).forEach(p => {
     const key = normalizePhone(p.phone)
-    if (key) map[key] = { type: 'promoter', label: p.name || 'Promoter', id: p._id, eventIds: p.attendedEventIds || [] }
+    if (key) map[key] = { type: 'promoter', label: 'PR', id: p._id, eventIds: p.attendedEventIds || [] }
   })
   ;(staffList || []).forEach(s => {
+    if (s.role === 'admin') return  // admins are never badged in the guest list
     const key = normalizePhone(s.phone)
-    if (key) map[key] = { type: 'staff', label: s.name || (s.role === 'admin' ? 'Admin' : 'Counter'), id: s._id, eventIds: s.workedEventIds || [] }
+    if (key) map[key] = { type: 'staff', label: 'C', id: s._id, eventIds: s.workedEventIds || [] }
   })
   return map
 }

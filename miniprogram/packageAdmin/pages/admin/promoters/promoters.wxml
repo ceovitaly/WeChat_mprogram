@@ -158,41 +158,14 @@
     </view>
 
     <view class="action-section">
-      <text class="section-title">Status</text>
+      <text class="section-title">Actions</text>
       <view class="card">
-
-        <view
-          wx:if="{{selectedPromoter.status !== 'approved'}}"
-          class="action-row action-row--green"
-          bindtap="setStatus"
-          data-status="approved"
-        >
-          <text class="action-row-text">Approve</text>
-        </view>
-
-        <view
-          wx:if="{{selectedPromoter.status !== 'suspended'}}"
-          class="action-row action-row--orange"
-          bindtap="setStatus"
-          data-status="suspended"
-        >
-          <text class="action-row-text">Suspend</text>
-        </view>
-
-        <view
-          class="action-row action-row--red"
-          bindtap="confirmRevoke"
-        >
-          <text class="action-row-text">Revoke status</text>
-        </view>
-
         <view
           class="action-row action-row--red"
           bindtap="confirmDelete"
         >
           <text class="action-row-text">Delete promoter</text>
         </view>
-
       </view>
     </view>
 

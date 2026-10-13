@@ -11,21 +11,18 @@
       <view wx:if="{{!isClosed && isAdmin}}" class="close-event-btn" bindtap="confirmCloseEvent">
         <text class="close-event-text">Close Event</text>
       </view>
-      <view wx:elif="{{isClosed}}" class="export-btn" bindtap="exportCSV">
-        <text class="export-btn-text">Export</text>
-      </view>
     </view>
     <text class="event-sub">{{venueName}}</text>
   </nav-bar>
 
   <view class="stats-bar {{isClosed ? 'stats-bar--closed' : ''}}">
     <view class="stat-item">
-      <text class="stat-num stat-num--green">{{dutyStaff.length + arrivedGuests.length}}</text>
+      <text class="stat-num stat-num--green">{{dutyStaff.length + totalArrived}}</text>
       <text class="stat-label">In venue</text>
     </view>
     <view class="stat-div"></view>
     <view class="stat-item">
-      <text class="stat-num">{{pendingGuests.length}}</text>
+      <text class="stat-num">{{totalRegistered - totalArrived}}</text>
       <text class="stat-label">Waiting</text>
     </view>
     <view class="stat-div"></view>
@@ -33,11 +30,54 @@
       <text class="stat-num">{{totalRegistered}}</text>
       <text class="stat-label">Registered</text>
     </view>
-    <view class="refresh-btn" bindtap="onRefresh">
+    <view class="stat-div"></view>
+    <view class="stat-item">
+      <text class="stat-num stat-num--red">{{paidCount}}</text>
+      <text class="stat-label">Paid</text>
+    </view>
+    <view wx:if="{{!isClosed}}" class="refresh-btn" bindtap="onRefresh">
       <text class="refresh-icon">↻</text>
       <text class="refresh-time">{{lastUpdated}}</text>
     </view>
   </view>
+
+  <!-- Closed/past event: everything below the stats is just the two frozen
+       report downloads (see downloadReport). -->
+  <view wx:if="{{isClosed}}" class="closed-reports">
+    <view class="closed-reports-btn" bindtap="downloadReport" data-kind="general">
+      <text class="closed-reports-btn-text">General Report</text>
+    </view>
+    <view class="closed-reports-btn" bindtap="downloadReport" data-kind="promoters">
+      <text class="closed-reports-btn-text">Promoters Report</text>
+    </view>
+  </view>
+
+  <block wx:if="{{!isClosed}}">
+  <!-- Promoter filter chips — the same control as the counter workspace:
+       "All" or a promoter name narrows the displayed lists; stats and export
+       stay event-wide. -->
+  <scroll-view class="chips-bar" scroll-x enable-flex>
+    <view class="chips-inner">
+      <view
+        class="chip {{selectedPromoter === '' ? 'chip--on' : ''}}"
+        bindtap="filterPromoter"
+        data-name=""
+      ><text class="chip-text">All</text></view>
+      <view
+        class="chip {{selectedPromoter === '__paid__' ? 'chip--on' : ''}}"
+        bindtap="filterPromoter"
+        data-name="__paid__"
+      ><text class="chip-text">Paid</text></view>
+      <view class="chips-divider"></view>
+      <view
+        wx:for="{{promoterNames}}"
+        wx:key="*this"
+        class="chip {{selectedPromoter === item ? 'chip--on' : ''}}"
+        bindtap="filterPromoter"
+        data-name="{{item}}"
+      ><text class="chip-text">{{item}}</text></view>
+    </view>
+  </scroll-view>
 
   <scroll-view class="scroll" scroll-y>
 
@@ -66,9 +106,9 @@
         </view>
       </view>
 
-      <!-- Arrived guests -->
-      <view wx:if="{{arrivedGuests.length > 0}}" class="section">
-        <text class="section-title">Arrived · {{arrivedGuests.length}}</text>
+      <!-- Arrived guests (narrowed by the selected promoter chip) -->
+      <view wx:if="{{arrivedSections.length > 0}}" class="section">
+        <text class="section-title">Arrived · {{filteredArrivedCount}}</text>
         <block wx:for="{{arrivedSections}}" wx:key="tag">
           <view class="arrived-section-header">
             <text class="arrived-section-title">{{item.label}}</text>
@@ -81,10 +121,10 @@
               wx:key="_id"
               class="guest-row guest-row--arrived row--{{guest.group === 'P' ? 'party' : guest.group === 'AP' ? 'ap' : guest.group === 'LAP' ? 'lap' : 'extra'}}"
             >
-              <text class="position-num">{{guest.position}}</text>
+              <text class="position-num {{guest.paid ? 'position-num--paid' : ''}}">{{guest.position}}</text>
               <view class="guest-info">
                 <view class="guest-name-row">
-                  <text class="guest-name guest-name--arrived">{{guest.guestName}}</text>
+                  <text class="guest-name guest-name--arrived {{guest.paid ? 'guest-name--paid' : ''}}">{{guest.guestName}}</text>
                   <text wx:if="{{guest.internalRole}}" class="badge {{guest.internalRole === 'staff' ? 'badge-blue' : 'badge-orange'}} internal-badge">{{guest.internalRole === 'staff' ? 'STAFF' : 'PROMOTER'}}</text>
                 </view>
                 <text class="guest-sub">{{guest.promoterName || '—'}}</text>
@@ -99,18 +139,18 @@
       </view>
 
       <!-- Waiting (no arrival) -->
-      <view wx:if="{{pendingGuests.length > 0}}" class="section">
-        <text class="section-title">Waiting · {{pendingGuests.length}}</text>
+      <view wx:if="{{filteredPendingGuests.length > 0}}" class="section">
+        <text class="section-title">Waiting · {{filteredPendingGuests.length}}</text>
         <view class="card">
           <view
-            wx:for="{{pendingGuests}}"
+            wx:for="{{filteredPendingGuests}}"
             wx:key="_id"
             class="guest-row"
           >
             <view class="pending-dot"></view>
             <view class="guest-info">
               <view class="guest-name-row">
-                <text class="guest-name">{{item.guestName}}</text>
+                <text class="guest-name {{item.paid ? 'guest-name--paid' : ''}}">{{item.guestName}}</text>
                 <text wx:if="{{item.internalRole}}" class="badge {{item.internalRole === 'staff' ? 'badge-blue' : 'badge-orange'}} internal-badge">{{item.internalRole === 'staff' ? 'STAFF' : 'PROMOTER'}}</text>
               </view>
               <text class="guest-sub">{{item.promoterName || '—'}}</text>
@@ -119,13 +159,14 @@
         </view>
       </view>
 
-      <view wx:if="{{dutyStaff.length === 0 && arrivedGuests.length === 0}}" class="empty-state">
-        <text class="empty-text">No one has arrived yet</text>
+      <view wx:if="{{dutyStaff.length === 0 && arrivedSections.length === 0 && filteredPendingGuests.length === 0}}" class="empty-state">
+        <text class="empty-text">{{selectedPromoter ? 'No guests for this promoter' : 'No one has arrived yet'}}</text>
       </view>
 
     </view>
 
     <view class="safe-bottom"></view>
   </scroll-view>
+  </block>
 
 </view>

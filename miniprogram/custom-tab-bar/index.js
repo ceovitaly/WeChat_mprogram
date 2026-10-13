@@ -1,19 +1,23 @@
 const ADMIN_LIST = [
   { pagePath: '/pages/admin/calendar/calendar', text: 'Schedule', icon: 'calendar' },
-  { pagePath: '/pages/admin/team/team', text: 'Team', icon: 'team' },
-  { pagePath: '/pages/admin/stats/stats', text: 'Stats', icon: 'stats' }
+  { pagePath: '/pages/admin/events/events', text: 'Events', icon: 'events' },
+  { pagePath: '/pages/admin/main/main', text: 'Main', icon: 'main' }
 ]
 
 const COUNTER_LIST = [
-  { pagePath: '/pages/counter/work/work', text: 'Work', icon: 'work' },
-  { pagePath: '/pages/counter/stats/stats', text: 'Stats', icon: 'stats' }
+  { pagePath: '/pages/counter/work/work', text: 'Work', icon: 'work' }
 ]
 
 Component({
   data: {
     selected: 0,
     role: '',
-    list: [],
+    // Pre-filled with the admin list: every tab page renders its OWN
+    // instance of this component, and an empty first frame (list: []) was
+    // visible as a flicker on every tab switch. The role can't change
+    // mid-session, so starting with the admin list is safe; updateTabs()
+    // still swaps in COUNTER_LIST + hidden for counter users on attach.
+    list: ADMIN_LIST,
     hidden: false
   },
 
@@ -40,10 +44,14 @@ Component({
       const currentPath = currentPage && currentPage.route ? '/' + currentPage.route : ''
       const selected = list.findIndex(item => item.pagePath === currentPath)
 
+      // Hide tab bar for counter role (always hide for counter)
+      const hidden = role === 'counter'
+
       this.setData({
         role,
         list,
-        selected: selected >= 0 ? selected : 0
+        selected: selected >= 0 ? selected : 0,
+        hidden
       })
     },
 

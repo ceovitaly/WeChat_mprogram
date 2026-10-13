@@ -1,0 +1,11 @@
+<view class="page">
+
+<nav-bar title="Reports" show-back />
+
+<view class="placeholder">
+  <text class="placeholder-icon">📄</text>
+  <text class="placeholder-title">Reports</text>
+  <text class="placeholder-sub">Coming soon</text>
+</view>
+
+</view>

@@ -55,13 +55,23 @@
         <text class="field-label">Description</text>
         <text class="field-value-preview {{!descPreviewText ? 'field-placeholder' : ''}}">{{descPreviewText || 'Event details...'}}</text>
       </view>
-    </view>
-  </view>
-
-  <!-- ── Date & time ── -->
-  <view class="section">
-    <text class="section-title">Date & time</text>
-    <view class="card">
+      <view class="field-row">
+        <text class="field-label">External link</text>
+        <input
+          class="field-input"
+          placeholder="https://example.com/event"
+          placeholder-class="field-placeholder"
+          value="{{externalLink}}"
+          bindinput="onExternalLinkInput"
+          confirm-type="done"
+        />
+      </view>
+      <view class="field-row">
+        <text class="field-label">Location</text>
+        <picker range="{{venues}}" range-key="name" value="{{venueIndex}}" bindchange="onVenueChange">
+          <text class="field-picker {{selectedVenueName ? '' : 'field-placeholder'}}">{{selectedVenueName || 'Select venue'}}</text>
+        </picker>
+      </view>
       <view class="field-row">
         <text class="field-label">Date</text>
         <picker mode="date" value="{{date}}" bindchange="onDateChange">
@@ -82,78 +92,6 @@
       </view>
     </view>
   </view>
-
-  <!-- ── Venue ── -->
-  <view class="section">
-    <text class="section-title">Venue</text>
-    <view class="card">
-      <view class="field-row">
-        <text class="field-label">Location</text>
-        <picker range="{{venues}}" range-key="name" value="{{venueIndex}}" bindchange="onVenueChange">
-          <text class="field-picker {{selectedVenueName ? '' : 'field-placeholder'}}">{{selectedVenueName || 'Select venue'}}</text>
-        </picker>
-      </view>
-    </view>
-  </view>
-
-  <!-- ── Paid Packages (disabled — uncomment when payment is ready) ──
-  <view class="section">
-    <text class="section-title">Paid Packages</text>
-    <view class="card">
-      <view class="field-row">
-        <text class="field-label">Enable paid packages</text>
-        <switch checked="{{hasPaidPackages}}" bindchange="togglePaidPackages" color="#007AFF" />
-      </view>
-    </view>
-
-    <block wx:if="{{hasPaidPackages}}">
-      <view
-        wx:for="{{paidPackages}}"
-        wx:key="index"
-        class="paid-package-block"
-      >
-        <view class="paid-package-header">
-          <text class="paid-package-num">Package {{index + 1}}</text>
-          <view class="pkg-btn pkg-btn--delete" bindtap="removePaidPackage" data-index="{{index}}">
-            <text>✕</text>
-          </view>
-        </view>
-        <view class="card">
-          <view class="field-row">
-            <text class="field-label">Name</text>
-            <input
-              class="field-input"
-              placeholder="VIP Table, Bottle service..."
-              placeholder-class="field-placeholder"
-              value="{{item.name}}"
-              bindinput="onPaidPackageInput"
-              data-index="{{index}}"
-              data-field="name"
-              confirm-type="done"
-            />
-          </view>
-          <view class="field-row">
-            <text class="field-label">Payment link</text>
-            <input
-              class="field-input"
-              placeholder="https://..."
-              placeholder-class="field-placeholder"
-              value="{{item.paymentLink}}"
-              bindinput="onPaidPackageInput"
-              data-index="{{index}}"
-              data-field="paymentLink"
-              confirm-type="done"
-            />
-          </view>
-        </view>
-      </view>
-
-      <view class="add-btn" bindtap="addPaidPackage">
-        <text class="add-btn-text">+ Add package</text>
-      </view>
-    </block>
-  </view>
-  ── -->
 
   <!-- ── Entry Limits ── -->
   <view class="section">
@@ -197,6 +135,117 @@
       </view>
     </view>
   </view>
+
+  <!-- ── Paid Tickets ──
+       Price > 0 → guests pay with WeChat Pay right in the app.
+       No price + external link → the legacy "register, then open link" flow. -->
+  <view class="section">
+    <text class="section-title">Paid Tickets</text>
+    <view class="card">
+      <view class="field-row">
+        <text class="field-label">Free entry</text>
+        <switch checked="{{hasFreeEntry}}" bindchange="toggleFreeEntry" color="#007AFF" />
+      </view>
+      <view class="field-row" wx:if="{{hasFreeEntry}}">
+        <text class="field-label">Free tickets limit</text>
+        <input
+          class="field-input"
+          type="number"
+          placeholder="Unlimited"
+          placeholder-class="field-placeholder"
+          value="{{freeTicketsLimit}}"
+          bindinput="onFreeLimitInput"
+          confirm-type="done"
+        />
+      </view>
+      <view class="field-row" wx:if="{{hasFreeEntry}}">
+        <text class="field-label">Free entry until</text>
+        <picker mode="time" value="{{freeUntil}}" bindchange="onFreeUntilChange">
+          <text class="field-picker {{freeUntil ? '' : 'field-picker--empty'}}">{{freeUntil || 'All night'}}</text>
+        </picker>
+      </view>
+      <view class="field-row">
+        <text class="field-label">Enable paid tickets</text>
+        <switch checked="{{hasPaidPackages}}" bindchange="togglePaidPackages" color="#007AFF" />
+      </view>
+    </view>
+
+    <block wx:if="{{hasPaidPackages}}">
+      <view
+        wx:for="{{paidPackages}}"
+        wx:key="index"
+        class="paid-package-block"
+      >
+        <view class="paid-package-header">
+          <text class="paid-package-num">Ticket {{index + 1}}</text>
+          <view class="pkg-btn pkg-btn--delete" bindtap="removePaidPackage" data-index="{{index}}">
+            <text>✕</text>
+          </view>
+        </view>
+        <view class="card">
+          <view class="field-row">
+            <text class="field-label">Name</text>
+            <input
+              class="field-input"
+              placeholder="VIP Entry, Open Bar..."
+              placeholder-class="field-placeholder"
+              value="{{item.name}}"
+              bindinput="onPaidPackageInput"
+              data-index="{{index}}"
+              data-field="name"
+              confirm-type="done"
+            />
+          </view>
+          <view class="field-row">
+            <text class="field-label">Description</text>
+            <input
+              class="field-input"
+              placeholder="What's included (optional)"
+              placeholder-class="field-placeholder"
+              value="{{item.description}}"
+              bindinput="onPaidPackageInput"
+              data-index="{{index}}"
+              data-field="description"
+              confirm-type="done"
+            />
+          </view>
+          <view class="field-row">
+            <text class="field-label">Price, ¥</text>
+            <input
+              class="field-input"
+              type="digit"
+              placeholder="150"
+              placeholder-class="field-placeholder"
+              value="{{item.price}}"
+              bindinput="onPaidPackageInput"
+              data-index="{{index}}"
+              data-field="price"
+              confirm-type="done"
+            />
+          </view>
+          <view class="field-row">
+            <text class="field-label">Quantity</text>
+            <input
+              class="field-input"
+              type="number"
+              placeholder="Unlimited"
+              placeholder-class="field-placeholder"
+              value="{{item.quantity}}"
+              bindinput="onPaidPackageInput"
+              data-index="{{index}}"
+              data-field="quantity"
+              confirm-type="done"
+            />
+          </view>
+        </view>
+      </view>
+
+      <view class="add-btn" bindtap="addPaidPackage">
+        <text class="add-btn-text">+ Add ticket</text>
+      </view>
+    </block>
+  </view>
+
 
   <!-- ── Save ── -->
   <view class="section">

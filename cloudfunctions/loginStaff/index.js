@@ -5,6 +5,7 @@ cloud.init({
 });
 
 const db = cloud.database();
+const { hashPassword, verifyPassword, needsRehash } = require('./passwords');
 
 const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -19,23 +20,27 @@ exports.main = async (event, context) => {
   const cleanUsername = (username || '').trim();
 
   try {
-    // Поиск пользователя в коллекции staff по имени и паролю
-    // Имя ищем без учёта регистра (whole-string regex, спецсимволы экранированы), пароль — строго как есть
+    // Query by the case-insensitive whole username, then verify the password in
+    // application code. New records use scrypt; a successful login upgrades a
+    // legacy plaintext record in place without forcing a password reset.
     const staffRes = await db.collection('staff').where({
-      name: db.RegExp({ regexp: '^' + escapeRegExp(cleanUsername) + '$', options: 'i' }),
-      password: password
-    }).get();
+      name: db.RegExp({ regexp: '^' + escapeRegExp(cleanUsername) + '$', options: 'i' })
+    }).limit(5).get();
 
-    if (staffRes.data.length === 0) {
+    let user = null;
+    for (const candidate of (staffRes.data || [])) {
+      if (await verifyPassword(password, candidate.password)) {
+        user = candidate;
+        break;
+      }
+    }
+
+    if (!user) {
       return {
         success: false,
         message: 'Неверный логин или пароль'
       };
     }
-
-    // Небольшой штат сотрудников — считаем, что двух аккаунтов, отличающихся
-    // только регистром имени, не заводят; при совпадении берём первого, как раньше
-    const user = staffRes.data[0];
 
     // ЛОГИКА ОПРЕДЕЛЕНИЯ РОЛИ:
     // 1. Если в базе явно прописано user.role (например, 'admin'), берем её.
@@ -56,12 +61,15 @@ exports.main = async (event, context) => {
       .update({ data: { lastOpenid: '' } });
 
     // Обновляем openid пользователя при входе, чтобы привязать устройство
-    await db.collection('staff').doc(user._id).update({
-      data: {
-        lastOpenid: wxContext.OPENID,
-        lastLogin: db.serverDate()
-      }
-    });
+    const loginPatch = {
+      lastOpenid: wxContext.OPENID,
+      lastLogin: db.serverDate()
+    };
+    if (needsRehash(user.password)) {
+      loginPatch.password = await hashPassword(password);
+      loginPatch.passwordMigratedAt = db.serverDate();
+    }
+    await db.collection('staff').doc(user._id).update({ data: loginPatch });
 
     return {
       success: true,

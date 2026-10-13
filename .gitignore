@@ -1,14 +1,37 @@
-# Windows
-[Dd]esktop.ini
-Thumbs.db
-$RECYCLE.BIN/
-
-# macOS
+# OS
 .DS_Store
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+.fseventsd/
+.Spotlight-V100/
+.TemporaryItems/
+.Trashes/
 
-# Node.js
+# Dependencies and generated artifacts
 node_modules/
+miniprogram_npm/
+.cloudbase/
+dist/
+build/
+coverage/
+
+# Local WeChat DevTools settings
+project.private.config.json
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Editors
+.vscode/
+.idea/

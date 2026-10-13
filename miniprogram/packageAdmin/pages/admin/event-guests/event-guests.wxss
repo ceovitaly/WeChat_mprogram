@@ -129,6 +129,41 @@
   height: 0;
 }
 
+/* ─── Promoter filter chips ───
+   Same control as the counter workspace (work.wxss), pinned under the stats
+   bar as part of the toolbar chrome. */
+.chips-bar {
+  background: var(--bg-card);
+  border-bottom: 0.5px solid var(--bg);
+  flex-shrink: 0;
+  padding: 14rpx 0 16rpx;
+}
+
+.chips-inner {
+  display: flex;
+  flex-direction: row;
+  padding: 0 24rpx;
+  gap: 12rpx;
+}
+
+.chip {
+  height: 56rpx;
+  padding: 0 28rpx;
+  border-radius: 28rpx;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.chip:active { opacity: 0.7; }
+
+.chip--on { background: var(--blue); }
+
+.chip-text { font-size: 26rpx; font-weight: 500; color: var(--text); }
+
+.chip--on .chip-text { color: #FFFFFF; }
+
 .body {
   padding: 24rpx 24rpx 0;
 }
@@ -212,8 +247,8 @@
 .tier-badge--ap .tier-badge-text  { color: #1565C0; }
 .tier-badge--lap { background: rgba(230, 81, 0, 0.12); }
 .tier-badge--lap .tier-badge-text { color: #E65100; }
-.tier-badge--e   { background: rgba(0, 0, 0, 0.06); }
-.tier-badge--e .tier-badge-text   { color: #757575; }
+.tier-badge--e   { background: rgba(255, 149, 0, 0.12); }
+.tier-badge--e .tier-badge-text   { color: #E65100; }
 
 @media (prefers-color-scheme: dark) {
   .guest-name--arrived { color: #30D158; }
@@ -222,8 +257,75 @@
   .tier-badge--p .tier-badge-text   { color: #30D158; }
   .tier-badge--ap .tier-badge-text  { color: #64B5F6; }
   .tier-badge--lap .tier-badge-text { color: #FFB74D; }
-  .tier-badge--e .tier-badge-text   { color: #AEAEB2; }
-  .tier-badge--e { background: rgba(255,255,255,0.08); }
+  .tier-badge--e .tier-badge-text   { color: #FF9500; }
+  .tier-badge--e { background: rgba(255, 149, 0, 0.15); }
 
   .arrived-section-header { background: transparent; }
+}
+/* Load-more row — pagination footer for the guest list (100 per page) */
+.load-more {
+  margin: 24rpx 24rpx 8rpx;
+  padding: 22rpx 0;
+  background: var(--bg-card);
+  border: 1rpx solid var(--border);
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.load-more:active { opacity: 0.7; }
+
+.load-more--busy { opacity: 0.6; }
+
+.load-more-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+/* ── Closed-event report buttons (below the stats bar, in place of the list) ── */
+
+.closed-reports {
+  padding: 32rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.closed-reports-btn {
+  height: 76rpx;
+  border-radius: 28rpx;
+  background: #007AFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closed-reports-btn:active { opacity: 0.8; }
+
+.closed-reports-btn-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+/* Paid guests: red stats number + red name/position in the lists. Defined
+   after .guest-name--arrived so the same-specificity cascade lands on red. */
+.stat-num--red { color: #FF3B30; }
+.guest-name--paid { color: #FF3B30; }
+.position-num--paid { color: #FF3B30; }
+
+@media (prefers-color-scheme: dark) {
+  .stat-num--red, .guest-name--paid, .position-num--paid { color: #FF453A; }
+}
+
+/* Vertical rule between the All/Paid chips and the promoter chips. */
+.chips-divider {
+  width: 2rpx;
+  height: 36rpx;
+  background: var(--border, #E5E5EA);
+  margin: 0 8rpx;
+  flex-shrink: 0;
+  align-self: center;
 }

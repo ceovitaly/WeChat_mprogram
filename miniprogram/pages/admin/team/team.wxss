@@ -123,3 +123,8 @@
   color: var(--text-3);
   font-weight: 300;
 }
+
+/* Subpage (navigateTo from Main) — no tab bar, just safe-area breathing room */
+.bottom-spacer {
+  height: calc(40rpx + env(safe-area-inset-bottom));
+}

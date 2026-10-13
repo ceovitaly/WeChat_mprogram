@@ -1,0 +1,80 @@
+.page {
+  height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.scroll {
+  flex: 1;
+  height: 0;
+}
+
+.section {
+  padding: 24rpx 24rpx 0;
+}
+
+/* One card with hairline-divided rows — same visual language as the Team
+   page's Manage list. */
+.menu-card {
+  background: var(--bg-card);
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 24rpx;
+  position: relative;
+}
+
+.menu-row:not(.menu-row--last)::after {
+  content: '';
+  position: absolute;
+  left: 96rpx;
+  right: 0;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--border);
+}
+
+.menu-row:active { opacity: 0.7; }
+
+.menu-row-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.menu-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.menu-icon-emoji {
+  font-size: 32rpx;
+}
+
+.menu-label {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.chevron {
+  font-size: 36rpx;
+  color: var(--text-3);
+  line-height: 1;
+}
+
+.tab-bar-spacer {
+  height: 160rpx;
+}

@@ -38,21 +38,31 @@ Page({
   async _fetchPromoters() {
     this.setData({ loading: true })
     try {
-      const res = await callFunction('manageApplications', {
-        action: 'getPromoters'
-      })
-      if (!res || !res.success) {
-        if (isUnauthorized(res)) { handleAuthFailure(); return }
+      const [promoRes, countsRes] = await Promise.all([
+        callFunction('manageApplications', { action: 'getPromoters' }),
+        // Per-promoter guest totals without shipping the roster (it outgrew
+        // the ~1MB reply cap): a tiny aggregated count from the server.
+        // counts keys on promoterId; codeCounts on the UPPER-cased promoCode
+        // for legacy rows written before promoterId was stored.
+        callFunction('manageApplications', { action: 'getPromoterGuestCounts' }).catch(() => null)
+      ])
+      if (!promoRes || !promoRes.success) {
+        if (isUnauthorized(promoRes)) { handleAuthFailure(); return }
         wx.showToast({ title: 'Load failed', icon: 'none' })
         return
       }
       // Share the fresh roster (raw server shape, not the display-decorated one).
-      refCache.set(refCache.KEYS.PROMOTERS, res.data || [])
-      const promoters = (res.data || []).map(p => ({
+      refCache.set(refCache.KEYS.PROMOTERS, promoRes.data || [])
+      const counts = (countsRes && countsRes.counts) || {}
+      const codeCounts = (countsRes && countsRes.codeCounts) || {}
+      const countGuests = (p) => counts[p._id] ||
+        (p.promoCode && codeCounts[p.promoCode.toUpperCase()]) || 0
+      const promoters = (promoRes.data || []).map(p => ({
         ...p,
         joinDate: p.createdAt ? formatDate(new Date(p.createdAt)) : '—',
         status: p.status || 'approved',
-        avatarLetter: p.name ? p.name[0].toUpperCase() : '?'
+        avatarLetter: p.name ? p.name[0].toUpperCase() : '?',
+        guestCount: countGuests(p)
       }))
       this.setData({ promoters })
     } catch (err) {
@@ -206,79 +216,6 @@ Page({
     }
   },
 
-  async setStatus(e) {
-    const { status } = e.currentTarget.dataset
-    const { selectedPromoter } = this.data
-    if (!selectedPromoter) return
-
-    wx.showLoading({ title: 'Updating...' })
-    try {
-      const res = await callFunction('manageApplications', {
-        action: 'updatePromoterStatus',
-        id: selectedPromoter._id,
-        status
-      })
-      if (!res || !res.success) {
-        if (isUnauthorized(res)) { handleAuthFailure(); return }
-        wx.showToast({ title: (res && res.message) || 'Update failed', icon: 'none' })
-        return
-      }
-      refCache.invalidate(refCache.KEYS.PROMOTERS)
-      wx.vibrateShort({ type: 'medium' })
-      wx.showToast({ title: 'Updated!', icon: 'success' })
-      this.closeActions()
-      const updated = this.data.promoters.map(p =>
-        p._id === selectedPromoter._id ? { ...p, status } : p
-      )
-      this.setData({ promoters: updated })
-    } catch (err) {
-      wx.showToast({ title: 'Update failed', icon: 'none' })
-    } finally {
-      wx.hideLoading()
-    }
-  },
-
-  confirmRevoke() {
-    const { selectedPromoter } = this.data
-    if (!selectedPromoter) return
-
-    wx.showModal({
-      title: 'Revoke status?',
-      content: `Remove promoter status from ${selectedPromoter.name}?`,
-      confirmColor: '#FF3B30',
-      confirmText: 'Revoke',
-      cancelText: 'Cancel',
-      success: async ({ confirm }) => {
-        if (!confirm) return
-        wx.showLoading({ title: 'Updating...' })
-        try {
-          const res = await callFunction('manageApplications', {
-            action: 'updatePromoterStatus',
-            id: selectedPromoter._id,
-            status: 'revoked'
-          })
-          if (!res || !res.success) {
-            if (isUnauthorized(res)) { handleAuthFailure(); return }
-            wx.showToast({ title: (res && res.message) || 'Error', icon: 'none' })
-            return
-          }
-          refCache.invalidate(refCache.KEYS.PROMOTERS)
-          wx.vibrateShort({ type: 'medium' })
-          wx.showToast({ title: 'Revoked!', icon: 'success' })
-          this.closeActions()
-          const updated = this.data.promoters.map(p =>
-            p._id === selectedPromoter._id ? { ...p, status: 'revoked' } : p
-          )
-          this.setData({ promoters: updated })
-        } catch (err) {
-          wx.showToast({ title: 'Error', icon: 'none' })
-        } finally {
-          wx.hideLoading()
-        }
-      }
-    })
-  },
-
   confirmDelete() {
     const { selectedPromoter } = this.data
     if (!selectedPromoter) return
@@ -296,9 +233,10 @@ Page({
     })
   },
 
-  // Deletes `promoter`. `reassignToPromoterId` is omitted on the first attempt;
-  // if the server refuses with requiresReassignment, we prompt for a replacement
-  // and re-call this with the admin's choice (a promoter _id, or '' to unassign).
+  // Deletes `promoter`. First attempt omits reassignToPromoterId; if the
+  // server refuses with requiresReassignment (the promoter still has
+  // guests), we confirm UNASSIGNING those guests and retry with '' — the
+  // guests stay in the system, just without a promoter.
   async _deletePromoter(promoter, reassignToPromoterId) {
     wx.showLoading({ title: 'Deleting...', mask: true })
     try {
@@ -309,7 +247,7 @@ Page({
       if (!res || !res.success) {
         if (isUnauthorized(res)) { handleAuthFailure(); return }
         if (res && res.requiresReassignment) {
-          this._promptReassignment(promoter, res.affectedCount)
+          this._confirmReassign(promoter, res.affectedCount)
           return
         }
         wx.showToast({ title: (res && res.message) || 'Error', icon: 'none' })
@@ -333,20 +271,37 @@ Page({
     }
   },
 
-  // Guests reference `promoter` — the deletion was refused. Offer a replacement
-  // promoter (or explicit unassignment) before retrying the delete.
-  _promptReassignment(promoter, affectedCount) {
-    const others = this.data.promoters.filter(p => p._id !== promoter._id)
-    const itemList = others.map(p => p.name).concat(['Remove without reassigning'])
-
-    wx.showActionSheet({
-      itemList,
-      success: ({ tapIndex }) => {
-        const reassignToPromoterId = tapIndex < others.length ? others[tapIndex]._id : ''
-        this._deletePromoter(promoter, reassignToPromoterId)
-      },
-      fail: () => {
-        // Admin cancelled the action sheet — leave the promoter and its guests untouched.
+  // The promoter has guests. The old flow showed an action-sheet picker, but
+  // wx.showActionSheet holds at most 6 items — with 40+ promoters it failed
+  // SILENTLY and the delete button appeared to do nothing. Policy instead:
+  // guests move to the system promoter THELIST (fallback: unassign, if the
+  // system promoter is missing or is itself being deleted).
+  _confirmReassign(promoter, affectedCount) {
+    wx.hideLoading()
+    const theList = this.data.promoters.find(p =>
+      (p.promoCode === 'THELIST' || p.name === 'THELIST') && p._id !== promoter._id
+    )
+    if (theList) {
+      wx.showModal({
+        title: 'Promoter has guests',
+        content: `${affectedCount} guest${affectedCount === 1 ? '' : 's'} registered under ${promoter.name} will be moved to the system promoter THELIST.`,
+        confirmColor: '#FF3B30',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        success: ({ confirm }) => {
+          if (confirm) this._deletePromoter(promoter, theList._id)
+        }
+      })
+      return
+    }
+    wx.showModal({
+      title: 'Promoter has guests',
+      content: `${affectedCount} guest${affectedCount === 1 ? '' : 's'} registered under ${promoter.name}. The system promoter THELIST was not found — delete the promoter and leave them without a promoter?`,
+      confirmColor: '#FF3B30',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      success: ({ confirm }) => {
+        if (confirm) this._deletePromoter(promoter, '')
       }
     })
   }

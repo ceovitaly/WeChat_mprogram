@@ -9,6 +9,8 @@
   </view>
 </nav-bar>
 
+<scroll-view class="content-area" scroll-y show-scrollbar="{{false}}">
+
 <!-- Name & Password -->
 <view class="section">
   <text class="section-title">Venue info</text>
@@ -53,6 +55,25 @@
   </view>
 </view>
 
+<!-- Gallery — photos of the venue shown in the guest app's Gallery tab.
+     Managed here per-photo (uploaded immediately, deleted on tap); Save
+     below is only for the info fields above. -->
+<view wx:if="{{isEdit}}" class="section">
+  <text class="section-title">Gallery ({{gallery.length}})</text>
+  <view class="card gallery-card">
+    <view wx:for="{{gallery}}" wx:key="fileID" class="gallery-item">
+      <image class="gallery-img" src="{{item.url}}" mode="aspectFill" bindtap="previewGalleryPhoto" data-url="{{item.url}}" />
+      <view class="gallery-del" catchtap="removeGalleryPhoto" data-index="{{index}}">
+        <text class="gallery-del-icon">✕</text>
+      </view>
+    </view>
+    <view class="gallery-add" bindtap="addGalleryPhotos">
+      <text class="gallery-add-icon">＋</text>
+      <text class="gallery-add-text">Add photos</text>
+    </view>
+  </view>
+</view>
+
 <!-- Save -->
 <view class="section">
   <view class="save-btn {{isProcessing ? 'save-btn--dim' : ''}}" bindtap="onSave">
@@ -61,4 +82,5 @@
 </view>
 
 <view class="safe-area-bottom" />
+</scroll-view>
 </view>

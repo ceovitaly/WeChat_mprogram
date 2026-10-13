@@ -1,0 +1,97 @@
+/* Layout mirrors the old Stats page (flex column: nav-bar + scroll-view),
+   which is the same pattern as every other admin tab page. */
+.page {
+  height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.scroll {
+  flex: 1;
+  height: 0;
+}
+
+.section {
+  padding: 24rpx 24rpx 0;
+}
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.event-card {
+  background: var(--bg-card);
+  border-radius: 20rpx;
+  padding: 28rpx 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.event-card:active { opacity: 0.7; }
+
+.event-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.event-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.event-meta {
+  font-size: 26rpx;
+  color: var(--text-2);
+}
+
+.event-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.guest-count {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--blue);
+  line-height: 1;
+}
+
+.guest-label {
+  font-size: 20rpx;
+  color: var(--text-2);
+  margin-top: 4rpx;
+}
+
+/* inherits display/flex-direction/align-items/colour from app.wxss's
+   .empty-state; only the tighter padding differs */
+.empty-state {
+  padding: 48rpx 0;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: var(--text-3);
+}
+
+/* flat value, not the shared calc() — this page's spacer sits inside a
+   scroll-view that already clears the safe area */
+.tab-bar-spacer {
+  height: 160rpx;
+}
+
+/* Date sections stack with breathing room between them */
+.section + .section {
+  margin-top: 8rpx;
+}

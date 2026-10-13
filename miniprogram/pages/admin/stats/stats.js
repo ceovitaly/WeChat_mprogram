@@ -1,159 +1,50 @@
 const { callFunction } = require('../../../utils/request')
-const { CLOUD_FUNCTIONS } = require('../../../utils/constants')
 const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 
+// Stats — promoter leaderboard: every promoter with the number of registered
+// guests attributed to them (all-time, the same counting the Promoters page
+// shows per row), sorted largest first so the top of the list is the top
+// performer. Counts come server-side (getPromoterGuestCounts) — the guest
+// roster itself never travels to the phone.
 Page({
   data: {
-    activeTab: 0,
-    userName: '',
-
-    loadingToday: false,
-    todayEvents: [],
-
-    loadingPast: false,
-    pastEvents: [],
-
-    refreshing: false
+    loading: true,
+    rows: []
   },
 
   onShow() {
-    this._syncTabBar()
-    const userInfo = getApp().globalData.userInfo
-    this.setData({ userName: userInfo ? (userInfo.name || 'Admin') : 'Admin' })
-    this._loadTodayEvents()
-    this._loadPastEvents()
+    this._load()
   },
 
-  async onRefresh() {
-    this.setData({ refreshing: true })
-    await this._loadTodayEvents()
-    this.setData({ refreshing: false })
-  },
-
-  _syncTabBar() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().updateTabs()
-      this.getTabBar().setData({ selected: 2 })
-    }
-  },
-
-  switchTab(e) {
-    this.setData({ activeTab: Number(e.currentTarget.dataset.index) })
-  },
-
-  async _loadTodayEvents() {
-    this.setData({ loadingToday: true })
+  async _load() {
+    this.setData({ loading: true })
     try {
-      const today = new Date()
-      const y = today.getFullYear()
-      const m = String(today.getMonth() + 1).padStart(2, '0')
-      const d = String(today.getDate()).padStart(2, '0')
-      const todayStr = y + '-' + m + '-' + d
-
-      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
-        action: 'getEventsWithGuestCounts',
-        dateFilter: todayStr,
-        mode: 'active'
-      })
-      if (!res || !res.success) {
-        if (isUnauthorized(res)) { handleAuthFailure(); return }
+      const [promoRes, countsRes] = await Promise.all([
+        callFunction('manageApplications', { action: 'getPromoters' }),
+        callFunction('manageApplications', { action: 'getPromoterGuestCounts' }).catch(() => null)
+      ])
+      if (!promoRes || !promoRes.success) {
+        if (isUnauthorized(promoRes)) { handleAuthFailure(); return }
         wx.showToast({ title: 'Load failed', icon: 'none' })
         return
       }
-      const now = new Date()
-      const events = (res.data || []).filter(ev => {
-        if (ev.isClosed) return false
-        if (ev.date && ev.endTime) {
-          try {
-            const parts = ev.date.split('-').map(Number)
-            const timeParts = ev.endTime.split(':').map(Number)
-            const endDt = new Date(parts[0], parts[1] - 1, parts[2], timeParts[0], timeParts[1], 0, 0)
-            if (timeParts[0] < 12) endDt.setDate(endDt.getDate() + 1)
-            if (!isNaN(endDt.getTime()) && now > endDt) return false
-          } catch (_) {}
-        }
-        return true
-      })
-      this.setData({ todayEvents: events })
+      const counts = (countsRes && countsRes.counts) || {}
+      const codeCounts = (countsRes && countsRes.codeCounts) || {}
+      const countGuests = (p) => counts[p._id] ||
+        (p.promoCode && codeCounts[p.promoCode.toUpperCase()]) || 0
+      const rows = (promoRes.data || [])
+        .map(p => ({
+          _id: p._id,
+          name: p.name || '—',
+          avatarLetter: p.name ? p.name[0].toUpperCase() : '?',
+          guestCount: countGuests(p)
+        }))
+        .sort((a, b) => b.guestCount - a.guestCount || a.name.localeCompare(b.name))
+      this.setData({ rows, loading: false })
     } catch (err) {
-      console.error('[Stats] today events error:', err)
-    } finally {
-      this.setData({ loadingToday: false })
+      console.error('[Stats] fetch error:', err)
+      this.setData({ loading: false })
+      wx.showToast({ title: 'Load failed', icon: 'none' })
     }
-  },
-
-  async _loadPastEvents() {
-    this.setData({ loadingPast: true })
-    try {
-      const now = new Date()
-      if (now.getHours() < 5) now.setDate(now.getDate() - 1)
-      const todayStr = now.getFullYear() + '-' +
-        String(now.getMonth() + 1).padStart(2, '0') + '-' +
-        String(now.getDate()).padStart(2, '0')
-
-      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
-        action: 'getEventsWithGuestCounts',
-        dateFilter: todayStr,
-        mode: 'past'
-      })
-      if (!res || !res.success) {
-        if (isUnauthorized(res)) { handleAuthFailure(); return }
-        wx.showToast({ title: 'Load failed', icon: 'none' })
-        return
-      }
-      const nowTs = new Date()
-      const past = (res.data || []).filter(ev => {
-        if (ev.isClosed) return true
-        if (ev.date < todayStr) return true
-        if (ev.date === todayStr && ev.endTime) {
-          try {
-            const parts = ev.date.split('-').map(Number)
-            const timeParts = ev.endTime.split(':').map(Number)
-            const endDt = new Date(parts[0], parts[1] - 1, parts[2], timeParts[0], timeParts[1], 0, 0)
-            if (timeParts[0] < 12) endDt.setDate(endDt.getDate() + 1)
-            return !isNaN(endDt.getTime()) && nowTs > endDt
-          } catch (_) { return false }
-        }
-        return false
-      })
-      this.setData({ pastEvents: past })
-    } catch (err) {
-      console.error('[Stats] past events error:', err)
-    } finally {
-      this.setData({ loadingPast: false })
-    }
-  },
-
-  openTodayEvent(e) {
-    const id = e.currentTarget.dataset.id
-    const event = this.data.todayEvents.find(ev => ev._id === id)
-    if (!event) return
-    wx.navigateTo({
-      url: `/packageAdmin/pages/admin/event-guests/event-guests?eventId=${id}&eventTitle=${encodeURIComponent(event.title || '')}&venueName=${encodeURIComponent(event.venueName || '')}`
-    })
-  },
-
-  openPastEvent(e) {
-    const id = e.currentTarget.dataset.id
-    const event = this.data.pastEvents.find(ev => ev._id === id)
-    if (!event) return
-    wx.navigateTo({
-      url: `/packageAdmin/pages/admin/event-guests/event-guests?eventId=${id}&eventTitle=${encodeURIComponent(event.title || '')}&venueName=${encodeURIComponent(event.venueName || '')}`
-    })
-  },
-
-  noop() {},
-
-  confirmLogout() {
-    wx.showModal({
-      title: 'Log out',
-      content: 'Are you sure you want to log out?',
-      confirmText: 'Log out',
-      confirmColor: '#FF3B30',
-      cancelText: 'Cancel',
-      success: ({ confirm }) => {
-        if (confirm) getApp().logout()
-      }
-    })
   }
 })

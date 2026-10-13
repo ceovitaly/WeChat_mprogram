@@ -6,21 +6,22 @@
   <view class="venue-hero">
     <text class="venue-app-name">THE LIST</text>
     <text class="venue-greeting">{{staffName ? 'Hi, ' + staffName + '!' : 'Welcome'}}</text>
-    <text class="venue-hint">Enter venue password to start your shift</text>
+    <text class="venue-hint">Enter the venue code to start your shift</text>
   </view>
   <view class="venue-card">
-    <view class="input-group">
-      <text class="input-label">VENUE PASSWORD</text>
-      <input
-        class="venue-input"
-        placeholder="Enter password"
-        placeholder-class="input-placeholder"
-        value="{{clubCode}}"
-        bindinput="onCodeInput"
-        confirm-type="done"
-        bindconfirm="enterVenue"
-      />
-    </view>
+    <!-- No label and no "password" wording anywhere near the field: iOS
+         keychain heuristics flag fields that look like passwords and pop the
+         "save password" sheet on every shift start. It's a shared door code,
+         not a credential. -->
+    <input
+      class="venue-input"
+      placeholder="Enter code"
+      placeholder-class="input-placeholder"
+      value="{{clubCode}}"
+      bindinput="onCodeInput"
+      confirm-type="done"
+      bindconfirm="enterVenue"
+    />
     <view class="primary-btn" bindtap="enterVenue">
       <text class="primary-btn-text">Enter</text>
     </view>
@@ -100,6 +101,12 @@
     </view>
   </scroll-view>
 
+  <!-- Check-in code: full-screen rotating QR the guests scan -->
+  <view class="qr-open-btn" bindtap="openCheckinQr">
+    <text class="qr-open-icon">⌘</text>
+    <text class="qr-open-text">Check-in code</text>
+  </view>
+
   <!-- Stats -->
   <view class="stats-row">
     <text class="stat-green">{{arrivedGuests.length}} arrived</text>
@@ -137,17 +144,29 @@
               data-id="{{guest._id}}"
               data-name="{{guest.guestName}}"
             >
-              <text class="arrival-number">{{guest.arrivalNumber}}</text>
+              <text class="arrival-number {{guest.paid ? 'arrival-number--paid' : ''}}">{{guest.arrivalNumber}}</text>
               <view class="guest-info">
-                <text class="guest-name guest-name--done">{{guest.guestName}}</text>
+                <text class="guest-name guest-name--done {{guest.paid ? 'guest-name--paid' : ''}}">{{guest.guestName}}</text>
                 <text class="guest-sub">{{guest.promoterName || '—'}}</text>
               </view>
               <view class="tier-badge {{guest.group === 'P' ? 'tier-badge--p' : guest.group === 'AP' ? 'tier-badge--ap' : guest.group === 'LAP' ? 'tier-badge--lap' : 'tier-badge--e'}}">
                 <text class="tier-badge-text">{{guest.group || 'E'}}</text>
               </view>
               <text class="arrival-time">{{guest.arrivedAt}}</text>
-              <view wx:if="{{guest.internalRole}}" class="staff-badge">
+              <view
+                wx:if="{{guest.internalRole}}"
+                class="staff-badge {{guest.attendancePresent ? 'staff-badge--on' : ''}}"
+                catchtap="toggleAttendance"
+                data-internal-id="{{guest.internalId}}"
+                data-internal-role="{{guest.internalRole}}"
+                data-present="{{guest.attendancePresent}}"
+              >
                 <text class="staff-badge-text">{{guest.internalLabel}}</text>
+              </view>
+              <!-- Manually checked in without a guest scan — the counter's
+                   responsibility flag, per the anti-fraud flow. -->
+              <view wx:if="{{!guest.scannedAt}}" class="noscan-chip">
+                <text class="noscan-chip-text">NO SCAN</text>
               </view>
             </view>
           </view>
@@ -189,7 +208,14 @@
               <text class="checkbox-empty">○</text>
             </view>
             <text class="guest-name">{{guest.guestName}}</text>
-            <view wx:if="{{guest.internalRole}}" class="staff-badge">
+            <view
+              wx:if="{{guest.internalRole}}"
+              class="staff-badge {{guest.attendancePresent ? 'staff-badge--on' : ''}}"
+              catchtap="toggleAttendance"
+              data-internal-id="{{guest.internalId}}"
+              data-internal-role="{{guest.internalRole}}"
+              data-present="{{guest.attendancePresent}}"
+            >
               <text class="staff-badge-text">{{guest.internalLabel}}</text>
             </view>
           </view>
@@ -203,4 +229,56 @@
 
 </view>
 
+</view>
+
+<!-- Full-screen check-in QR overlay: one server-signed code per refresh —
+     it lives out its TTL, then hides behind a refresh icon (the counter taps
+     for a new one; no background rotation requests). Guests scan it in The
+     List app, the counter still confirms arrival with the usual check-in
+     tap. -->
+<view wx:if="{{showCheckinQr}}" class="qr-overlay" catchtouchmove="noop">
+  <view class="qr-panel">
+    <text class="qr-title">Check-in code</text>
+    <text class="qr-event">{{currentEvent.title}}</text>
+    <view class="qr-canvas-wrap">
+      <canvas wx:if="{{!qrExpired}}" type="2d" id="checkinQrCanvas" class="qr-canvas"></canvas>
+      <view wx:else class="qr-expired" bindtap="refreshCheckinQr">
+        <text class="qr-refresh-icon">↻</text>
+        <text class="qr-refresh-text">Refresh code</text>
+      </view>
+    </view>
+    <view class="qr-timer-row" wx:if="{{!qrExpired}}">
+      <view class="qr-timer-bar">
+        <view class="qr-timer-fill" style="width: {{qrSecondsLeft * 100 / qrTtl}}%;"></view>
+      </view>
+      <text class="qr-timer-text">{{qrSecondsLeft}}s</text>
+    </view>
+    <text wx:if="{{qrExpired}}" class="qr-hint">Code expired — tap to get a new one</text>
+    <text wx:else class="qr-hint">Guest scans this code in The List app, then you confirm their check-in</text>
+    <view class="qr-close-btn" bindtap="closeCheckinQr">
+      <text class="qr-close-text">Close</text>
+    </view>
+  </view>
+</view>
+
+<!-- Paid-guest scan alert: pops up when a PAID guest scans the door QR, so
+     their ticket is right in front of the counter (free guests check in
+     silently as always). Auto-closes in 20s; OK or tapping the backdrop
+     closes it too. -->
+<view wx:if="{{paidScanAlert}}" class="paid-alert-mask" bindtap="closePaidScanAlert">
+  <view class="paid-alert" catchtap="noop">
+    <view class="paid-alert-head">
+      <text class="paid-alert-tag">PAID TICKET</text>
+      <text class="paid-alert-time">{{paidScanAlert.arrivedAt}}</text>
+    </view>
+    <text class="paid-alert-name">{{paidScanAlert.guestName || 'Guest'}}</text>
+    <view class="paid-alert-ticket">
+      <text class="paid-alert-ticket-name">{{paidScanAlert.ticketType || 'Ticket'}}</text>
+      <text wx:if="{{paidScanAlert.price}}" class="paid-alert-price">{{paidScanAlert.price}}</text>
+    </view>
+    <text wx:if="{{paidScanAlert.promoterName}}" class="paid-alert-promoter">Promoter: {{paidScanAlert.promoterName}}</text>
+    <view class="paid-alert-btn" bindtap="closePaidScanAlert">
+      <text class="paid-alert-btn-text">OK</text>
+    </view>
+  </view>
 </view>

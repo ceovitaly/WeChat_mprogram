@@ -1,9 +1,8 @@
 <view class="page">
 
-<!-- Capsule-aligned header. This page previously had NO header row of its
-     own and relied on the system bar's "Team" title; with a custom nav
-     that title has to be drawn here. Tab page — no back affordance. -->
-<nav-bar title="Team" />
+<!-- Capsule-aligned header. Opened from the Main menu now (used to be a
+     tab) — a back affordance replaces the tab-page behaviour. -->
+<nav-bar title="Team" show-back />
 
 <scroll-view class="scroll" scroll-y>
 
@@ -77,7 +76,7 @@
     </view>
   </view>
 
-  <view class="tab-bar-spacer" />
+  <view class="bottom-spacer" />
 </scroll-view>
 
 </view>

@@ -1,0 +1,51 @@
+<view class="page">
+
+<!-- Capsule-aligned header. Tab page — no back affordance by design.
+     Monitoring only: no create action here by design. -->
+<nav-bar title="Events" />
+
+<scroll-view class="scroll" scroll-y>
+
+  <view wx:if="{{loading}}" class="section">
+    <view class="empty-state">
+      <text class="empty-text">Loading...</text>
+    </view>
+  </view>
+
+  <view wx:elif="{{groups.length === 0}}" class="section">
+    <view class="empty-state">
+      <text class="empty-text">No upcoming events</text>
+    </view>
+  </view>
+
+  <!-- One section per date: "Today" first, then future dates ascending.
+       Each card's number = registrations for that event (tap → the
+       event-guests statistics page). -->
+  <view wx:else>
+    <view wx:for="{{groups}}" wx:for-item="group" wx:key="label" class="section">
+      <text class="section-title">{{group.label}}</text>
+      <view class="event-list">
+        <view
+          wx:for="{{group.events}}"
+          wx:key="_id"
+          class="event-card"
+          bindtap="openEvent"
+          data-id="{{item._id}}"
+        >
+          <view class="event-card-info">
+            <text class="event-title">{{item.title}}</text>
+            <text class="event-meta">{{item.venueName || 'Venue'}}{{item.startTime ? ' · ' + item.startTime : ''}}</text>
+          </view>
+          <view class="event-card-right">
+            <text class="guest-count">{{item.guestCount || 0}}</text>
+            <text class="guest-label">guests</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="tab-bar-spacer" />
+</scroll-view>
+
+</view>

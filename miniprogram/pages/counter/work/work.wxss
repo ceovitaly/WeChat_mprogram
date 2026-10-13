@@ -24,7 +24,8 @@ page {
   flex-direction: column;
   justify-content: flex-start;
   padding: 0 32rpx;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: calc(env(safe-area-inset-top) + 20rpx);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 100rpx);
   z-index: 10;
   overflow-y: auto;
 }
@@ -49,6 +50,8 @@ page {
   z-index: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   padding-top: calc(40rpx + env(safe-area-inset-top));
   padding-bottom: 40rpx;
 }
@@ -102,7 +105,7 @@ page {
 .venue-input {
   height: 96rpx;
   background: rgba(255, 255, 255, 0.07);
-  border-radius: 16rpx;
+  border-radius: 28rpx;
   padding: 0 32rpx;
   font-size: 30rpx;
   color: #FFFFFF;
@@ -116,9 +119,9 @@ page {
    This card sits on a fixed dark background, so both buttons keep their
    literal colours rather than the theme vars. */
 .primary-btn {
-  height: 76rpx;
+  height: 96rpx;
   background: #007AFF;
-  border-radius: 999rpx;
+  border-radius: 28rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -133,10 +136,10 @@ page {
 }
 
 .danger-btn {
-  height: 76rpx;
+  height: 96rpx;
   background: rgba(255, 59, 48, 0.15);
   border: 1rpx solid rgba(255, 59, 48, 0.3);
-  border-radius: 999rpx;
+  border-radius: 28rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -192,14 +195,17 @@ page {
 .event-card:active { opacity: 0.8; }
 
 .event-cover {
-  height: 100rpx;
+  /* min-height instead of height: a wrapped two-line title must grow the
+     cover instead of being clipped or overflowing the card. */
+  min-height: 100rpx;
   background: #1a1a2e;
-  padding: 0 28rpx;
+  padding: 16rpx 28rpx;
   display: flex;
   align-items: center;
+  box-sizing: border-box;
 }
 
-.event-cover-title { font-size: 30rpx; font-weight: 600; color: #FFFFFF; }
+.event-cover-title { font-size: 30rpx; font-weight: 600; color: #FFFFFF; line-height: 1.4; word-break: break-all; }
 
 .event-info {
   padding: 16rpx 24rpx;
@@ -346,6 +352,10 @@ page {
   font-weight: 600;
   color: var(--blue);
 }
+/* Tapped-on state: this person is marked present at the event.
+   Colour + weight both change — colour alone is not a reliable signal. */
+.staff-badge--on { background: rgba(52, 199, 89, 0.18); }
+.staff-badge--on .staff-badge-text { color: var(--green); font-weight: 800; }
 
 .safe-area-bottom { height: calc(32rpx + env(safe-area-inset-bottom)); }
 
@@ -354,17 +364,17 @@ page {
 .tier-badge-text { font-size: 22rpx; font-weight: 600; font-family: monospace; }
 .tier-badge--p { background: #E8F5E9; }
 .tier-badge--p .tier-badge-text { color: #2E7D32; }
-.tier-badge--ap { background: #E3F2FD; }
-.tier-badge--ap .tier-badge-text { color: #1565C0; }
+.tier-badge--ap { background: #FFF9C4; }
+.tier-badge--ap .tier-badge-text { color: #F57F17; }
 .tier-badge--lap { background: #FFF3E0; }
 .tier-badge--lap .tier-badge-text { color: #E65100; }
-.tier-badge--e { background: #F5F5F5; }
-.tier-badge--e .tier-badge-text { color: #757575; }
+.tier-badge--e { background: #FFE0B2; }
+.tier-badge--e .tier-badge-text { color: #E65100; }
 
 .row--party { background: #F5FBF6; }
-.row--ap { background: #F5F8FF; }
+.row--ap { background: #FFFDF5; }
 .row--lap { background: #FFFBF5; }
-.row--extra { background: #FAFFFE; }
+.row--extra { background: #FFF8E1; }
 
 @media (prefers-color-scheme: dark) {
   .guest-row--done { background: var(--bg-card); }
@@ -380,6 +390,277 @@ page {
   .tier-badge--ap .tier-badge-text  { color: #0A84FF; }
   .tier-badge--lap { background: rgba(255, 149, 0, 0.15); }
   .tier-badge--lap .tier-badge-text { color: #FF9500; }
-  .tier-badge--e   { background: rgba(255, 255, 255, 0.08); }
-  .tier-badge--e .tier-badge-text   { color: #AEAEB2; }
+  .tier-badge--e   { background: rgba(255, 149, 0, 0.15); }
+  .tier-badge--e .tier-badge-text   { color: #FF9500; }
 }
+/* ─── Check-in QR ─── */
+/* Trigger row under the promoter chips — the door's main action alongside the list. */
+.qr-open-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  margin: 0 24rpx 16rpx;
+  height: 76rpx;
+  border-radius: 16rpx;
+  background: var(--blue);
+}
+
+.qr-open-btn:active { opacity: 0.8; }
+
+.qr-open-icon { font-size: 30rpx; color: #FFFFFF; }
+
+.qr-open-text { font-size: 28rpx; font-weight: 600; color: #FFFFFF; }
+
+/* No-scan chip: this ARRIVED guest was checked in manually, without the
+   guest scanning the door code — the counter's responsibility flag. Guests
+   who scanned (the normal path) show nothing. */
+.noscan-chip {
+  flex-shrink: 0;
+  margin-left: 10rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  background: rgba(255, 149, 0, 0.15);
+}
+
+.noscan-chip-text {
+  font-size: 20rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  color: #FF9500;
+}
+
+/* Full-screen overlay */
+.qr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-panel {
+  width: 580rpx;
+  background: #FFFFFF;
+  border-radius: 32rpx;
+  padding: 40rpx 40rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qr-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #111111;
+}
+
+.qr-event {
+  font-size: 24rpx;
+  color: #666666;
+  margin-top: 8rpx;
+  text-align: center;
+}
+
+.qr-canvas-wrap {
+  width: 440rpx;
+  height: 440rpx;
+  margin-top: 28rpx;
+  background: #FFFFFF;
+}
+
+.qr-canvas { width: 100%; height: 100%; }
+
+.qr-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  width: 100%;
+  margin-top: 28rpx;
+}
+
+.qr-timer-bar {
+  flex: 1;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background: #EEEEEE;
+  overflow: hidden;
+}
+
+.qr-timer-fill {
+  height: 100%;
+  background: var(--blue);
+  transition: width 1s linear;
+}
+
+.qr-timer-text {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--blue);
+  min-width: 52rpx;
+  text-align: right;
+}
+
+.qr-hint {
+  font-size: 24rpx;
+  color: #999999;
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 20rpx;
+}
+
+.qr-close-btn {
+  margin-top: 28rpx;
+  width: 100%;
+  height: 76rpx;
+  border-radius: 16rpx;
+  background: #F2F2F2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-close-btn:active { opacity: 0.8; }
+
+.qr-close-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333333;
+}
+
+@media (prefers-color-scheme: dark) {
+  .qr-panel { background: #1C1C1E; }
+  .qr-title { color: #FFFFFF; }
+  .qr-event { color: #9898A0; }
+  .qr-timer-bar { background: #2C2C2E; }
+  .qr-close-btn { background: #2C2C2E; }
+  .qr-close-text { color: #FFFFFF; }
+}
+
+/* Expired-code state: the square swaps to a tappable refresh icon (one
+   request per tap — see refreshCheckinQr in work.js). */
+.qr-expired {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  background: #F5F5F7;
+  border-radius: 24rpx;
+}
+
+.qr-refresh-icon {
+  font-size: 96rpx;
+  line-height: 1;
+  color: #1A1A1A;
+}
+
+.qr-refresh-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.qr-expired:active .qr-refresh-icon {
+  opacity: 0.5;
+}
+
+/* ─── Paid-guest scan alert ─────────────────────────────────────────────── */
+.paid-alert-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1100; /* above the QR overlay (1000-level) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx;
+}
+
+.paid-alert {
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  box-sizing: border-box;
+}
+
+.paid-alert-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.paid-alert-tag {
+  font-size: 22rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  color: #FF6B35;
+}
+
+.paid-alert-time {
+  font-size: 24rpx;
+  color: #8E8E93;
+}
+
+.paid-alert-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1C1C1E;
+}
+
+.paid-alert-ticket {
+  padding: 20rpx 24rpx;
+  border-radius: 24rpx;
+  background: #F2F2F7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.paid-alert-ticket-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1C1C1E;
+  flex: 1;
+}
+
+.paid-alert-price {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #007AFF;
+}
+
+.paid-alert-promoter {
+  font-size: 24rpx;
+  color: #8E8E93;
+}
+
+.paid-alert-btn {
+  height: 76rpx;
+  border-radius: 28rpx;
+  background: #007AFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paid-alert-btn-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+/* Paid arrivals: name + arrival number in red instead of the green every
+   arrived guest gets — the counter spots paid tickets in the list at a
+   glance. */
+.guest-name--paid { color: var(--red); }
+.arrival-number--paid { color: var(--red); }

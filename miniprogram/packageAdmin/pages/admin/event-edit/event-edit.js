@@ -16,6 +16,7 @@ Page({
 
     title: '',
     description: '',
+    externalLink: '',
     descPreviewText: '',
     showDescEditor: false,
     editorFormats: {},
@@ -30,6 +31,8 @@ Page({
 
     // Free entry toggle
     hasFreeEntry: true,
+    freeTicketsLimit: '',
+    freeUntil: '',
 
     // Paid packages
     hasPaidPackages: false,
@@ -60,13 +63,10 @@ Page({
   // ─── Photos ─────────────────────────────────────────────
 
   chooseImages() {
-    const currentCount = this.data.images.length
-    if (currentCount >= 10) {
-      wx.showToast({ title: 'Max 10 photos', icon: 'none' })
-      return
-    }
+    // No total cap by design — up to 20 per pick, and the admin can keep
+    // adding more in another round.
     wx.chooseMedia({
-      count: 10 - currentCount,
+      count: 20,
       mediaType: ['image'],
       sizeType: ['compressed'],
       success: (res) => {
@@ -144,6 +144,7 @@ Page({
       this.setData({
         title: e.title || '',
         description: e.description || '',
+        externalLink: e.externalLink || '',
         descPreviewText: this._stripHtml(e.description || ''),
         date: e.date || '',
         startTime: e.startTime || '22:00',
@@ -153,7 +154,9 @@ Page({
         selectedVenueId: e.venueId || '',
         selectedVenueName: e.venueName || '',
         venueIndex: venueIndex >= 0 ? venueIndex : -1,
-        hasFreeEntry: e.hasFreeEntry || false,
+        hasFreeEntry: e.hasFreeEntry !== false,
+        freeTicketsLimit: e.freeTicketsLimit || '',
+        freeUntil: e.freeUntil || '',
         hasPaidPackages: e.hasPaidPackages || false,
         paidPackages: e.paidPackages || [],
         tickets: e.tickets || [],
@@ -177,6 +180,7 @@ Page({
   },
 
   onTitleInput(e) { this.setData({ title: e.detail.value }) },
+  onExternalLinkInput(e) { this.setData({ externalLink: e.detail.value }) },
   onDateChange(e) { this.setData({ date: e.detail.value }) },
   onStartTimeChange(e) { this.setData({ startTime: e.detail.value }) },
   onEndTimeChange(e) { this.setData({ endTime: e.detail.value }) },
@@ -202,12 +206,23 @@ Page({
     this.setData({ hasFreeEntry: e.detail.value })
   },
 
+  onFreeLimitInput(e) {
+    this.setData({ freeTicketsLimit: e.detail.value })
+  },
+
+  // "Free entry until" — after this moment (night rule applies server-side:
+  // a time before noon belongs to the morning after) only paid tickets
+  // remain. Empty = free all night.
+  onFreeUntilChange(e) {
+    this.setData({ freeUntil: e.detail.value })
+  },
+
   togglePaidPackages(e) {
     const val = e.detail.value
     this.setData({
       hasPaidPackages: val,
       paidPackages: val && this.data.paidPackages.length === 0
-        ? [{ name: '', paymentLink: '' }]
+        ? [{ name: '', description: '', price: '' }]
         : this.data.paidPackages
     })
   },
@@ -220,7 +235,7 @@ Page({
   },
 
   addPaidPackage() {
-    const paidPackages = [...this.data.paidPackages, { name: '', paymentLink: '' }]
+    const paidPackages = [...this.data.paidPackages, { name: '', description: '', price: '', quantity: '' }]
     this.setData({ paidPackages })
   },
 
@@ -237,15 +252,37 @@ Page({
   },
 
   openDescEditor() {
+    // Reset the seed flag so the existing description is loaded fresh each open.
+    this._descSeeded = false
     this.setData({ showDescEditor: true })
+    // bindready re-fires each open (the bottom-sheet uses wx:if, so the <editor>
+    // is rebuilt every time), but on real devices setContents from the ready
+    // callback can race the editor's init and silently no-op — which is why an
+    // existing description opened an empty editor. Seed again here, retrying
+    // briefly until the context is ready.
+    this._seedDescEditor()
   },
 
   onEditorReady() {
     const query = wx.createSelectorQuery().in(this)
     query.select('#descEditor').context((res) => {
       this._descEditorCtx = res.context
-      this._descEditorCtx.setContents({ html: this.data.description || '' })
+      this._seedDescEditor()
     }).exec()
+  },
+
+  // Push the current description into the editor exactly once per open.
+  // _descSeeded guarantees a single apply (the first moment the context exists),
+  // so a late retry can never wipe text the user has already started typing.
+  // Bounded retries so it can never spin forever.
+  _seedDescEditor(retries) {
+    if (retries === undefined) retries = 0
+    if (this._descEditorCtx && !this._descSeeded) {
+      this._descSeeded = true
+      this._descEditorCtx.setContents({ html: this.data.description || '' })
+    } else if (!this._descEditorCtx && retries < 12) {
+      setTimeout(() => this._seedDescEditor(retries + 1), 50)
+    }
   },
 
   onEditorStatusChange(e) {
@@ -322,10 +359,12 @@ Page({
     if (this.data.isProcessing) return
 
     const {
-      title, date, startTime, endTime, description,
+      title, date, startTime, endTime, description, externalLink,
       selectedVenueId, selectedVenueName,
       images, tickets, tables, bottles,
-      hasFreeEntry, hasPaidPackages, paidPackages,
+      hasFreeEntry, hasPaidPackages, paidPackages: paidPackagesRaw,
+      freeTicketsLimit,
+      freeUntil,
       partyCapacity, afterPartyCapacity, lateAfterPartyCapacity,
       id, isEdit
     } = this.data
@@ -333,6 +372,25 @@ Page({
     const errors = validateEvent({ title, venueId: selectedVenueId, date, startTime })
     if (errors.length > 0) {
       wx.showToast({ title: errors[0], icon: 'none' }); return
+    }
+
+    const normalizedExternalLink = (externalLink || '').trim()
+    if (normalizedExternalLink && !/^https?:\/\/\S+$/i.test(normalizedExternalLink)) {
+      wx.showToast({ title: 'Link must start with http:// or https://', icon: 'none' }); return
+    }
+
+    // Entry mode: at least one of free entry / paid tickets must be on.
+    // With free entry off, paid tickets are the only way in — so there must
+    // be at least one named ticket and every one of them needs a price.
+    const validPkgs = (hasPaidPackages ? paidPackagesRaw : []).filter(p => (p.name || '').trim())
+    if (!hasFreeEntry && !hasPaidPackages) {
+      wx.showToast({ title: 'Enable free entry or paid tickets', icon: 'none' }); return
+    }
+    if (!hasFreeEntry && validPkgs.length === 0) {
+      wx.showToast({ title: 'Add at least one paid ticket', icon: 'none' }); return
+    }
+    if (!hasFreeEntry && validPkgs.some(p => !(Number(p.price) > 0))) {
+      wx.showToast({ title: 'Every ticket needs a price', icon: 'none' }); return
     }
 
     this.setData({ isProcessing: true })
@@ -346,9 +404,27 @@ Page({
 
       const finalImages = await Promise.all(uploadPromises)
 
+      // Paid tickets: each row gets a stable id on first save (orders
+      // reference it; index-based ids would break on reorder/delete) and a
+      // numeric price — >0 means in-app WeChat Pay. The ticket card only
+      // edits name/description/price; quantity and paymentLink (legacy
+      // external-link flow) are passed through untouched if an old event
+      // already has them.
+      const paidPackages = (hasPaidPackages ? paidPackagesRaw : [])
+        .map(p => ({
+          id: p.id || ('pkg_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)),
+          name: (p.name || '').trim(),
+          description: (p.description || '').trim(),
+          price: Number(p.price) || 0,
+          quantity: p.quantity || 0,
+          paymentLink: (p.paymentLink || '').trim()
+        }))
+        .filter(p => p.name)
+
       const eventData = {
         title: title.trim(),
         description: description || '',
+        externalLink: normalizedExternalLink,
         date,
         startTime,
         endTime,
@@ -358,8 +434,10 @@ Page({
         promoImages: finalImages,
         coverImage: finalImages[0] || '',
         hasFreeEntry,
+        freeTicketsLimit: Number(freeTicketsLimit) || 0, // 0 = unlimited
+        freeUntil: freeUntil || '', // '' = free all night
         hasPaidPackages,
-        paidPackages: hasPaidPackages ? paidPackages : [],
+        paidPackages,
         isFree: hasFreeEntry,
         isPaid: hasPaidPackages,
         tickets,

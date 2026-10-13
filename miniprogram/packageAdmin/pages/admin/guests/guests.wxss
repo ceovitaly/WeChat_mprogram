@@ -20,6 +20,23 @@ page {
   overflow: hidden;
 }
 
+/* Nav-bar export action */
+.export-btn {
+  background: rgba(48, 209, 88, 0.12);
+  border: 1rpx solid rgba(48, 209, 88, 0.3);
+  border-radius: 12rpx;
+  padding: 10rpx 20rpx;
+  flex-shrink: 0;
+}
+
+.export-btn:active { opacity: 0.7; }
+
+.export-btn-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #30D158;
+}
+
 /* Search */
 .search-wrap {
   padding: 16rpx 24rpx 8rpx;
@@ -126,11 +143,12 @@ page {
 }
 
 /* Change Promoter Sheet — contents of <bottom-sheet>.
-   The old `.sheet` capped the whole sheet (including its safe-area
-   padding) at 70vh. That padding now lives on the component's shell,
-   one level up, so subtract it here to keep the same overall cap. */
+   No height cap here: nothing above this node has a definite height (the
+   shell hugs its content), so a `max-height` on this flex container leaves
+   zero free space for a `flex:1` child to grow into. The cap lives on the
+   scroll-view instead — see `.sheet-scroll`. Header + 60vh + cancel stays
+   under the shell's 90vh backstop. */
 .sheet-inner {
-  max-height: calc(70vh - env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
 }
@@ -154,9 +172,15 @@ page {
   display: block;
 }
 
+/* The cap goes on the scroll-view itself, NOT on an ancestor: WeChat renders
+   <scroll-view> as two nested divs styled `height:100%; max-height:inherit`,
+   and the inner one is the actual scroller. `height:100%` of an auto-height
+   parent is auto, so the only thing that bounds those divs — and therefore
+   the only thing that makes them scroll — is a max-height they can inherit
+   from this element. `flex:1; height:0` did the opposite: it handed them a
+   0px containing block inside a container with no free space to grow into. */
 .sheet-scroll {
-  flex: 1;
-  overflow: hidden;
+  max-height: calc(60vh - env(safe-area-inset-bottom));
 }
 
 .sheet-row {
@@ -203,4 +227,34 @@ page {
   font-size: 30rpx;
   color: var(--text-2);
   font-weight: 500;
+}
+
+/* Pager — one roster page at a time (see guests.js PAGE_SIZE). */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 40rpx 8rpx;
+}
+
+.pager-btn {
+  padding: 12rpx 28rpx;
+  border-radius: 16rpx;
+  background: #FFFFFF;
+  border: 1rpx solid rgba(0, 0, 0, 0.08);
+}
+
+.pager-btn--off {
+  opacity: 0.35;
+}
+
+.pager-btn-text {
+  font-size: 26rpx;
+  color: #1A1A1A;
+  font-weight: 600;
+}
+
+.pager-info {
+  font-size: 24rpx;
+  color: rgba(0, 0, 0, 0.45);
 }

@@ -25,8 +25,19 @@
   align-items: flex-start;
 }
 
+/* Backstop only: a sheet never covers more than 90% of the screen, and its
+   rounded corners clip the slot content. Height stays `auto`, so a short
+   sheet still hugs its content. A sheet that needs an inner scroller must
+   cap that scroller itself (see `.sheet-scroll` in guests.wxss) — a
+   `max-height` here does NOT give children a definite height to size
+   against, it only clamps the shell after the fact. */
 .bs-shell {
   width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
   background: var(--bg);
   border-radius: 24rpx 24rpx 0 0;
   padding-bottom: env(safe-area-inset-bottom);

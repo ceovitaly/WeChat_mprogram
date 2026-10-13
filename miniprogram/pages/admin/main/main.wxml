@@ -1,0 +1,63 @@
+<view class="page">
+
+<!-- Capsule-aligned header. The Log out action moved here from the old
+     Stats header. Tab page — no back affordance by design. -->
+<nav-bar title="{{userName}}">
+  <view slot="right" class="nav-action" bindtap="confirmLogout">
+    <text class="nav-action-text nav-action-text--danger">Log out</text>
+  </view>
+</nav-bar>
+
+<scroll-view class="scroll" scroll-y>
+
+  <view class="section">
+    <text class="section-title">Menu</text>
+    <view class="menu-card">
+
+      <view class="menu-row" bindtap="goTo" data-url="/pages/admin/team/team">
+        <view class="menu-row-left">
+          <view class="menu-icon" style="background:#E8F0FB">
+            <text class="menu-icon-emoji">👥</text>
+          </view>
+          <text class="menu-label">Team</text>
+        </view>
+        <text class="chevron">›</text>
+      </view>
+
+      <view class="menu-row" bindtap="goTo" data-url="/pages/admin/past-events/past-events">
+        <view class="menu-row-left">
+          <view class="menu-icon" style="background:#FDF0E3">
+            <text class="menu-icon-emoji">🕘</text>
+          </view>
+          <text class="menu-label">Past Events</text>
+        </view>
+        <text class="chevron">›</text>
+      </view>
+
+      <view class="menu-row menu-row--last" bindtap="goTo" data-url="/pages/admin/stats/stats">
+        <view class="menu-row-left">
+          <view class="menu-icon" style="background:#E9F7EF">
+            <text class="menu-icon-emoji">📊</text>
+          </view>
+          <text class="menu-label">Stats</text>
+        </view>
+        <text class="chevron">›</text>
+      </view>
+
+      <view class="menu-row menu-row--last" bindtap="goTo" data-url="/pages/admin/ads/ads">
+        <view class="menu-row-left">
+          <view class="menu-icon" style="background:#FFF3E0">
+            <text class="menu-icon-emoji">📣</text>
+          </view>
+          <text class="menu-label">Ads</text>
+        </view>
+        <text class="chevron">›</text>
+      </view>
+
+    </view>
+  </view>
+
+  <view class="tab-bar-spacer" />
+</scroll-view>
+
+</view>

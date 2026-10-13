@@ -64,7 +64,7 @@ Page({
       showModal: true,
       tempName: item.name,
       tempPhone: item.phone || '',
-      tempPassword: item.password || '',
+      tempPassword: '',
       tempRole: item.role || 'counter',
       editingId: item._id
     })
@@ -114,7 +114,7 @@ Page({
         refCache.invalidate(refCache.KEYS.STAFF)
         this.closeModal()
         const updated = this.data.staffList.map(s =>
-          s._id === editingId ? { ...s, name: tempName.trim(), phone: tempPhone.trim(), role: tempRole, ...(tempPassword ? { password: tempPassword } : {}) } : s
+          s._id === editingId ? { ...s, name: tempName.trim(), phone: tempPhone.trim(), role: tempRole } : s
         )
         this.setData({ staffList: updated })
       } else {
@@ -136,6 +136,7 @@ Page({
         this.closeModal()
         // _fetchStaff re-seeds the cache with the roster including the new member.
         await this._fetchStaff()
+        this._showIssuedCredentials(tempName.trim(), res.password)
       }
 
     } catch (err) {
@@ -146,11 +147,21 @@ Page({
     }
   },
 
-  copyCredentials(e) {
-    const { item } = e.currentTarget.dataset
-    wx.setClipboardData({
-      data: `Login: ${item.name}\nPassword: ${item.password}`,
-      success: () => wx.showToast({ title: 'Copied!', icon: 'none' })
+  _showIssuedCredentials(name, password) {
+    if (!password) return
+    const credentials = `Login: ${name}\nPassword: ${password}`
+    wx.showModal({
+      title: 'Counter created',
+      content: credentials,
+      confirmText: 'Copy',
+      cancelText: 'Done',
+      success: ({ confirm }) => {
+        if (!confirm) return
+        wx.setClipboardData({
+          data: credentials,
+          success: () => wx.showToast({ title: 'Copied!', icon: 'none' })
+        })
+      }
     })
   },
 

@@ -1,0 +1,58 @@
+<view class="page">
+
+<nav-bar title="Past Events" show-back />
+
+<scroll-view class="scroll" scroll-y>
+
+  <view class="section">
+    <text class="section-title">Past Events</text>
+
+    <view class="date-filter-row">
+      <picker
+        class="date-picker"
+        mode="date"
+        value="{{selectedDate}}"
+        end="{{todayDate}}"
+        bindchange="onDateChange"
+      >
+        <view class="date-filter-btn {{selectedDate ? 'date-filter-btn--active' : ''}}">
+          <text class="date-filter-label">{{selectedDate || 'All dates'}}</text>
+        </view>
+      </picker>
+      <view wx:if="{{selectedDate}}" class="date-clear-btn" bindtap="clearDateFilter">
+        <text class="date-clear-text">Clear</text>
+      </view>
+    </view>
+
+    <view wx:if="{{loading}}" class="empty-state">
+      <text class="empty-text">Loading...</text>
+    </view>
+
+    <view wx:elif="{{pastEvents.length === 0}}" class="empty-state">
+      <text class="empty-text">{{selectedDate ? 'No events on this date' : 'No past events'}}</text>
+    </view>
+
+    <view wx:else class="event-list">
+      <view
+        wx:for="{{pastEvents}}"
+        wx:key="_id"
+        class="event-card"
+        bindtap="openPastEvent"
+        data-id="{{item._id}}"
+      >
+        <view class="event-card-info">
+          <text class="event-title">{{item.title}}</text>
+          <text class="event-meta">{{item.date}} · {{item.venueName || 'Venue'}}</text>
+        </view>
+        <view class="event-card-right">
+          <text class="guest-count">{{item.guestCount || 0}}</text>
+          <text class="guest-label">guests</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="bottom-spacer" />
+</scroll-view>
+
+</view>

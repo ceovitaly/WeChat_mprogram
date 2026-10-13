@@ -1,10 +1,12 @@
 const app = getApp()
-const { callFunction, collection } = require('../../../utils/request')
+const { callFunction } = require('../../../utils/request')
 const { COLLECTIONS, CLOUD_FUNCTIONS } = require('../../../utils/constants')
 const { isUnauthorized, handleAuthFailure } = require('../../../utils/auth')
 const { startLiveSync } = require('../../../utils/liveSync')
 const phoneMatch = require('../../../utils/phoneMatch')
 const refCache = require('../../../utils/refCache')
+const { createMatrix } = require('../../../utils/qrCode')
+const { businessToday, hasEnded } = require('../../../utils/format')
 
 // checkedInAt normalizer: the server value (db.serverDate()) crosses the cloud-function
 // JSON boundary as an ISO string or a {$date: <ms>} object depending on SDK serialization;
@@ -32,6 +34,10 @@ const compareArrival = (a, b) => {
   return sa < sb ? -1 : (sa > sb ? 1 : 0)
 }
 
+
+// Delta refreshes carry only changed rows; a FULL refresh still runs at
+// least this often as the safety net for changes the delta channel can't see.
+const FULL_EVERY_MS = 5 * 60 * 1000
 Page({
   data: {
     step: 'venue',
@@ -52,13 +58,29 @@ Page({
     selectedPromoter: '',
     isLoading: false,
     staffName: '',
-    staffId: ''
+    staffId: '',
+    // Check-in QR overlay: the token rotates every 20s server-side; the overlay
+    // refetches a few seconds before expiry so the displayed code is always
+    // valid. qrToken drives the canvas redraw.
+    showCheckinQr: false,
+    qrToken: '',
+    qrExpired: false,
+    qrTtl: 20,
+    qrSecondsLeft: 0,
+    // Paid-guest scan alert: when a PAID guest scans the door QR, their
+    // ticket details pop up here so the counter never misses them. Free
+    // guests check in silently as before.
+    paidScanAlert: null
   },
 
   onLoad() {
     this._checkingIn = new Set()
     this._roleMap = {}
     this._lastRawGuests = null
+    this._scanMarks = {}
+    // Delta-refresh cursors (server clock; see _fetchGuests's delta branch).
+    this._lastSyncMs = 0
+    this._lastFullAt = 0
     this._stopLiveSync = null
     this._watchedEventId = null
   },
@@ -70,10 +92,120 @@ Page({
 
   onHide() {
     this._stopLiveUpdates()
+    this._stopQrCountdown()
+    this.closePaidScanAlert()
   },
 
   onUnload() {
     this._stopLiveUpdates()
+    this._stopQrCountdown()
+    this.closePaidScanAlert()
+  },
+
+  // ─── Check-in QR (anti-fraud) ─────────────────────────────
+  //
+  // Guests scan this rotating code with The List app; their registration gets
+  // scannedAt, and the counter's check-in tap stays the second confirmation.
+  // Rotation is server-driven (signed token, 20s TTL); the countdown and
+  // refetch below only keep the DISPLAY fresh — validity is enforced in the
+  // cloud function, so a stale phone clock can't extend a code.
+  openCheckinQr() {
+    this.setData({ showCheckinQr: true, qrExpired: false })
+    this._fetchQrToken()
+    this._startQrCountdown()
+  },
+
+  closeCheckinQr() {
+    this._stopQrCountdown()
+    this.setData({ showCheckinQr: false, qrToken: '', qrSecondsLeft: 0, qrExpired: false })
+  },
+
+  async _fetchQrToken() {
+    if (this._qrFetching) return
+    const eventId = (this.data.currentEvent || {})._id
+    if (!eventId) return
+    this._qrFetching = true
+    try {
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+        action: 'issueCheckinToken', eventId
+      })
+      if (!res || !res.success) throw new Error((res && res.message) || 'failed')
+      this._qrExpiresAt = Math.floor(Date.now() / 1000) + (res.ttl || 20)
+      this.setData({ qrToken: res.token, qrSecondsLeft: res.ttl || 20, qrTtl: res.ttl || 20, qrExpired: false })
+      this._drawQr(res.token)
+    } catch (e) {
+      wx.showToast({ title: 'Code refresh failed', icon: 'none' })
+      // Offer the refresh icon as the retry path — an empty square helps nobody.
+      if (this.data.showCheckinQr) this.setData({ qrExpired: true })
+    } finally {
+      this._qrFetching = false
+    }
+  },
+
+  // Countdown only — NO auto-refresh loop: the code lives until it expires,
+  // then hides behind a refresh icon and the COUNTER decides when a new one
+  // is needed (one request per tap instead of a rotation request every TTL).
+  _startQrCountdown() {
+    this._stopQrCountdown()
+    this._qrTimer = setInterval(() => {
+      if (!this.data.showCheckinQr) { this._stopQrCountdown(); return }
+      const left = Math.max(0, (this._qrExpiresAt || 0) - Math.floor(Date.now() / 1000))
+      this.setData({ qrSecondsLeft: left })
+      if (left === 0 && !this.data.qrExpired) this.setData({ qrExpired: true })
+    }, 1000)
+  },
+
+  _stopQrCountdown() {
+    if (this._qrTimer) {
+      clearInterval(this._qrTimer)
+      this._qrTimer = null
+    }
+  },
+
+  refreshCheckinQr() {
+    if (this._qrFetching) return
+    this._fetchQrToken()
+  },
+
+  _drawQr(token) {
+    wx.createSelectorQuery().in(this)
+      .select('#checkinQrCanvas')
+      .fields({ node: true, size: true })
+      .exec((res) => {
+        // The overlay's wx:if may not have mounted the canvas yet when the
+        // token fetch resolves fast — retry shortly instead of leaving the
+        // code blank until the next rotation.
+        if (!res || !res[0] || !res[0].node) {
+          if (!this._qrDrawRetries) this._qrDrawRetries = 0
+          if (this._qrDrawRetries < 5 && this.data.showCheckinQr) {
+            this._qrDrawRetries++
+            setTimeout(() => this._drawQr(token), 250)
+          }
+          return
+        }
+        this._qrDrawRetries = 0
+        const canvas = res[0].node
+        const ctx = canvas.getContext('2d')
+        const dpr = (wx.getWindowInfo && wx.getWindowInfo().pixelRatio) || 2
+        canvas.width = res[0].width * dpr
+        canvas.height = res[0].height * dpr
+        const m = createMatrix(token)
+        const quiet = 4
+        const cell = Math.min(canvas.width, canvas.height) / (m.size + quiet * 2)
+        ctx.fillStyle = '#FFFFFF'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.fillStyle = '#000000'
+        for (let r = 0; r < m.size; r++) {
+          for (let c = 0; c < m.size; c++) {
+            if (!m.modules[r][c]) continue
+            ctx.fillRect(
+              Math.floor((c + quiet) * cell),
+              Math.floor((r + quiet) * cell),
+              Math.ceil(cell), Math.ceil(cell)
+            )
+          }
+        }
+      })
   },
 
   _syncTabBar() {
@@ -133,7 +265,7 @@ Page({
       label: '[work]',
       onChange: () => {
         if (this._watchedEventId !== eventId) return
-        this._fetchGuests(eventId, { silent: true })
+        this._fetchGuests(eventId, { silent: true, delta: true })
       }
     })
   },
@@ -187,7 +319,7 @@ Page({
         wx.removeStorageSync('currentVenueId')
         wx.removeStorageSync('currentVenueName')
         wx.removeStorageSync('currentEvent')
-        if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: false })
+        // Navigation is always hidden for counter role
         this.setData({
           step: 'venue', venueName: '', currentVenueId: '', currentEvent: null,
           events: [], guests: [], filteredGuests: [], arrivedGuests: [], totalExpected: 0
@@ -204,16 +336,21 @@ Page({
       // Venue name comes from the login step / storage — events reference venues by
       // name, and the venues collection itself is not client-readable.
       const venueName = this.data.venueName || wx.getStorageSync('currentVenueName')
-      const now = new Date()
-      if (now.getHours() < 5) now.setDate(now.getDate() - 1)
-      // Build the date string from LOCAL components — toISOString() is UTC, which
-      // between 00:00 and 05:00 China time still points at the previous UTC day and
-      // made the 5am night-shift cutoff land on the wrong date.
-      const today = now.getFullYear() + '-' +
-        String(now.getMonth() + 1).padStart(2, '0') + '-' +
-        String(now.getDate()).padStart(2, '0')
-      const eventRes = await collection(COLLECTIONS.EVENTS).where({ venueName }).orderBy('date', 'asc').get()
-      this.setData({ events: eventRes.data.filter(e => e.date >= today), isLoading: false })
+      // Server-side date filter: a client-issued query is capped at 20 docs regardless
+      // of .limit(), so ascending order returned the venue's oldest history and the
+      // upcoming events were never in the result set to filter. businessToday() (6 AM
+      // shift day) is passed through unchanged.
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+        action: 'getEvents',
+        venueName,
+        dateGte: businessToday()
+      })
+      if (!res || !res.success) {
+        this.setData({ isLoading: false })
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        return
+      }
+      this.setData({ events: res.data || [], isLoading: false })
     } catch (e) {
       this.setData({ isLoading: false })
     }
@@ -233,7 +370,7 @@ Page({
   backToEvents() {
     this._stopLiveUpdates()
     wx.removeStorageSync('currentEvent')
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: false })
+    // Navigation is always hidden for counter role
     this.setData({ step: 'event', currentEvent: null, guests: [], filteredGuests: [], arrivedGuests: [], totalExpected: 0 })
     this._fetchEvents()
   },
@@ -246,9 +383,56 @@ Page({
   async _fetchGuests(eventId, opts = {}) {
     const silent = !!opts.silent
     if (!silent) this.setData({ isLoading: true })
+
+    // DELTA path — same design as event-guests: only rows changed since the
+    // last sync (server clock) merge into _lastRawGuests and the view
+    // rebuilds locally. One check-in = one row over the wire. A full silent
+    // fetch stays the fallback (any delta problem) and the safety net (at
+    // least every FULL_EVERY_MS).
+    if (opts.delta && this._lastSyncMs && Date.now() - (this._lastFullAt || 0) < FULL_EVERY_MS) {
+      try {
+        const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+          action: 'getRegistrations',
+          eventId,
+          since: this._lastSyncMs
+        })
+        if (res && res.success && res.delta) {
+          if (silent && this.data.currentEvent && this.data.currentEvent._id !== eventId) return
+          this._lastSyncMs = res.serverNow || Date.now()
+          if (this._lastRawGuests) {
+            const byId = {}
+            this._lastRawGuests.forEach(r => { byId[r._id] = r })
+            ;(res.changed || []).forEach(r => { byId[r._id] = r })
+            this._lastRawGuests = Object.keys(byId).map(k => byId[k])
+            this._checkPaidScans(res.changed || [], true)
+            this._buildState(this._lastRawGuests)
+            return
+          }
+        }
+      } catch (e) { /* fall through to the full fetch below */ }
+    }
+
     try {
-      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, { action: 'getRegistrations', eventId })
-      if (!res || !res.success) {
+      // getRegistrations is paginated server-side (the unpaginated reply
+      // outgrew the ~1MB callFunction cap on big events). The door screen
+      // still wants EVERYONE, so pages are looped until exhausted — each
+      // reply stays small; only the local array holds the full list.
+      const PAGE = 1000
+      let all = []
+      let res = null
+      let failed = false
+      while (true) {
+        res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+          action: 'getRegistrations',
+          eventId,
+          offset: all.length,
+          limit: PAGE
+        })
+        if (!res || !res.success) { failed = true; break }
+        all = all.concat(res.data || [])
+        if (!res.hasMore) break
+      }
+      if (failed) {
         if (!silent) this.setData({ isLoading: false })
         if (isUnauthorized(res)) { handleAuthFailure(); return }
         if (!silent) wx.showToast({ title: 'Load failed', icon: 'none' })
@@ -256,7 +440,12 @@ Page({
       }
       // A slow silent refetch can land after the user already left this event — drop it.
       if (silent && this.data.currentEvent && this.data.currentEvent._id !== eventId) return
-      this._lastRawGuests = res.data || []
+      this._lastRawGuests = all
+      this._lastSyncMs = res.serverNow || Date.now()
+      this._lastFullAt = Date.now()
+      // Record-only pass: full loads update the per-guest scan marks so a
+      // later delta compares against the right baseline, but never pop.
+      this._checkPaidScans(all, false)
       this._buildState(this._lastRawGuests)
     } catch (e) {
       if (!silent) {
@@ -264,6 +453,68 @@ Page({
         wx.showToast({ title: 'Load failed', icon: 'none' })
       }
     }
+  },
+
+  // ─── Paid-guest scan alert ────────────────────────────────
+  //
+  // Pops up ONLY at the moment a PAID guest scans the door QR: the scan
+  // stamps scannedAt on their registration, the live watcher fires a delta
+  // refresh, and the changed row lands here with live=true. Full loads
+  // (page open, event switch) pass live=false — they only RECORD the current
+  // scan marks, never replay them. Per guest the LAST scannedAt value is
+  // remembered (not a one-time flag), so after a "Remove arrival" reset the
+  // next scan is a NEW mark and pops again. FREE guests are untouched:
+  // silent check-in, exactly as before.
+  _checkPaidScans(rows, live) {
+    if (!Array.isArray(rows) || !rows.length) return
+    if (!this._scanMarks) this._scanMarks = {}
+    // Freshness guard: the changed row's scan must be ~just now (a little
+    // slack for phone-vs-server clock skew). Anything older is an edit to an
+    // already-scanned row, not a new arrival.
+    const freshAfter = Date.now() - 90 * 1000
+    rows.forEach(r => {
+      if (!r || !r._id) return
+      let mark = ''
+      if (r.scannedAt) {
+        const raw = (typeof r.scannedAt === 'object' && r.scannedAt.$date !== undefined) ? r.scannedAt.$date : r.scannedAt
+        const ms = new Date(raw).getTime()
+        if (!isNaN(ms)) mark = String(ms)
+      }
+      const prev = this._scanMarks[r._id]
+      this._scanMarks[r._id] = mark
+      if (!live || !mark || !r.paid || mark === prev) return
+      if (Number(mark) < freshAfter) return
+      this._showPaidScanAlert(r)
+    })
+  },
+
+  _showPaidScanAlert(r) {
+    if (this._paidScanTimer) clearTimeout(this._paidScanTimer)
+    // The alert replaces the QR overlay instead of stacking on top of it —
+    // two overlapping windows read as broken. The counter reopens the code
+    // with one tap when the next guest approaches.
+    this._stopQrCountdown()
+    wx.vibrateShort({ type: 'medium' })
+    this.setData({
+      showCheckinQr: false,
+      qrToken: '',
+      qrSecondsLeft: 0,
+      qrExpired: false,
+      paidScanAlert: {
+        guestName: r.guestName || '',
+        ticketType: r.ticketType || '',
+        price: r.paidAmountFen ? '¥ ' + (r.paidAmountFen / 100) : '',
+        promoterName: r.promoterName || '',
+        arrivedAt: r.arrivedAt || ''
+      }
+    })
+    // Auto-dismiss: never leave a stale popup covering the work screen.
+    this._paidScanTimer = setTimeout(() => this.closePaidScanAlert(), 20 * 1000)
+  },
+
+  closePaidScanAlert() {
+    if (this._paidScanTimer) { clearTimeout(this._paidScanTimer); this._paidScanTimer = null }
+    this.setData({ paidScanAlert: null })
   },
 
   // Fetches the full staff + promoter rosters and builds the phone -> role lookup used to
@@ -300,7 +551,11 @@ Page({
     const buckets = {}
     sectionDefs.forEach(s => { buckets[s.tag] = [] })
     arrivedList.forEach(g => {
-      const tag = g.group !== undefined ? g.group : ''
+      // Manual-only (no-scan) marks land in the Extra bucket regardless of
+      // their capacity group — verified (scanned) arrivals fill P/AP/LAP. The
+      // guest's own group/arrivalNumber stay truthful, so a later scan moves
+      // them back into their own section on the next rebuild.
+      const tag = (!g.scannedAt || g.group === undefined) ? '' : g.group
       if (buckets[tag] !== undefined) buckets[tag].push(g)
       else buckets[''].push(g)
     })
@@ -388,23 +643,10 @@ Page({
   async checkIn(e) {
     const { id, pindex, gindex } = e.currentTarget.dataset
     if (this._checkingIn.has(id)) return
-    if (this.data.currentEvent && this.data.currentEvent.isClosed) {
+    // Closed by the admin, or its end time has passed
+    if (hasEnded(this.data.currentEvent)) {
       wx.showToast({ title: 'Event is closed', icon: 'none' })
       return
-    }
-    // Also block if event's end time has passed
-    const ev = this.data.currentEvent || {}
-    if (ev.date && ev.endTime) {
-      try {
-        const parts = ev.date.split('-').map(Number)
-        const timeParts = ev.endTime.split(':').map(Number)
-        const endDt = new Date(parts[0], parts[1] - 1, parts[2], timeParts[0], timeParts[1], 0, 0)
-        if (timeParts[0] < 12) endDt.setDate(endDt.getDate() + 1)
-        if (!isNaN(endDt.getTime()) && new Date() > endDt) {
-          wx.showToast({ title: 'Event is closed', icon: 'none' })
-          return
-        }
-      } catch (_) {}
     }
     const group = this.data.filteredGuests[pindex]
     if (!group) return
@@ -538,8 +780,63 @@ Page({
     }
   },
 
-  confirmLogout() {
-    wx.showModal({
+  // ─── Staff / promoter attendance ──────────────────────────
+  //
+  // Flips attendancePresent for every row belonging to one staff/promoter record
+  // (matched by internalId, so multiple registrations of the same person stay in sync).
+  // The list is fanned out across six data arrays — flat arrived, grouped pending,
+  // sectioned arrived and the filtered copy of each — plus the phone->role map that
+  // _buildState re-annotates from. All of them move together: live sync rebuilds the
+  // list constantly, so a stale copy anywhere reverts the badge on the next render.
+  _setAttendance(internalId, present) {
+    const eventId = (this.data.currentEvent || {})._id
+    const flip = list => list.map(g => g.internalId === internalId ? { ...g, attendancePresent: present } : g)
+    const flipGroups = list => list.map(grp => ({ ...grp, guests: flip(grp.guests) }))
+    Object.keys(this._roleMap || {}).forEach(k => {
+      const m = this._roleMap[k]
+      if (!m || m.id !== internalId) return
+      const ids = m.eventIds || []
+      m.eventIds = present ? (ids.includes(eventId) ? ids : [...ids, eventId]) : ids.filter(i => i !== eventId)
+    })
+    this.setData({
+      guests: flipGroups(this.data.guests),
+      filteredGuests: flipGroups(this.data.filteredGuests),
+      arrivedGuests: flip(this.data.arrivedGuests),
+      filteredArrivedGuests: flip(this.data.filteredArrivedGuests),
+      arrivedSections: flipGroups(this.data.arrivedSections),
+      filteredArrivedSections: flipGroups(this.data.filteredArrivedSections)
+    })
+  },
+
+  async toggleAttendance(e) {
+    const { internalId, internalRole, present } = e.currentTarget.dataset
+    if (!internalId) return
+    const eventId = (this.data.currentEvent || {})._id
+    if (!eventId) return
+    const next = !present
+    this._setAttendance(internalId, next)  // optimistic; reverted below on failure
+    try {
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+        action: 'markAttendance', targetType: internalRole, targetId: internalId, eventId, present: next
+      })
+      if (!res || !res.success) {
+        this._setAttendance(internalId, !next)
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        wx.showToast({ title: 'Error', icon: 'none' })
+        return
+      }
+      wx.vibrateShort({ type: 'medium' })
+      wx.showToast({ title: next ? 'Marked present' : 'Unmarked', icon: 'none' })
+    } catch (err) {
+      this._setAttendance(internalId, !next)
+      wx.showToast({ title: 'Error', icon: 'none' })
+    }
+  },
+
+  // Empty handler for WXML scroll/tap blocks (catchtouchmove / catchtap noop).
+  noop() {},
+
+  confirmLogout() {    wx.showModal({
       title: 'Log out', content: 'Log out from account?',
       confirmText: 'Log out', confirmColor: '#FF3B30', cancelText: 'Cancel',
       success: ({ confirm }) => { if (confirm) getApp().logout() }
