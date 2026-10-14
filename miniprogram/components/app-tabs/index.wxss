@@ -66,6 +66,24 @@
   white-space: nowrap;
 }
 
+.app-tab-label-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-tab-dot {
+  position: absolute;
+  top: -5rpx;
+  right: -13rpx;
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #FF3B30;
+  box-shadow: 0 0 0 2rpx var(--bg-elevated);
+}
+
 .app-tab--active .app-tab-label {
   color: var(--accent);
   font-weight: 700;

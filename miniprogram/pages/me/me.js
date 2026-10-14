@@ -1,5 +1,6 @@
 const app = getApp();
 const auth = require('../../utils/auth.js');
+const tabDots = require('../../utils/tab-dots.js');
 
 Page({
   data: {
@@ -48,6 +49,7 @@ Page({
     auth.getAuth((profile) => {
       if (!profile) {
         this.setData({ isAnonymous: true, userInfo: null, loading: false });
+        tabDots.updateProfileDot(null);
         return;
       }
       this.setData({
@@ -56,6 +58,7 @@ Page({
         musicText: this._toArray(profile.music).join(', '),
         loading: false
       });
+      tabDots.updateProfileDot(profile);
     });
   },
 
@@ -90,6 +93,7 @@ Page({
       // Refresh the central auth cache so the feed header/badges pick up
       // the new value without an app restart.
       auth.completeSignIn(userInfo);
+      tabDots.updateProfileDot(userInfo);
       this.setData({
         showFieldEdit: false,
         showMusicEdit: false,
@@ -183,6 +187,8 @@ Page({
       success: (res) => {
         if (res.confirm) {
           auth.logout();
+          tabDots.updateProfileDot(null);
+          tabDots.updateWalletDot(false);
           // Land on the feed (the app's anonymous-friendly home) rather
           // than register, which would immediately re-prompt for sign-in.
           wx.reLaunch({ url: '/pages/feed/feed' });

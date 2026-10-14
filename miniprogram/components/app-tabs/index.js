@@ -1,4 +1,5 @@
 const app = getApp();
+const tabDots = require('../../utils/tab-dots.js');
 
 Component({
   properties: {
@@ -9,12 +10,17 @@ Component({
   data: {
     navPadTop: 48,
     navBarHeight: 32,
-    navRowWidth: 175
+    navRowWidth: 175,
+    dots: { feed: false, wallet: false, events: false, profile: false }
   },
 
   lifetimes: {
     attached() {
       this.updateLayout();
+      this._unsubscribeDots = tabDots.subscribe((dots) => this.setData({ dots }));
+    },
+    detached() {
+      if (this._unsubscribeDots) this._unsubscribeDots();
     }
   },
 

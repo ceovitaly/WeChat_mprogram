@@ -1,6 +1,7 @@
 const app = getApp();
 const auth = require('../../utils/auth.js');
 const { resolveEventImages } = require('../../utils/cloud.js');
+const tabDots = require('../../utils/tab-dots.js');
 
 Page({
   data: {
@@ -145,6 +146,8 @@ Page({
     if (showPaidEvents !== this.data.showPaidEvents) {
       this.setData({ showPaidEvents: showPaidEvents });
     }
+    var dotCollections = this.getNotificationEventCollections();
+    tabDots.markEventTabSeen(showPaidEvents ? 'events' : 'feed', dotCollections.feed, dotCollections.paid);
   },
 
   // Header identity pill and card badges both derive from the central
@@ -156,8 +159,10 @@ Page({
       if (profile) {
         var initial = ((profile.nickName || profile.name || '')[0] || '?').toUpperCase();
         self.setData({ userInfo: profile, userInitial: initial });
+        tabDots.updateProfileDot(profile);
       } else {
         self.setData({ userInfo: null, userInitial: '?' });
+        tabDots.updateProfileDot(null);
       }
     });
   },
@@ -306,6 +311,28 @@ Page({
       });
     });
     this.setData({ filteredEvents: marked, paidEvents: paidEvents });
+
+    var dotCollections = this.getNotificationEventCollections();
+    tabDots.updateEventDots(dotCollections.feed, dotCollections.paid, app.globalData.guestTopTab || 'feed');
+    tabDots.updateWalletDot(dotCollections.feed.some(function(event) {
+      return !!(regIds && regIds.indexOf(event._id) !== -1);
+    }));
+  },
+
+  // Keep notification state independent from temporary search/date filters.
+  getNotificationEventCollections: function() {
+    var now = new Date();
+    if (now.getHours() < 5) now.setDate(now.getDate() - 1);
+    var today = now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0');
+    var feed = this.data.events.filter(function(event) {
+      return event.date && event.date >= today;
+    });
+    var paid = feed.filter(function(event) {
+      return event.isPaid === true || event.hasPaidPackages === true;
+    });
+    return { feed: feed, paid: paid };
   },
 
   // ===== REGISTRATIONS =====
@@ -316,6 +343,7 @@ Page({
       if (!profile) {
         // Anonymous: no "You're on the list" badges anywhere.
         self.setData({ myRegistrationIds: [] });
+        tabDots.updateWalletDot(false);
         self.applyFilters();
         return;
       }
@@ -346,7 +374,7 @@ Page({
         // Content first: cards must not wait for cloud image URL resolution.
         this.renderEvents(events, false);
         this.enrichEventImages(events);
-        if (age > 2 * 60 * 1000) this.fetchEvents(false);
+        this.fetchEvents(false);
         return;
       }
     } catch (e) {
@@ -610,6 +638,8 @@ Page({
     if (showPaidEvents !== this.data.showPaidEvents) {
       this.setData({ showPaidEvents: showPaidEvents });
     }
+    var dotCollections = this.getNotificationEventCollections();
+    tabDots.markEventTabSeen(showPaidEvents ? 'events' : 'feed', dotCollections.feed, dotCollections.paid);
   },
 
   // Broader "interacting with other elements should hide the search bar"

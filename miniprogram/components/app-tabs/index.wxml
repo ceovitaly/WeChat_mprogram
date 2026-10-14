@@ -1,16 +1,28 @@
 <view class="app-tabs-nav {{scrolled ? 'app-tabs-nav--scrolled' : ''}}" style="padding-top:{{navPadTop}}px">
   <view class="app-tabs-row" style="height:{{navBarHeight}}px; width:{{navRowWidth}}px">
     <view class="app-tab {{activeTab === 'feed' ? 'app-tab--active' : ''}}" hover-class="app-tab--pressed" data-tab="feed" bindtap="onTabTap">
-      <text class="app-tab-label">Feed</text>
+      <view class="app-tab-label-wrap">
+        <text class="app-tab-label">Feed</text>
+        <view wx:if="{{dots.feed}}" class="app-tab-dot"></view>
+      </view>
     </view>
     <view class="app-tab {{activeTab === 'wallet' ? 'app-tab--active' : ''}}" hover-class="app-tab--pressed" data-tab="wallet" bindtap="onTabTap">
-      <text class="app-tab-label">Wallet</text>
+      <view class="app-tab-label-wrap">
+        <text class="app-tab-label">Wallet</text>
+        <view wx:if="{{dots.wallet}}" class="app-tab-dot"></view>
+      </view>
     </view>
     <view class="app-tab {{activeTab === 'events' ? 'app-tab--active' : ''}}" hover-class="app-tab--pressed" data-tab="events" bindtap="onTabTap">
-      <text class="app-tab-label">Events</text>
+      <view class="app-tab-label-wrap">
+        <text class="app-tab-label">Events</text>
+        <view wx:if="{{dots.events}}" class="app-tab-dot"></view>
+      </view>
     </view>
     <view class="app-tab {{activeTab === 'profile' ? 'app-tab--active' : ''}}" hover-class="app-tab--pressed" data-tab="profile" bindtap="onTabTap">
-      <text class="app-tab-label">Profile</text>
+      <view class="app-tab-label-wrap">
+        <text class="app-tab-label">Profile</text>
+        <view wx:if="{{dots.profile}}" class="app-tab-dot"></view>
+      </view>
     </view>
   </view>
 </view>

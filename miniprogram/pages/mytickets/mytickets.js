@@ -2,6 +2,7 @@ const app = getApp();
 const auth = require('../../utils/auth.js');
 const { callFunction } = require('../../utils/cloud.js');
 const pay = require('../../utils/pay.js');
+const tabDots = require('../../utils/tab-dots.js');
 
 Page({
   data: {
@@ -35,6 +36,7 @@ Page({
           pendingOrders: [],
           isLoading: false
         });
+        tabDots.updateWalletDot(false);
         return;
       }
       if (!this.cloud) return;
@@ -66,6 +68,7 @@ Page({
             pastTickets: past,
             isLoading: false
           });
+          tabDots.updateWalletDot(active.length > 0);
           this._enrichTickets(active);
           this.fetchPendingOrders();
         })

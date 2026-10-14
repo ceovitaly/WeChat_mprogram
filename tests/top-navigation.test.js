@@ -27,6 +27,7 @@ test('top navigation switches Feed, Wallet, Events and Profile as persistent tab
   for (const label of ['Feed', 'Wallet', 'Events', 'Profile']) {
     assert.match(component, new RegExp('>' + label + '<'))
   }
+  assert.equal((component.match(/class="app-tab-dot"/g) || []).length, 4)
   assert.match(componentJs, /wx\.switchTab/)
   assert.match(componentJs, /guestTopTab/)
   assert.doesNotMatch(componentJs, /hideTabBar/)

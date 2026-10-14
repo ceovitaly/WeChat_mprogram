@@ -1,6 +1,7 @@
 // pages/register/index.js
 const app = getApp();
 const auth = require('../../utils/auth.js');
+const tabDots = require('../../utils/tab-dots.js');
 
 Page({
   data: {
@@ -171,6 +172,7 @@ Page({
       const guestRes = await db.collection('guests').where({ _openid: openid }).limit(1).get();
       if (guestRes.data && guestRes.data.length > 0) {
         auth.completeSignIn(guestRes.data[0]);
+        tabDots.updateProfileDot(guestRes.data[0]);
         this._afterSignIn(cloud, guestRes.data[0]);
         return;
       }
@@ -345,6 +347,7 @@ Page({
         const savedRes = await db.collection('guests').where({ _openid: openid }).limit(1).get();
         const profile = (savedRes.data && savedRes.data.length > 0) ? savedRes.data[0] : profileData;
         auth.completeSignIn(profile);
+        tabDots.updateProfileDot(profile);
 
         await this._afterSignIn(cloud, profile);
       } catch (err) {
