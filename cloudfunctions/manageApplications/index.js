@@ -1113,20 +1113,28 @@ exports.main = async (event, context) => {
       const targetId = eventId || id;
       if (!targetId) return { success: false, message: 'No ID provided' };
 
-      // Cascade: an event's registrations are meaningless once the event itself
-      // is gone — otherwise guests keep a ticket in "My Tickets" for an event
-      // that no longer exists anywhere in the app.
-      const regsRes = await db.collection('registrations')
-        .where({ eventId: targetId })
-        .field({ _id: true })
-        .limit(1000)
-        .get();
-      await Promise.all(
-        (regsRes.data || []).map(r => db.collection('registrations').doc(r._id).remove())
-      );
+      // Cascade registrations in repeated batches. Querying the first batch
+      // again after removal avoids skip-offset gaps while supporting events
+      // with more than the server-side 1000-document query limit.
+      let removedRegistrations = 0;
+      while (true) {
+        const regsRes = await db.collection('registrations')
+          .where({ eventId: targetId })
+          .field({ _id: true })
+          .limit(1000)
+          .get();
+        const registrations = regsRes.data || [];
+        if (registrations.length === 0) break;
+        await Promise.all(
+          registrations.map(r => db.collection('registrations').doc(r._id).remove())
+        );
+        removedRegistrations += registrations.length;
+      }
 
       await db.collection('events').doc(targetId).remove();
-      return { success: true, removedRegistrations: (regsRes.data || []).length };
+      const remaining = await db.collection('events').where({ _id: targetId }).count();
+      if (remaining.total > 0) throw new Error('Event still exists after deletion');
+      return { success: true, removedEvent: true, removedRegistrations };
     } catch (e) {
       return { success: false, error: e.message };
     }

@@ -349,6 +349,10 @@ Page({
           })
           if (isUnauthorized(res)) { handleAuthFailure(); return }
           if (!res || !res.success) throw new Error(res && res.error || 'Delete failed')
+          this.setData({
+            events: this.data.events.filter(event => event._id !== id),
+            filteredEvents: this.data.filteredEvents.filter(event => event._id !== id)
+          })
           wx.vibrateShort({ type: 'medium' })
           wx.showToast({ title: 'Deleted', icon: 'success' })
           await this._fetchEvents()
