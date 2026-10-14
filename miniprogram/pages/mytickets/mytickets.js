@@ -16,7 +16,6 @@ Page({
 
   onShow() {
     app.globalData.guestTopTab = 'wallet';
-    wx.hideTabBar({ animation: false, fail() {} });
     app.getCloud((cloud) => {
       this.cloud = cloud;
       this.fetchTickets();

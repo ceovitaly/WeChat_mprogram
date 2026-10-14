@@ -133,7 +133,6 @@ Page({
   },
 
   onShow: function() {
-    wx.hideTabBar({ animation: false, fail: function() {} });
     this.syncRequestedTopTab();
     this.refreshAuthUI();
     this.loadMyRegistrations();

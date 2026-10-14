@@ -22,11 +22,14 @@ test('top navigation switches Feed, Wallet, Events and Profile as persistent tab
     'pages/mytickets/mytickets',
     'pages/me/me'
   ])
+  assert.equal(app.tabBar.custom, true)
+  assert.match(read('custom-tab-bar/index.wxss'), /display:\s*none/)
   for (const label of ['Feed', 'Wallet', 'Events', 'Profile']) {
     assert.match(component, new RegExp('>' + label + '<'))
   }
   assert.match(componentJs, /wx\.switchTab/)
   assert.match(componentJs, /guestTopTab/)
+  assert.doesNotMatch(componentJs, /hideTabBar/)
   assert.match(feed, /<app-tabs[^>]*active-tab="\{\{showPaidEvents \? 'events' : 'feed'\}\}"/)
   assert.match(wallet, /<app-tabs[^>]*active-tab="wallet"/)
   assert.match(profile, /<app-tabs[^>]*active-tab="profile"/)

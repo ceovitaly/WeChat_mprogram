@@ -15,21 +15,10 @@ Component({
   lifetimes: {
     attached() {
       this.updateLayout();
-      this.hideNativeTabBar();
-    }
-  },
-
-  pageLifetimes: {
-    show() {
-      this.hideNativeTabBar();
     }
   },
 
   methods: {
-    hideNativeTabBar() {
-      wx.hideTabBar({ animation: false, fail() {} });
-    },
-
     updateLayout() {
       const info = wx.getWindowInfo();
       let menu = null;
