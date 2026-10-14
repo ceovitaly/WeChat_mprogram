@@ -36,6 +36,7 @@ Page({
 
     // Paid packages
     hasPaidPackages: false,
+    eventsOnly: false,
     paidPackages: [], // [{ name: '', paymentLink: '' }]
 
     // Real event fields — persisted by onSave. There is currently no UI for editing
@@ -158,6 +159,7 @@ Page({
         freeTicketsLimit: e.freeTicketsLimit || '',
         freeUntil: e.freeUntil || '',
         hasPaidPackages: e.hasPaidPackages || false,
+        eventsOnly: e.eventsOnly === true,
         paidPackages: e.paidPackages || [],
         tickets: e.tickets || [],
         tables: e.tables || [],
@@ -221,10 +223,15 @@ Page({
     const val = e.detail.value
     this.setData({
       hasPaidPackages: val,
+      eventsOnly: val ? this.data.eventsOnly : false,
       paidPackages: val && this.data.paidPackages.length === 0
         ? [{ name: '', description: '', price: '' }]
         : this.data.paidPackages
     })
+  },
+
+  toggleEventsOnly(e) {
+    this.setData({ eventsOnly: e.detail.value })
   },
 
   onPaidPackageInput(e) {
@@ -362,7 +369,7 @@ Page({
       title, date, startTime, endTime, description, externalLink,
       selectedVenueId, selectedVenueName,
       images, tickets, tables, bottles,
-      hasFreeEntry, hasPaidPackages, paidPackages: paidPackagesRaw,
+      hasFreeEntry, hasPaidPackages, eventsOnly, paidPackages: paidPackagesRaw,
       freeTicketsLimit,
       freeUntil,
       partyCapacity, afterPartyCapacity, lateAfterPartyCapacity,
@@ -437,6 +444,7 @@ Page({
         freeTicketsLimit: Number(freeTicketsLimit) || 0, // 0 = unlimited
         freeUntil: freeUntil || '', // '' = free all night
         hasPaidPackages,
+        eventsOnly: hasPaidPackages && eventsOnly,
         paidPackages,
         isFree: hasFreeEntry,
         isPaid: hasPaidPackages,

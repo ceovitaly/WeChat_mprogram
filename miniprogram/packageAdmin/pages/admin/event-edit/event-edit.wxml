@@ -168,6 +168,10 @@
         <text class="field-label">Enable paid tickets</text>
         <switch checked="{{hasPaidPackages}}" bindchange="togglePaidPackages" color="#007AFF" />
       </view>
+      <view class="field-row" wx:if="{{hasPaidPackages}}">
+        <text class="field-label">Show only in Events</text>
+        <switch checked="{{eventsOnly}}" bindchange="toggleEventsOnly" color="#007AFF" />
+      </view>
     </view>
 
     <block wx:if="{{hasPaidPackages}}">
