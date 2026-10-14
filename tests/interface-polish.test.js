@@ -46,3 +46,11 @@ test('top navigation exposes a compact layout for narrow devices', () => {
   assert.match(js, /compactNav/)
   assert.match(wxss, /\.app-tabs-row--compact/)
 })
+
+test('events-only paid events stay out of Feed and remain available in Events', () => {
+  const feed = read('pages/feed/feed.js')
+  const cloud = read('../cloudfunctions/clientAuth/index.js')
+  assert.match(feed, /var marked = filtered\.filter\(function\(e\) \{[\s\S]*?e\.eventsOnly !== true/)
+  assert.match(feed, /var paidEvents = filtered\.filter\(function\(e\)[\s\S]*?isPaid[\s\S]*?hasPaidPackages/)
+  assert.match(cloud, /SAFE_FIELDS[\s\S]*?eventsOnly/)
+})

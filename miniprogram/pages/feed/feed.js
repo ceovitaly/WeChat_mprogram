@@ -317,7 +317,9 @@ Page({
         isNew: newPaidIds.indexOf(e._id) !== -1
       });
     });
-    var marked = filtered.map(function(e) {
+    var marked = filtered.filter(function(e) {
+      return e.eventsOnly !== true;
+    }).map(function(e) {
       return Object.assign({}, e, {
         isRegistered: !!(regIds && regIds.indexOf(e._id) !== -1),
         isNew: newFeedIds.indexOf(e._id) !== -1
@@ -352,10 +354,13 @@ Page({
     var today = now.getFullYear() + '-' +
       String(now.getMonth() + 1).padStart(2, '0') + '-' +
       String(now.getDate()).padStart(2, '0');
-    var feed = this.data.events.filter(function(event) {
+    var upcoming = this.data.events.filter(function(event) {
       return event.date && event.date >= today;
     });
-    var paid = feed.filter(function(event) {
+    var feed = upcoming.filter(function(event) {
+      return event.eventsOnly !== true;
+    });
+    var paid = upcoming.filter(function(event) {
       return event.isPaid === true || event.hasPaidPackages === true;
     });
     return { feed: feed, paid: paid };

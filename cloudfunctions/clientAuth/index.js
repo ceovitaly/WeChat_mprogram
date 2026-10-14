@@ -555,7 +555,7 @@ exports.main = async (event, context) => {
         const SAFE_FIELDS = ['_id', 'title', 'date', 'startTime', 'endTime',
           'venueName', 'venueId', 'isClosed', 'status', 'partyCapacity',
           'afterPartyCapacity', 'lateAfterPartyCapacity', 'isFree', 'isPaid',
-          'hasFreeEntry', 'hasPaidPackages', 'coverImage', 'images', 'promoImages'];
+          'hasFreeEntry', 'hasPaidPackages', 'eventsOnly', 'coverImage', 'images', 'promoImages'];
         const data = (res.data || []).map(e => {
           const safe = {};
           SAFE_FIELDS.forEach(k => { if (e[k] !== undefined) safe[k] = e[k]; });
