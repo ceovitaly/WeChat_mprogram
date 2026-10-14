@@ -42,3 +42,13 @@ test('tab-bar destinations are opened with switchTab rather than page navigation
   assert.doesNotMatch(sources, /wx\.(?:navigateTo|reLaunch)\(\{\s*url:\s*['"]\/pages\/(?:mytickets\/mytickets|me\/me)['"]\s*\}\)/)
   assert.match(sources, /wx\.switchTab\(\{\s*url:\s*['"]\/pages\/mytickets\/mytickets['"]/)
 })
+
+test('wallet header uses two equal tabs with an underline active state', () => {
+  const wxml = read('pages/mytickets/mytickets.wxml')
+  const wxss = read('pages/mytickets/mytickets.wxss')
+
+  assert.equal((wxml.match(/class="tab \{\{activeTab/g) || []).length, 2)
+  assert.match(wxss, /\.tab\s*\{[\s\S]*?flex:\s*1;/)
+  assert.match(wxss, /\.tab-active::after\s*\{[\s\S]*?bottom:\s*0;[\s\S]*?background:\s*var\(--accent\);/)
+  assert.doesNotMatch(wxss, /\.tab-active\s*\{\s*background:/)
+})

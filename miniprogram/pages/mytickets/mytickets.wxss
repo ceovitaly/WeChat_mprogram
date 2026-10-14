@@ -15,10 +15,10 @@ page {
   position: relative;
   display: flex;
   background: var(--bg-elevated);
-  padding: 20rpx 32rpx 16rpx;
-  gap: 8rpx;
+  padding: 0 32rpx;
   flex-shrink: 0;
 }
+
 .tabs::after {
   content: '';
   position: absolute;
@@ -30,9 +30,9 @@ page {
 }
 
 .tab {
-  height: 72rpx;
-  padding: 0 32rpx;
-  border-radius: 18rpx;
+  position: relative;
+  flex: 1;
+  height: 88rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,10 +40,16 @@ page {
 
 .tab:active { opacity: 0.7; }
 
-/* Inverted high-contrast pill (black-on-white / white-on-black) — a
-   one-off design distinct from the standard token pairs, left un-tokenized */
-.tab-active {
-  background: #1C1C1E;
+.tab-active::after {
+  content: '';
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: 0;
+  height: 5rpx;
+  border-radius: 999rpx 999rpx 0 0;
+  background: var(--accent);
+  z-index: 1;
 }
 
 .tab-text {
@@ -53,7 +59,8 @@ page {
 }
 
 .tab-active .tab-text {
-  color: #FFFFFF;
+  color: var(--accent);
+  font-weight: 700;
 }
 
 /* Scroll */
@@ -246,13 +253,6 @@ page {
    token's dark value) are overridden below. */
 @media (prefers-color-scheme: dark) {
   .page { background: var(--bg); }
-
-  .tab { background: transparent; }
-  .tab-active { background: #FFFFFF; }
-  /* tab-text uses a dimmer gray than --text-secondary specifically in
-     dark mode here, rather than the usual theme-invariant value */
-  .tab-text { color: #636366; }
-  .tab-active .tab-text { color: #1C1C1E; }
 
   .badge-confirmed { background: rgba(255,255,255,0.08); }
   .badge-past { background: rgba(255,255,255,0.06); }
