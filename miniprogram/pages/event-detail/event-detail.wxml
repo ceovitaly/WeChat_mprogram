@@ -185,22 +185,22 @@
       <view class="icon icon--list btn-register-icon"></view>
       <text>View in Wallet</text>
     </button>
-    <button wx:if="{{event.externalLink}}" class="btn-share btn-copy-link pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="copyExternalLink">
-      <text class="btn-share-text">Copy link</text>
+    <button wx:if="{{event.externalLink}}" class="btn-share btn-icon-action btn-copy-link pressable" aria-label="Copy event link" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="copyExternalLink">
+      <view class="icon icon--link btn-copy-icon"></view>
     </button>
-    <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
+    <button class="btn-share {{event.externalLink ? 'btn-icon-action' : ''}} pressable" aria-label="Share event" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
       <view class="icon icon--share btn-share-icon"></view>
-      <text class="btn-share-text">Share</text>
+      <text wx:if="{{!event.externalLink}}" class="btn-share-text">Share</text>
     </button>
   </view>
   <view wx:elif="{{event.isEventOver}}" class="ended-bar">
     <text class="ended-text">Registration closed</text>
-    <button wx:if="{{event.externalLink}}" class="btn-share btn-copy-link pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="copyExternalLink">
-      <text class="btn-share-text">Copy link</text>
+    <button wx:if="{{event.externalLink}}" class="btn-share btn-icon-action btn-copy-link pressable" aria-label="Copy event link" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="copyExternalLink">
+      <view class="icon icon--link btn-copy-icon"></view>
     </button>
-    <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
+    <button class="btn-share {{event.externalLink ? 'btn-icon-action' : ''}} pressable" aria-label="Share event" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
       <view class="icon icon--share btn-share-icon"></view>
-      <text class="btn-share-text">Share</text>
+      <text wx:if="{{!event.externalLink}}" class="btn-share-text">Share</text>
     </button>
   </view>
   <view wx:else class="action-row">
@@ -208,12 +208,12 @@
       <view class="icon icon--list btn-register-icon"></view>
       <text>Get on list</text>
     </button>
-    <button wx:if="{{event.externalLink}}" class="btn-share btn-copy-link pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="copyExternalLink">
-      <text class="btn-share-text">Copy link</text>
+    <button wx:if="{{event.externalLink}}" class="btn-share btn-icon-action btn-copy-link pressable" aria-label="Copy event link" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="copyExternalLink">
+      <view class="icon icon--link btn-copy-icon"></view>
     </button>
-    <button class="btn-share pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
+    <button class="btn-share {{event.externalLink ? 'btn-icon-action' : ''}} pressable" aria-label="Share event" hover-class="pressed" hover-start-time="20" hover-stay-time="80" open-type="share">
       <view class="icon icon--share btn-share-icon"></view>
-      <text class="btn-share-text">Share</text>
+      <text wx:if="{{!event.externalLink}}" class="btn-share-text">Share</text>
     </button>
   </view>
 </view>
