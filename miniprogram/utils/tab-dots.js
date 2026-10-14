@@ -76,7 +76,15 @@ function calculateUnseen(key, ids) {
   return ids.some((id) => seen.indexOf(id) === -1);
 }
 
-function updateEventDots(feedEvents, paidEvents, activeTab) {
+function getUnseenEventIds(events, tab) {
+  const key = tab === 'events' ? PAID_SEEN_KEY : FEED_SEEN_KEY;
+  const seen = readSeen(key);
+  if (seen === null) return [];
+  return eventIds(events).filter((id) => seen.indexOf(id) === -1);
+}
+
+function updateEventDots(feedEvents, paidEvents, activeTab, collectionReady) {
+  if (collectionReady === false) return getDots();
   const feedIds = eventIds(feedEvents);
   const paidIds = eventIds(paidEvents);
   let feed = calculateUnseen(FEED_SEEN_KEY, feedIds);
@@ -95,11 +103,13 @@ function updateEventDots(feedEvents, paidEvents, activeTab) {
 
 function markEventTabSeen(tab, feedEvents, paidEvents) {
   if (tab === 'feed') {
-    writeSeen(FEED_SEEN_KEY, eventIds(feedEvents));
+    const ids = eventIds(feedEvents);
+    if (ids.length > 0 || readSeen(FEED_SEEN_KEY) !== null) writeSeen(FEED_SEEN_KEY, ids);
     return setDots({ feed: false });
   }
   if (tab === 'events') {
-    writeSeen(PAID_SEEN_KEY, eventIds(paidEvents));
+    const ids = eventIds(paidEvents);
+    if (ids.length > 0 || readSeen(PAID_SEEN_KEY) !== null) writeSeen(PAID_SEEN_KEY, ids);
     return setDots({ events: false });
   }
   return getDots();
@@ -113,23 +123,37 @@ function hasText(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-function updateProfileDot(profile) {
+function getProfileCompletion(profile) {
   const music = profile && profile.music;
-  const hasMusic = Array.isArray(music) ? music.length > 0 : hasText(music);
-  const complete = !!profile &&
-    hasText(profile.nickName || profile.name || '') &&
-    hasText(profile.birthday || '') &&
-    hasText(profile.gender || '') &&
-    hasText(profile.country || '') &&
-    hasMusic;
-  return setDots({ profile: !complete });
+  const missing = {
+    name: !profile || !hasText(profile.nickName || profile.name || ''),
+    birthday: !profile || !hasText(profile.birthday || ''),
+    gender: !profile || !hasText(profile.gender || ''),
+    country: !profile || !hasText(profile.country || ''),
+    music: !profile || !(Array.isArray(music) ? music.length > 0 : hasText(music))
+  };
+  const total = Object.keys(missing).length;
+  const count = Object.keys(missing).filter((key) => !missing[key]).length;
+  return {
+    complete: count === total,
+    count,
+    total,
+    percent: Math.round(count / total * 100),
+    missing
+  };
+}
+
+function updateProfileDot(profile) {
+  return setDots({ profile: !getProfileCompletion(profile).complete });
 }
 
 module.exports = {
   getDots,
   subscribe,
+  getUnseenEventIds,
   updateEventDots,
   markEventTabSeen,
   updateWalletDot,
-  updateProfileDot
+  updateProfileDot,
+  getProfileCompletion
 };

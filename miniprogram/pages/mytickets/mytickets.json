@@ -1,6 +1,7 @@
 {
   "usingComponents": {
-    "app-tabs": "/components/app-tabs/index"
+    "app-tabs": "/components/app-tabs/index",
+    "loading-state": "/components/loading-state/index"
   },
   "navigationStyle": "custom",
   "disableScroll": true

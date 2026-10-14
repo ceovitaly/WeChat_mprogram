@@ -11,6 +11,7 @@ Component({
     navPadTop: 48,
     navBarHeight: 32,
     navRowWidth: 175,
+    compactNav: true,
     dots: { feed: false, wallet: false, events: false, profile: false }
   },
 
@@ -40,14 +41,16 @@ Component({
       } catch (e) {}
 
       const leftPaddingPx = 24 * info.windowWidth / 750;
-      const navRowWidth = menu && menu.left
+      const availableWidth = menu && menu.left
         ? menu.left - leftPaddingPx - 12
         : info.windowWidth - leftPaddingPx - 100;
+      const navRowWidth = Math.max(168, availableWidth);
 
       this.setData({
         navPadTop,
         navBarHeight,
-        navRowWidth: Math.max(navRowWidth, 190)
+        navRowWidth,
+        compactNav: navRowWidth < 220
       });
     },
 

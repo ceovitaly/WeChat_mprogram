@@ -25,7 +25,7 @@
   <scroll-view class="scroll" scroll-y>
 
     <view wx:if="{{isLoading}}" class="loading-wrap">
-      <view class="loading-spinner"></view>
+      <loading-state label="Loading tickets" />
     </view>
 
     <!-- Signed-out state -->
@@ -74,6 +74,7 @@
         <view class="icon icon--list icon-empty"></view>
         <text class="empty-title">No active tickets</text>
         <text class="empty-sub">Register for an event to see your tickets here</text>
+        <view class="empty-action-btn" bindtap="goToFeed"><text class="empty-action-text">Explore Feed</text></view>
       </view>
       <view wx:else class="tickets-list">
         <view
@@ -110,6 +111,7 @@
         <view class="icon icon--calendar icon-empty"></view>
         <text class="empty-title">No past events</text>
         <text class="empty-sub">Attended events will appear here</text>
+        <view class="empty-action-btn" bindtap="goToFeed"><text class="empty-action-text">Explore Feed</text></view>
       </view>
       <view wx:else class="tickets-list">
         <!-- Past event: just a caption, by design — no navigation, no

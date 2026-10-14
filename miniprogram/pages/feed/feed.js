@@ -139,6 +139,10 @@ Page({
     this.loadMyRegistrations();
   },
 
+  onHide: function() {
+    this.clearNewEventLabels(this.data.showPaidEvents ? 'events' : 'feed');
+  },
+
   syncRequestedTopTab: function() {
     var requested = app.globalData.guestTopTab;
     var showPaidEvents = requested === 'events';
@@ -146,8 +150,6 @@ Page({
     if (showPaidEvents !== this.data.showPaidEvents) {
       this.setData({ showPaidEvents: showPaidEvents });
     }
-    var dotCollections = this.getNotificationEventCollections();
-    tabDots.markEventTabSeen(showPaidEvents ? 'events' : 'feed', dotCollections.feed, dotCollections.paid);
   },
 
   // Header identity pill and card badges both derive from the central
@@ -298,25 +300,49 @@ Page({
     });
 
     var regIds = this.data.myRegistrationIds;
+    var dotCollections = this.getNotificationEventCollections();
+    var newFeedIds = this.rememberNewEventIds(
+      '_sessionNewFeedIds',
+      tabDots.getUnseenEventIds(dotCollections.feed, 'feed')
+    );
+    var newPaidIds = this.rememberNewEventIds(
+      '_sessionNewPaidIds',
+      tabDots.getUnseenEventIds(dotCollections.paid, 'events')
+    );
     var paidEvents = filtered.filter(function(e) {
       return e.isPaid === true || e.hasPaidPackages === true;
     }).map(function(e) {
       return Object.assign({}, e, {
-        isRegistered: !!(regIds && regIds.indexOf(e._id) !== -1)
+        isRegistered: !!(regIds && regIds.indexOf(e._id) !== -1),
+        isNew: newPaidIds.indexOf(e._id) !== -1
       });
     });
     var marked = filtered.map(function(e) {
       return Object.assign({}, e, {
-        isRegistered: !!(regIds && regIds.indexOf(e._id) !== -1)
+        isRegistered: !!(regIds && regIds.indexOf(e._id) !== -1),
+        isNew: newFeedIds.indexOf(e._id) !== -1
       });
     });
     this.setData({ filteredEvents: marked, paidEvents: paidEvents });
 
-    var dotCollections = this.getNotificationEventCollections();
-    tabDots.updateEventDots(dotCollections.feed, dotCollections.paid, app.globalData.guestTopTab || 'feed');
+    tabDots.updateEventDots(
+      dotCollections.feed,
+      dotCollections.paid,
+      app.globalData.guestTopTab || 'feed',
+      this._eventsReady === true
+    );
     tabDots.updateWalletDot(dotCollections.feed.some(function(event) {
       return !!(regIds && regIds.indexOf(event._id) !== -1);
     }));
+  },
+
+  rememberNewEventIds: function(key, ids) {
+    var remembered = this[key] || [];
+    (ids || []).forEach(function(id) {
+      if (remembered.indexOf(id) === -1) remembered.push(id);
+    });
+    this[key] = remembered;
+    return remembered;
   },
 
   // Keep notification state independent from temporary search/date filters.
@@ -442,6 +468,7 @@ Page({
   renderEvents: function(events, updateCache) {
     this.processEvents(events);
     this.setData({ events: events, loading: false, refreshing: false });
+    this._eventsReady = true;
     this.applyFilters();
     if (updateCache) {
       try {
@@ -632,14 +659,40 @@ Page({
     this.setFeedTab(e.detail.tab);
   },
 
+  showFeedFromEmpty: function() {
+    this.setFeedTab('feed');
+  },
+
   setFeedTab: function(tab) {
     var showPaidEvents = tab === 'events';
+    if (showPaidEvents !== this.data.showPaidEvents) {
+      this.clearNewEventLabels(this.data.showPaidEvents ? 'events' : 'feed');
+    }
     app.globalData.guestTopTab = showPaidEvents ? 'events' : 'feed';
     if (showPaidEvents !== this.data.showPaidEvents) {
       this.setData({ showPaidEvents: showPaidEvents });
     }
     var dotCollections = this.getNotificationEventCollections();
     tabDots.markEventTabSeen(showPaidEvents ? 'events' : 'feed', dotCollections.feed, dotCollections.paid);
+  },
+
+  clearNewEventLabels: function(tab) {
+    if (tab === 'events') {
+      this._sessionNewPaidIds = [];
+      if ((this.data.paidEvents || []).some(function(event) { return event.isNew; })) {
+        this.setData({ paidEvents: this.data.paidEvents.map(function(event) {
+          return Object.assign({}, event, { isNew: false });
+        }) });
+      }
+      return;
+    }
+
+    this._sessionNewFeedIds = [];
+    if ((this.data.filteredEvents || []).some(function(event) { return event.isNew; })) {
+      this.setData({ filteredEvents: this.data.filteredEvents.map(function(event) {
+        return Object.assign({}, event, { isNew: false });
+      }) });
+    }
   },
 
   // Broader "interacting with other elements should hide the search bar"

@@ -132,6 +132,11 @@ Page({
     wx.navigateTo({ url: '/pages/register/register' });
   },
 
+  goToFeed: function() {
+    app.globalData.guestTopTab = 'feed';
+    wx.switchTab({ url: '/pages/feed/feed' });
+  },
+
   // Unpaid orders (10-minute server TTL; stale ones the server closes itself).
   // Every displayed pending order is also silently re-confirmed against
   // WeChat Pay: if the guest actually paid but the confirm chain died

@@ -488,6 +488,30 @@ page {
   opacity: 0.5;
 }
 
+.new-event-badge {
+  position: absolute;
+  top: 16rpx;
+  left: 16rpx;
+  z-index: 4;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: #FF3B30;
+  color: #FFFFFF;
+  font-size: 20rpx;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 1rpx;
+  box-shadow: 0 4rpx 14rpx rgba(0, 0, 0, 0.2);
+}
+
+.new-event-badge--tile {
+  top: auto;
+  bottom: 12rpx;
+  left: 14rpx;
+  padding: 7rpx 11rpx;
+  font-size: 17rpx;
+}
+
 .event-tile-date {
   position: absolute;
   top: 14rpx;

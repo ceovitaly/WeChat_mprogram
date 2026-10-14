@@ -106,16 +106,7 @@
 
   <view class="event-list-container {{showPaidEvents ? 'event-grid-container' : ''}}">
 
-    <!-- Loading skeleton -->
-    <block wx:if="{{loading && events.length === 0}}">
-      <view wx:for="{{[1,2,3,4]}}" wx:key="*this" class="skeleton-card">
-        <view class="skeleton-img"></view>
-        <view class="skeleton-body">
-          <view class="skeleton-line skeleton-line-lg"></view>
-          <view class="skeleton-btn"></view>
-        </view>
-      </view>
-    </block>
+    <loading-state wx:if="{{loading && events.length === 0}}" label="Loading events" />
 
     <!-- Default full-width event feed -->
     <block wx:if="{{!showPaidEvents && filteredEvents.length > 0}}">
@@ -137,6 +128,7 @@
         <view class="card-media-wrap" style="height:{{cardImgHeight}}rpx">
           <image wx:if="{{item.promoImages[0]}}" src="{{item.promoImages[0]}}" mode="aspectFill" class="card-img" />
           <view wx:else class="card-img-empty"></view>
+          <view wx:if="{{item.isNew}}" class="new-event-badge">NEW</view>
           <view wx:if="{{item.promoImages.length > 1}}" class="img-count-badge">
             <text class="img-count-txt">{{item.promoImages.length}}</text>
             <view class="icon icon--camera img-count-icon"></view>
@@ -180,6 +172,7 @@
           <view wx:else class="event-tile-img event-tile-img--empty">
             <view class="icon icon--calendar event-tile-placeholder-icon"></view>
           </view>
+          <view wx:if="{{item.isNew}}" class="new-event-badge new-event-badge--tile">NEW</view>
           <view class="event-tile-date">
             <text class="event-tile-day">{{item.chipDay}}</text>
             <text class="event-tile-month">{{item.chipMonth}}</text>
@@ -203,18 +196,21 @@
 
     <view wx:if="{{!showPaidEvents && filteredEvents.length === 0 && !loading}}" class="empty-state">
       <view class="icon icon--list icon-empty"></view>
-      <text class="empty-title">No events found</text>
-      <text class="empty-sub">Try adjusting your search or date filter</text>
+      <text class="empty-title">{{selectedDate || searchKeyword ? 'No events found' : 'No upcoming events'}}</text>
+      <text class="empty-sub">{{selectedDate || searchKeyword ? 'Try adjusting your search or date filter' : 'New events will appear here when available'}}</text>
       <view wx:if="{{selectedDate || searchKeyword}}" class="empty-clear-btn" bindtap="clearAllFilters">
         <text class="empty-clear-txt">Clear filters</text>
       </view>
     </view>
     <view wx:if="{{showPaidEvents && paidEvents.length === 0 && !loading}}" class="empty-state">
       <view class="icon icon--calendar icon-empty"></view>
-      <text class="empty-title">No paid events found</text>
+      <text class="empty-title">No paid events available</text>
       <text class="empty-sub">{{selectedDate || searchKeyword ? 'Try adjusting your search or date filter' : 'Paid events will appear here when available'}}</text>
       <view wx:if="{{selectedDate || searchKeyword}}" class="empty-clear-btn" bindtap="clearAllFilters">
         <text class="empty-clear-txt">Clear filters</text>
+      </view>
+      <view wx:else class="empty-clear-btn" bindtap="showFeedFromEmpty">
+        <text class="empty-clear-txt">View Feed</text>
       </view>
     </view>
 

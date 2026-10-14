@@ -84,6 +84,17 @@
   box-shadow: 0 0 0 2rpx var(--bg-elevated);
 }
 
+.app-tabs-row--compact .app-tab-label {
+  font-size: 20rpx;
+}
+
+.app-tabs-row--compact .app-tab-dot {
+  top: -4rpx;
+  right: -9rpx;
+  width: 10rpx;
+  height: 10rpx;
+}
+
 .app-tab--active .app-tab-label {
   color: var(--accent);
   font-weight: 700;

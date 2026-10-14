@@ -3,9 +3,8 @@
 
   <app-tabs active-tab="profile" />
 
-  <!-- Loading -->
   <view wx:if="{{loading}}" class="loading-wrap">
-    <view class="loading-spinner"></view>
+    <loading-state label="Loading profile" />
   </view>
 
   <!-- Signed out -->
@@ -26,8 +25,19 @@
     <scroll-view class="scroll" scroll-y>
       <view class="content">
 
+        <view class="profile-progress {{profileComplete ? 'profile-progress--complete' : ''}}">
+          <view class="profile-progress-head">
+            <text class="profile-progress-title">{{profileComplete ? 'Profile complete' : 'Complete your profile'}}</text>
+            <text class="profile-progress-count">{{profileCompletedCount}} / {{profileTotal}}</text>
+          </view>
+          <view class="profile-progress-track">
+            <view class="profile-progress-fill" style="width:{{profileProgressPct}}%"></view>
+          </view>
+          <text class="profile-progress-sub">{{profileComplete ? 'All profile details are filled in' : 'Fill in the highlighted fields to complete your profile'}}</text>
+        </view>
+
         <view class="info-list">
-          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openFieldEdit" data-field="nickName" data-title="Edit Name">
+          <view class="info-row info-row--tappable {{missingProfileFields.name ? 'info-row--missing' : ''}} pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openFieldEdit" data-field="nickName" data-title="Edit Name">
             <text class="info-label">Name</text>
             <view class="info-row-value-group">
               <text class="info-value">{{userInfo.nickName || userInfo.name || 'Set name'}}</text>
@@ -39,7 +49,7 @@
             <text class="info-value">{{userInfo.promoCode}}</text>
           </view>
 
-          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80">
+          <view class="info-row info-row--tappable {{missingProfileFields.birthday ? 'info-row--missing' : ''}} pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80">
             <text class="info-label">Birthday</text>
             <picker class="info-row-picker" mode="date" value="{{userInfo.birthday}}" end="{{today}}" bindchange="onBirthdayChange">
               <view class="info-row-value-group">
@@ -49,7 +59,7 @@
             </picker>
           </view>
 
-          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80">
+          <view class="info-row info-row--tappable {{missingProfileFields.gender ? 'info-row--missing' : ''}} pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80">
             <text class="info-label">Gender</text>
             <picker class="info-row-picker" mode="selector" range="{{genders}}" bindchange="onGenderChange">
               <view class="info-row-value-group">
@@ -59,7 +69,7 @@
             </picker>
           </view>
 
-          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openFieldEdit" data-field="country" data-title="Home Country">
+          <view class="info-row info-row--tappable {{missingProfileFields.country ? 'info-row--missing' : ''}} pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openFieldEdit" data-field="country" data-title="Home Country">
             <text class="info-label">Country</text>
             <view class="info-row-value-group">
               <text class="info-value {{userInfo.country ? '' : 'info-value--empty'}}">{{userInfo.country || 'Add country'}}</text>
@@ -67,7 +77,7 @@
             </view>
           </view>
 
-          <view class="info-row info-row--tappable pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openMusicEdit">
+          <view class="info-row info-row--tappable {{missingProfileFields.music ? 'info-row--missing' : ''}} pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="openMusicEdit">
             <text class="info-label">Music i like</text>
             <view class="info-row-value-group">
               <text class="info-value {{musicText ? '' : 'info-value--empty'}}">{{musicText || 'Add music'}}</text>

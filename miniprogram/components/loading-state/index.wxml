@@ -1,0 +1,8 @@
+<view class="loading-state">
+  <view class="loading-dots">
+    <view class="loading-dot"></view>
+    <view class="loading-dot"></view>
+    <view class="loading-dot"></view>
+  </view>
+  <text class="loading-label">{{label}}</text>
+</view>

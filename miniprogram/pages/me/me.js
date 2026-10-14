@@ -17,6 +17,11 @@ Page({
     // renders off this map. `selectedGenres` stays the saved source of truth.
     genreOn: {},
     musicText: '',
+    profileCompletedCount: 0,
+    profileTotal: 5,
+    profileProgressPct: 0,
+    profileComplete: false,
+    missingProfileFields: { name: true, birthday: true, gender: true, country: true, music: true },
     today: '',
     genders: ['Male', 'Female', 'Other'],
     musicGenres: ['House', 'Techno', 'Hip-Hop', 'R&B', 'Pop', 'EDM', 'Afrobeats', 'Latin', 'Rock', 'Jazz', 'Disco', 'Other']
@@ -52,12 +57,12 @@ Page({
         tabDots.updateProfileDot(null);
         return;
       }
-      this.setData({
+      this.setData(Object.assign({
         isAnonymous: false,
         userInfo: profile,
         musicText: this._toArray(profile.music).join(', '),
         loading: false
-      });
+      }, this._profileProgressPatch(profile)));
       tabDots.updateProfileDot(profile);
     });
   },
@@ -72,6 +77,17 @@ Page({
     const map = {};
     (list || []).forEach((g) => { map[g] = true; });
     return map;
+  },
+
+  _profileProgressPatch(profile) {
+    const completion = tabDots.getProfileCompletion(profile);
+    return {
+      profileCompletedCount: completion.count,
+      profileTotal: completion.total,
+      profileProgressPct: completion.percent,
+      profileComplete: completion.complete,
+      missingProfileFields: completion.missing
+    };
   },
 
   goSignIn: function() {
@@ -94,7 +110,7 @@ Page({
       // the new value without an app restart.
       auth.completeSignIn(userInfo);
       tabDots.updateProfileDot(userInfo);
-      this.setData({
+      this.setData(Object.assign({
         showFieldEdit: false,
         showMusicEdit: false,
         editingField: '',
@@ -102,7 +118,7 @@ Page({
         editingValue: '',
         userInfo,
         musicText: this._toArray(userInfo.music).join(', ')
-      });
+      }, this._profileProgressPatch(userInfo)));
       wx.vibrateShort({ type: 'medium' });
       wx.showToast({ title: 'Saved!', icon: 'success' });
     })
