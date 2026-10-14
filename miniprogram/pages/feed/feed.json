@@ -1,6 +1,7 @@
 {
   "usingComponents": {
-    "bottom-sheet": "/components/bottom-sheet/index"
+    "bottom-sheet": "/components/bottom-sheet/index",
+    "app-tabs": "/components/app-tabs/index"
   },
   "navigationStyle": "custom"
 }

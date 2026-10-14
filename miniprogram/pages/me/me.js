@@ -38,6 +38,8 @@ Page({
   },
 
   onShow: function() {
+    app.globalData.guestTopTab = 'profile';
+    wx.hideTabBar({ animation: false, fail: function() {} });
     if (this.cloud) this._loadProfile();
   },
 

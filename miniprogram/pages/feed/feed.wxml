@@ -1,39 +1,11 @@
 <!--pages/feed/feed.wxml-->
 <view class="page-container">
 
-<!-- Nav bar: content-first redesign — the old avatar/search/calendar/my-list
-     row is gone. This is now a single WeChat-capsule-style segmented control
-     (Wallet, Events and Profile sharing one pill outline),
-     left-aligned clear of the WeChat capsule (top-right), so cards start
-     much higher on screen. A normal flex sibling ABOVE the scroll-view
-     (not inside it), so it stays fully visible and fixed in place;
-     pull-to-refresh only ever touches the scroll-view's own content.
-     padding-top (navPadTop, feed.js) clears down to where the capsule
-     starts; the inner .nav-seg-row gets an explicit height (navBarHeight)
-     equal to the capsule's own height, so the segments land in exactly
-     the same vertical band as the capsule instead of below it.
-     `scrolled` (box-shadow only) is a plain setData class flip; see
-     onFeedScroll. Profile and Tickets navigate directly
-     (goToProfile/goToTickets, feed.js) — no drawer/intermediate step. -->
-<view
-  class="feed-nav {{scrolled ? 'feed-nav--scrolled' : ''}}"
-  style="padding-top:{{navPadTop}}px"
->
-  <view class="nav-seg-row" style="height:{{navBarHeight}}px; width:{{navSegRowWidth}}px">
-    <view class="nav-seg pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToTickets">
-      <view class="icon icon--list nav-seg-icon"></view>
-      <text class="nav-seg-label">Wallet</text>
-    </view>
-    <view class="nav-seg {{showPaidEvents ? 'nav-seg--active' : ''}} pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="togglePaidEvents">
-      <view class="icon icon--calendar nav-seg-icon"></view>
-      <text class="nav-seg-label">Events</text>
-    </view>
-    <view class="nav-seg pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="goToProfile">
-      <view class="icon icon--user nav-seg-icon"></view>
-      <text class="nav-seg-label">Profile</text>
-    </view>
-  </view>
-</view>
+<app-tabs
+  active-tab="{{showPaidEvents ? 'events' : 'feed'}}"
+  scrolled="{{scrolled}}"
+  bind:change="onAppTabChange"
+/>
 
 <!-- Search panel: expands DOWN from the nav-bar in place (not a separate
      page). Always rendered (not wx:if-removed) so the height/opacity

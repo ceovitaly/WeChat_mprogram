@@ -15,6 +15,26 @@
     "backgroundColor": "@bgColor",
     "enablePullDownRefresh": false
   },
+  "tabBar": {
+    "color": "#8A8A8A",
+    "selectedColor": "#FF6B35",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/feed/feed",
+        "text": "Feed"
+      },
+      {
+        "pagePath": "pages/mytickets/mytickets",
+        "text": "Wallet"
+      },
+      {
+        "pagePath": "pages/me/me",
+        "text": "Profile"
+      }
+    ]
+  },
   "style": "v2",
   "darkmode": true,
   "themeLocation": "theme.json",

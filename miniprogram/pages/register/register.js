@@ -399,7 +399,8 @@ Page({
         wx.showToast({ title: "You're in! 🎉", icon: 'success' });
       }
       setTimeout(() => {
-        wx.reLaunch({ url: '/pages/mytickets/mytickets' });
+        app.globalData.guestTopTab = 'wallet';
+        wx.switchTab({ url: '/pages/mytickets/mytickets' });
       }, 1500);
     } catch(err) {
       console.error('[pendingEvent] registration failed:', err);

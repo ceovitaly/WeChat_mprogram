@@ -133,8 +133,19 @@ Page({
   },
 
   onShow: function() {
+    wx.hideTabBar({ animation: false, fail: function() {} });
+    this.syncRequestedTopTab();
     this.refreshAuthUI();
     this.loadMyRegistrations();
+  },
+
+  syncRequestedTopTab: function() {
+    var requested = app.globalData.guestTopTab;
+    var showPaidEvents = requested === 'events';
+    app.globalData.guestTopTab = showPaidEvents ? 'events' : 'feed';
+    if (showPaidEvents !== this.data.showPaidEvents) {
+      this.setData({ showPaidEvents: showPaidEvents });
+    }
   },
 
   // Header identity pill and card badges both derive from the central
@@ -587,7 +598,19 @@ Page({
   },
 
   togglePaidEvents: function() {
-    this.setData({ showPaidEvents: !this.data.showPaidEvents });
+    this.setFeedTab(this.data.showPaidEvents ? 'feed' : 'events');
+  },
+
+  onAppTabChange: function(e) {
+    this.setFeedTab(e.detail.tab);
+  },
+
+  setFeedTab: function(tab) {
+    var showPaidEvents = tab === 'events';
+    app.globalData.guestTopTab = showPaidEvents ? 'events' : 'feed';
+    if (showPaidEvents !== this.data.showPaidEvents) {
+      this.setData({ showPaidEvents: showPaidEvents });
+    }
   },
 
   // Broader "interacting with other elements should hide the search bar"
@@ -623,14 +646,13 @@ Page({
   },
 
   goToTickets: function() {
-    wx.navigateTo({ url: '/pages/mytickets/mytickets' });
+    app.globalData.guestTopTab = 'wallet';
+    wx.switchTab({ url: '/pages/mytickets/mytickets' });
   },
 
   goToProfile: function() {
-    // Signed-in users get their profile; anonymous users go to sign-in.
-    auth.getAuth(function(profile) {
-      wx.navigateTo({ url: profile ? '/pages/me/me' : '/pages/register/register' });
-    });
+    app.globalData.guestTopTab = 'profile';
+    wx.switchTab({ url: '/pages/me/me' });
   },
 
 stopPropagation: function() {},

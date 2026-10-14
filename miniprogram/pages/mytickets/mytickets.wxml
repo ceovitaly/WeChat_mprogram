@@ -1,6 +1,8 @@
 <!--pages/mytickets/mytickets.wxml-->
 <view class="page">
 
+  <app-tabs active-tab="wallet" />
+
   <!-- Tabs -->
   <view class="tabs">
     <view

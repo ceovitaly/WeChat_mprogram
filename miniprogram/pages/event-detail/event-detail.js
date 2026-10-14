@@ -473,7 +473,8 @@ Page({
             if (pkgLink) {
               wx.navigateTo({ url: '/pages/webview/webview?url=' + encodeURIComponent(pkgLink) });
             } else {
-              wx.navigateTo({ url: '/pages/mytickets/mytickets' });
+              app.globalData.guestTopTab = 'wallet';
+              wx.switchTab({ url: '/pages/mytickets/mytickets' });
             }
           }, 1200);
         },
@@ -559,7 +560,8 @@ Page({
     wx.vibrateShort();
     setTimeout(() => {
       this.setData({ showTicketModal: false, joinSuccess: false });
-      wx.navigateTo({ url: '/pages/mytickets/mytickets' });
+      app.globalData.guestTopTab = 'wallet';
+      wx.switchTab({ url: '/pages/mytickets/mytickets' });
     }, 1200);
   },
 
@@ -629,7 +631,8 @@ Page({
   },
 
   goToTickets: function() {
-    wx.navigateTo({ url: '/pages/mytickets/mytickets' });
+    app.globalData.guestTopTab = 'wallet';
+    wx.switchTab({ url: '/pages/mytickets/mytickets' });
   },
 
   copyExternalLink: function() {

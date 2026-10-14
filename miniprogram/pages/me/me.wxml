@@ -1,6 +1,8 @@
 <!--pages/me/me.wxml-->
 <view class="page">
 
+  <app-tabs active-tab="profile" />
+
   <!-- Loading -->
   <view wx:if="{{loading}}" class="loading-wrap">
     <view class="loading-spinner"></view>
