@@ -40,7 +40,7 @@ There is no separate `pages/register/promo` page and no active `assignPromoter` 
 - `feed`: event feed, date/search filtering and navigation
 - `gallery`: venue gallery tiles and photo view
 - `event-detail`: event details, free registration and paid ticket selection
-- `mytickets`: active/past registrations, pending payments and QR scanner
+- `mytickets`: issued paid tickets in one shared Active/Past card layout; no pending-order or payment-retry UI; event end time determines the tab and QR check-in is active-only
 - `me`: profile and preferences
 - `register`: phone/profile onboarding
 - `legal`: privacy and terms

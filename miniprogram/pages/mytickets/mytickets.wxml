@@ -3,84 +3,44 @@
 
   <app-tabs active-tab="wallet" />
 
-  <!-- Tabs -->
   <view class="tabs">
-    <view
-      class="tab {{activeTab === 'active' ? 'tab-active' : ''}}"
-      bindtap="switchTab"
-      data-tab="active"
-    >
+    <view class="tab {{activeTab === 'active' ? 'tab-active' : ''}}" bindtap="switchTab" data-tab="active">
       <text class="tab-text">Active</text>
     </view>
-    <view
-      class="tab {{activeTab === 'past' ? 'tab-active' : ''}}"
-      bindtap="switchTab"
-      data-tab="past"
-    >
+    <view class="tab {{activeTab === 'past' ? 'tab-active' : ''}}" bindtap="switchTab" data-tab="past">
       <text class="tab-text">Past</text>
     </view>
   </view>
 
-  <!-- Scrollable Content -->
   <scroll-view class="scroll" scroll-y>
-
     <view wx:if="{{isLoading}}" class="loading-wrap">
       <loading-state label="Loading tickets" />
     </view>
 
-    <!-- Signed-out state -->
     <view wx:elif="{{isAnonymous}}" class="empty-state">
       <view class="icon icon--list icon-empty"></view>
-      <text class="empty-title">Sign in to see your list</text>
-      <text class="empty-sub">Your event registrations will appear here once you sign in</text>
+      <text class="empty-title">Sign in to see your tickets</text>
+      <text class="empty-sub">Your purchased tickets will appear here once you sign in</text>
       <view class="signin-btn" bindtap="goSignIn">
         <text class="signin-btn-text">Sign In</text>
       </view>
     </view>
 
-    <!-- Active tickets -->
-    <block wx:elif="{{activeTab === 'active'}}">
-      <!-- Unpaid orders: the payment was prepared but not completed — one
-           tap re-runs the whole pay flow (order reuse is server-side) -->
-      <view wx:if="{{pendingOrders.length > 0}}" class="pending-orders">
-        <text class="pending-title">PENDING PAYMENT</text>
-        <view
-          wx:for="{{pendingOrders}}"
-          wx:key="_id"
-          class="pending-card pressable"
-          hover-class="pressed"
-          hover-start-time="20"
-          hover-stay-time="80"
-          bindtap="completePayment"
-          data-order-id="{{item._id}}"
-          data-event-id="{{item.eventId}}"
-          data-ticket-id="{{item.ticketId}}"
-        >
-          <view class="ticket-info">
-            <text class="ticket-title">{{item.eventTitle}}</text>
-            <view class="ticket-meta">
-              <view class="dot dot-pending"></view>
-              <text class="ticket-date">{{item.ticketName}}</text>
-              <text class="ticket-type">¥ {{item.amountFen / 100}}</text>
-            </view>
-          </view>
-          <view class="pending-pay-btn">
-            <text>Pay</text>
-          </view>
+    <!-- Both tabs render issued, paid registrations with one shared card. -->
+    <block wx:else>
+      <view wx:if="{{visibleTickets.length === 0}}" class="empty-state">
+        <view class="icon {{activeTab === 'past' ? 'icon--calendar' : 'icon--list'}} icon-empty"></view>
+        <text class="empty-title">{{activeTab === 'past' ? 'No past tickets' : 'No active tickets'}}</text>
+        <text class="empty-sub">{{activeTab === 'past' ? 'Tickets move here after the event ends' : 'Purchased tickets for upcoming events will appear here'}}</text>
+        <view class="empty-action-btn" bindtap="goToFeed">
+          <text class="empty-action-text">Explore Main</text>
         </view>
-      </view>
-
-      <view wx:if="{{activeTickets.length === 0}}" class="empty-state">
-        <view class="icon icon--list icon-empty"></view>
-        <text class="empty-title">No active tickets</text>
-        <text class="empty-sub">Register for an event to see your tickets here</text>
-        <view class="empty-action-btn" bindtap="goToFeed"><text class="empty-action-text">Explore Feed</text></view>
       </view>
       <view wx:else class="tickets-list">
         <view
-          wx:for="{{activeTickets}}"
+          wx:for="{{visibleTickets}}"
           wx:key="_id"
-          class="ticket-card pressable"
+          class="ticket-card {{item.isPast ? 'ticket-card-past' : ''}} pressable"
           hover-class="pressed"
           hover-start-time="20"
           hover-stay-time="80"
@@ -89,14 +49,14 @@
         >
           <view class="ticket-info">
             <view class="ticket-meta">
-              <view class="dot"></view>
+              <view class="dot {{item.isPast ? 'dot-past' : ''}}"></view>
               <text class="ticket-date">{{item.eventDate}}</text>
-              <text class="ticket-type">{{item.paid ? item.ticketType : (item.ticketType === 'free' ? 'Free' : 'On guest list')}}</text>
+              <text class="ticket-type {{item.isPast ? 'ticket-type-past' : ''}}">PAID</text>
             </view>
-            <text class="ticket-title ticket-title--meta-above">{{item.eventTitle}}</text>
-            <!-- Ticket detail: name, what's included, price -->
+            <text class="ticket-title ticket-title--meta-above {{item.isPast ? 'ticket-title-past' : ''}}">{{item.eventTitle}}</text>
+            <text wx:if="{{item.venueName}}" class="ticket-venue">{{item.venueName}}</text>
             <view class="ticket-detail">
-              <text class="ticket-detail-name">{{item.paid ? 'PAID' : 'FREE'}} · {{item.ticketName}}</text>
+              <text class="ticket-detail-name">{{item.ticketName}}</text>
               <text wx:if="{{item.ticketDesc}}" class="ticket-detail-desc">{{item.ticketDesc}}</text>
               <text class="ticket-detail-price">{{item.priceText}}</text>
             </view>
@@ -105,60 +65,28 @@
       </view>
     </block>
 
-    <!-- Past tickets -->
-    <block wx:elif="{{activeTab === 'past'}}">
-      <view wx:if="{{pastTickets.length === 0}}" class="empty-state">
-        <view class="icon icon--calendar icon-empty"></view>
-        <text class="empty-title">No past events</text>
-        <text class="empty-sub">Attended events will appear here</text>
-        <view class="empty-action-btn" bindtap="goToFeed"><text class="empty-action-text">Explore Feed</text></view>
-      </view>
-      <view wx:else class="tickets-list">
-        <!-- Past event: just a caption, by design — no navigation, no
-             interactive ticket data (the raw registration is retired after
-             the event; the row itself disappears at the 7-day archival). -->
-        <view wx:for="{{pastTickets}}" wx:key="_id" class="ticket-card ticket-card-past">
-          <view class="ticket-info">
-            <text class="ticket-title ticket-title-past">{{item.eventTitle}}</text>
-            <view class="ticket-meta">
-              <view class="dot dot-past"></view>
-              <text class="ticket-date">{{item.eventDate}}</text>
-            </view>
-          </view>
-          <view class="status-badge badge-past">
-            <text class="badge-icon">✓</text>
-          </view>
-        </view>
-      </view>
-    </block>
-
     <view class="list-bottom-pad"></view>
   </scroll-view>
 
-  <!-- Ticket detail popup: date, venue, event title → ticket info → scan.
-       Tapping the dark backdrop closes; catchtap inside keeps taps local. -->
+  <!-- Past tickets keep the same details, without an expired check-in action. -->
   <view wx:if="{{detailTicket}}" class="td-mask" bindtap="closeTicketDetail">
     <view class="td-window" catchtap="stopPropagation">
       <view class="td-head">
         <text class="td-title">{{detailTicket.eventTitle}}</text>
         <text class="td-sub">{{detailTicket.venueName || 'Venue'}} · {{detailTicket.eventDate}}</text>
       </view>
-
       <view class="td-ticket">
-        <text class="td-ticket-name">{{detailTicket.paid ? 'PAID' : 'FREE'}} · {{detailTicket.ticketName}}</text>
+        <text class="td-ticket-name">PAID · {{detailTicket.ticketName}}</text>
         <text wx:if="{{detailTicket.ticketDesc}}" class="td-ticket-desc">{{detailTicket.ticketDesc}}</text>
         <text class="td-ticket-price">{{detailTicket.priceText}}</text>
         <text wx:if="{{detailTicket.promoterName}}" class="td-ticket-promoter">by {{detailTicket.promoterName}}</text>
       </view>
-
-      <!-- Two buttons side by side: Scan QR (the proven system scanner,
-           wx.scanCode — no camera permission of our own) and Cancel. -->
       <view class="td-actions">
-        <view class="td-btn td-btn--scan" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="scanFromDetail">
+        <view wx:if="{{!detailTicket.isPast}}" class="td-btn td-btn--scan" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="scanFromDetail">
           <text class="td-btn-text td-btn-text--scan">Scan QR</text>
         </view>
         <view class="td-btn td-btn--cancel" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="closeTicketDetail">
-          <text class="td-btn-text">Cancel</text>
+          <text class="td-btn-text">Close</text>
         </view>
       </view>
     </view>
