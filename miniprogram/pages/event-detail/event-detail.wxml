@@ -131,7 +131,7 @@
       >
         <view class="package-left">
           <text class="package-name">{{item.name}}</text>
-          <text class="package-desc">{{item.description || 'Paid package'}}</text>
+          <text wx:if="{{item.description}}" class="package-desc">{{item.description}}</text>
         </view>
         <text wx:if="{{item.price}}" class="package-price">¥ {{item.price}}</text>
         <view class="icon icon--chevron package-chevron"></view>
@@ -307,7 +307,6 @@
       </view>
       <view class="ticket-left">
         <text class="ticket-name">{{item.name}}</text>
-        <text class="ticket-desc">Paid package</text>
       </view>
       <text class="ticket-price-tag paid-tag">{{soldOut[item.id] ? 'SOLD OUT' : (item.price > 0 ? '¥ ' + item.price : 'PAID')}}</text>
     </view>
