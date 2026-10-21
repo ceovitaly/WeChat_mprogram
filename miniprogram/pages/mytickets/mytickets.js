@@ -4,6 +4,18 @@ const { callFunction } = require('../../utils/cloud.js');
 const pay = require('../../utils/pay.js');
 const tabDots = require('../../utils/tab-dots.js');
 
+function isConfirmedFreeTicket(ticket) {
+  const type = String(ticket.ticketType || '').trim().toLowerCase();
+  // Missing paid is not proof of free entry: require the issued free snapshot
+  // and reject any purchase/payment markers, including an unpaid upgrade.
+  return ticket.status === 'confirmed' && ['free', 'free entry'].includes(type) &&
+    (ticket.paid == null || ticket.paid === false) &&
+    (!ticket.ticketId || ticket.ticketId === 'free') &&
+    !ticket.orderId && !ticket.paymentId && !ticket.transactionId && !ticket.outTradeNo &&
+    !ticket.paymentStatus && !ticket.paidAt && !ticket.paidAtMs &&
+    ticket.paidAmountFen == null && ticket.amountFen == null;
+}
+
 function ticketEndTime(ticket, event) {
   const date = (event && event.date) || ticket.eventDate;
   const explicitEnd = (event && event.endDate) || ticket.eventEndDate;
@@ -107,12 +119,15 @@ Page({
       .limit(1000)
       .get();
     if (requestId !== this._ticketRequestId) return;
-    const issued = (res.data || []).filter(ticket => ticket.paid === true && ticket.eventId &&
-      ticket.refunded !== true && !['pending', 'refunded', 'cancelled'].includes(ticket.status) &&
-      !['pending', 'refunded', 'cancelled'].includes(ticket.paymentStatus));
+    const nonIssuedStates = ['pending', 'pending_payment', 'awaiting_payment', 'unpaid', 'refunded', 'cancelled', 'canceled'];
+    const isNonIssued = status => nonIssuedStates.includes(String(status || '').trim().toLowerCase().replace(/[\s-]+/g, '_'));
+    const issued = (res.data || []).filter(ticket => ticket.eventId &&
+      (ticket.paid === true || isConfirmedFreeTicket(ticket)) &&
+      ticket.refunded !== true && !isNonIssued(ticket.status) && !isNonIssued(ticket.paymentStatus));
     const byEvent = await this._loadTicketEvents(issued);
     if (requestId !== this._ticketRequestId) return;
     this._walletTickets = issued.map(ticket => {
+      const isFree = isConfirmedFreeTicket(ticket);
       const event = byEvent[ticket.eventId];
       const pools = event ? [].concat(event.tickets || [], event.paidPackages || []) : [];
       const definition = pools.find(item => item && item.id === ticket.ticketId);
@@ -123,10 +138,11 @@ Page({
         eventTitle: (event && event.title) || ticket.eventTitle || 'Event',
         eventDate: (event && event.date) || ticket.eventDate || '',
         venueName: (event && event.venueName) || ticket.venueName || '',
-        ticketName: (ticket.ticketType && ticket.ticketType !== 'free' ? ticket.ticketType : '') ||
+        ticketKindLabel: isFree ? 'FREE' : 'PAID',
+        ticketName: isFree ? 'Free Entry' : (ticket.ticketType && ticket.ticketType !== 'free' ? ticket.ticketType : '') ||
           ticket.ticketName || (definition && definition.name) || 'Ticket',
         ticketDesc: String(description).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-        priceText: Number.isFinite(amount) && amount >= 0 ? '¥ ' + (amount / 100).toFixed(2) : 'Paid',
+        priceText: isFree ? 'Free' : Number.isFinite(amount) && amount >= 0 ? '¥ ' + (amount / 100).toFixed(2) : 'Paid',
         _eventEndAt: ticketEndTime(ticket, event),
         _eventMissing: Object.prototype.hasOwnProperty.call(byEvent, ticket.eventId) && !event
       });

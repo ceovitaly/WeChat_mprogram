@@ -20,18 +20,18 @@
     <view wx:elif="{{isAnonymous}}" class="empty-state">
       <view class="icon icon--list icon-empty"></view>
       <text class="empty-title">Sign in to see your tickets</text>
-      <text class="empty-sub">Your purchased tickets will appear here once you sign in</text>
+      <text class="empty-sub">Your issued tickets and free invitations will appear here once you sign in</text>
       <view class="signin-btn" bindtap="goSignIn">
         <text class="signin-btn-text">Sign In</text>
       </view>
     </view>
 
-    <!-- Both tabs render issued, paid registrations with one shared card. -->
+    <!-- Both tabs share one card for paid tickets and confirmed free invitations. -->
     <block wx:else>
       <view wx:if="{{visibleTickets.length === 0}}" class="empty-state">
         <view class="icon {{activeTab === 'past' ? 'icon--calendar' : 'icon--list'}} icon-empty"></view>
         <text class="empty-title">{{activeTab === 'past' ? 'No past tickets' : 'No active tickets'}}</text>
-        <text class="empty-sub">{{activeTab === 'past' ? 'Tickets move here after the event ends' : 'Purchased tickets for upcoming events will appear here'}}</text>
+        <text class="empty-sub">{{activeTab === 'past' ? 'Tickets move here after the event ends' : 'Issued tickets and free invitations for upcoming events will appear here'}}</text>
         <view class="empty-action-btn" bindtap="goToFeed">
           <text class="empty-action-text">Explore Main</text>
         </view>
@@ -51,7 +51,7 @@
             <view class="ticket-meta">
               <view class="dot {{item.isPast ? 'dot-past' : ''}}"></view>
               <text class="ticket-date">{{item.eventDate}}</text>
-              <text class="ticket-type {{item.isPast ? 'ticket-type-past' : ''}}">PAID</text>
+              <text class="ticket-type {{item.isPast ? 'ticket-type-past' : ''}}">{{item.ticketKindLabel}}</text>
             </view>
             <text class="ticket-title ticket-title--meta-above {{item.isPast ? 'ticket-title-past' : ''}}">{{item.eventTitle}}</text>
             <text wx:if="{{item.venueName}}" class="ticket-venue">{{item.venueName}}</text>
@@ -76,7 +76,7 @@
         <text class="td-sub">{{detailTicket.venueName || 'Venue'}} · {{detailTicket.eventDate}}</text>
       </view>
       <view class="td-ticket">
-        <text class="td-ticket-name">PAID · {{detailTicket.ticketName}}</text>
+        <text class="td-ticket-name">{{detailTicket.ticketKindLabel}} · {{detailTicket.ticketName}}</text>
         <text wx:if="{{detailTicket.ticketDesc}}" class="td-ticket-desc">{{detailTicket.ticketDesc}}</text>
         <text class="td-ticket-price">{{detailTicket.priceText}}</text>
         <text wx:if="{{detailTicket.promoterName}}" class="td-ticket-promoter">by {{detailTicket.promoterName}}</text>
