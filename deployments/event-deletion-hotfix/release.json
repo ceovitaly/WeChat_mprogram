@@ -1,0 +1,16 @@
+{
+  "function": "manageApplications",
+  "environment": "cloud1-9g2yewom6a2d5467",
+  "sourceBaselineSha256": "c7cdbf71af1bdca4c75ae4489fce23ae361f2e78420c8c4f6fb8be51e7cb02f8",
+  "deployedIndexSha256": "1d2957fe6057eea0d29e421de6a1efc58e7aba48a1def19e4ef5bcbb92023dcb",
+  "deploymentDate": "2026-10-21",
+  "verifiedState": "Active",
+  "sourceDownloadedAfterDeployment": true,
+  "nonIndexFilesUnchanged": true,
+  "runtimeAndTimeoutUnchanged": true,
+  "paymentsSourceUnchanged": true,
+  "clientAuthSourceUnchanged": true,
+  "businessHandlersInvoked": false,
+  "manualEventOrTicketDeletionPerformed": false,
+  "testsBuildsAndAppWalkthroughsRun": false
+}
