@@ -32,8 +32,8 @@
         <view class="icon {{activeTab === 'past' ? 'icon--calendar' : 'icon--list'}} icon-empty"></view>
         <text class="empty-title">{{activeTab === 'past' ? 'No past tickets' : 'No active tickets'}}</text>
         <text class="empty-sub">{{activeTab === 'past' ? 'Tickets move here after the event ends' : 'Issued tickets and free invitations for upcoming events will appear here'}}</text>
-        <view class="empty-action-btn" bindtap="goToFeed">
-          <text class="empty-action-text">Explore Main</text>
+        <view class="main-return-btn pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="goToFeed">
+          <text class="main-return-btn-text">View Main</text>
         </view>
       </view>
       <view wx:else class="tickets-list">

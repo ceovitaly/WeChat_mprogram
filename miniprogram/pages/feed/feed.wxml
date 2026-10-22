@@ -209,8 +209,8 @@
       <view wx:if="{{selectedDate || searchKeyword}}" class="empty-clear-btn" bindtap="clearAllFilters">
         <text class="empty-clear-txt">Clear filters</text>
       </view>
-      <view wx:else class="empty-clear-btn" bindtap="showFeedFromEmpty">
-        <text class="empty-clear-txt">View Feed</text>
+      <view wx:else class="main-return-btn pressable" hover-class="pressed-soft" hover-start-time="20" hover-stay-time="80" bindtap="showFeedFromEmpty">
+        <text class="main-return-btn-text">View Main</text>
       </view>
     </view>
 

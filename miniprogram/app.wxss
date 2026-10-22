@@ -170,6 +170,28 @@ page {
   line-height: 1.5;
 }
 
+/* ── Return to Main: shared by Wallet and Events ── */
+.main-return-btn {
+  box-sizing: border-box;
+  margin-top: 8rpx;
+  height: 72rpx;
+  padding: 0 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1rpx solid rgba(255, 107, 53, 0.35);
+  border-radius: 999rpx;
+  background: rgba(255, 107, 53, 0.08);
+}
+.main-return-btn-text {
+  color: var(--accent);
+  font-size: 26rpx;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 /* ── Tab bar spacer ── */
 .tab-bar-spacer { height: 160rpx; }
 
