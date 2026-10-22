@@ -3,42 +3,10 @@ const auth = require('../../utils/auth.js');
 const { resolveEventImages } = require('../../utils/cloud.js');
 const tabDots = require('../../utils/tab-dots.js');
 
-// Event clocks are venue time (Shanghai), not the phone's timezone.
-function feedEventEndAt(event) {
-  var explicitEndDate = event.endDate;
-  var date = String(explicitEndDate || event.date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!date) return null;
-  var year = Number(date[1]), month = Number(date[2]), day = Number(date[3]);
-  var calendarDate = new Date(Date.UTC(year, month - 1, day));
-  if (calendarDate.getUTCFullYear() !== year || calendarDate.getUTCMonth() !== month - 1 ||
-      calendarDate.getUTCDate() !== day) return null;
-
-  function minutes(value) {
-    var clock = String(value || '').match(/^(\d{1,2}):(\d{2})$/);
-    if (!clock || Number(clock[1]) > 23 || Number(clock[2]) > 59) return null;
-    return Number(clock[1]) * 60 + Number(clock[2]);
-  }
-
-  var end = minutes(event.endTime);
-  var start = minutes(event.startTime);
-  var missingEnd = end === null;
-  // Keep the old 05:00 nightlife fallback only for legacy records without an end time.
-  if (missingEnd) end = 5 * 60;
-  var endAt = Date.UTC(year, month - 1, day, 0, end) - 8 * 60 * 60 * 1000;
-  if (!explicitEndDate && (missingEnd || (start !== null && end <= start))) {
-    endAt += 24 * 60 * 60 * 1000;
-  }
-  return endAt;
-}
-
-function isUpcomingFeedEvent(event, now) {
-  if (!event || event.isClosed === true || event.deleting === true) return false;
-  var status = String(event.status || '').trim().toLowerCase();
-  if (['closed', 'ended', 'finished', 'archived', 'cancelled', 'canceled', 'deleted'].indexOf(status) !== -1) {
-    return false;
-  }
-  var endAt = feedEventEndAt(event);
-  return endAt !== null && now < endAt;
+// The backend/admin owns completion. The guest feed only reads stored status.
+function isActiveFeedEvent(event) {
+  return !!event && event.status === 'active' &&
+    event.isClosed !== true && event.deleting !== true;
 }
 
 Page({
@@ -172,7 +140,6 @@ Page({
   },
 
   onShow: function() {
-    this._feedVisible = true;
     this.syncRequestedTopTab();
     this.refreshAuthUI();
     if (this._eventsReady) {
@@ -183,14 +150,7 @@ Page({
   },
 
   onHide: function() {
-    this._feedVisible = false;
-    clearTimeout(this._feedExpiryTimer);
     this.clearNewEventLabels(this.data.showPaidEvents ? 'events' : 'feed');
-  },
-
-  onUnload: function() {
-    this._feedVisible = false;
-    clearTimeout(this._feedExpiryTimer);
   },
 
   syncRequestedTopTab: function() {
@@ -311,10 +271,7 @@ Page({
   // ===== FILTERS =====
 
   applyFilters: function() {
-    var now = Date.now();
-    var filtered = this.data.events.filter(function(event) {
-      return isUpcomingFeedEvent(event, now);
-    });
+    var filtered = this.data.events.filter(isActiveFeedEvent);
 
     if (this.data.selectedDate) {
       filtered = filtered.filter(function(e) {
@@ -381,26 +338,6 @@ Page({
     tabDots.updateWalletDot(dotCollections.feed.some(function(event) {
       return !!(regIds && regIds.indexOf(event._id) !== -1);
     }));
-    this.scheduleFeedExpiry();
-  },
-
-  scheduleFeedExpiry: function() {
-    clearTimeout(this._feedExpiryTimer);
-    this._feedExpiryTimer = null;
-    if (!this._feedVisible) return;
-    var now = Date.now();
-    var nextEnd = null;
-    this.data.events.forEach(function(event) {
-      if (!isUpcomingFeedEvent(event, now)) return;
-      var endAt = feedEventEndAt(event);
-      if (nextEnd === null || endAt < nextEnd) nextEnd = endAt;
-    });
-    if (nextEnd === null) return;
-    var self = this;
-    this._feedExpiryTimer = setTimeout(function() {
-      self._feedExpiryTimer = null;
-      if (self._feedVisible) self.applyFilters();
-    }, Math.min(nextEnd - now + 50, 2147483647));
   },
 
   rememberNewEventIds: function(key, ids) {
@@ -414,10 +351,7 @@ Page({
 
   // Keep notification state independent from temporary search/date filters.
   getNotificationEventCollections: function() {
-    var now = Date.now();
-    var upcoming = this.data.events.filter(function(event) {
-      return isUpcomingFeedEvent(event, now);
-    });
+    var upcoming = this.data.events.filter(isActiveFeedEvent);
     var feed = upcoming.filter(function(event) {
       return event.eventsOnly !== true;
     });
@@ -462,7 +396,7 @@ Page({
       var cachedEvents = cached ? JSON.parse(cached) : null;
       // Never let a recently cached empty/error result suppress a real fetch.
       if (Array.isArray(cachedEvents) && cachedEvents.length > 0 && cacheTime && age < 10 * 60 * 1000) {
-        var events = this.normalizeEventImages(cachedEvents);
+        var events = this.normalizeEventImages(cachedEvents.filter(isActiveFeedEvent));
         // Content first: cards must not wait for cloud image URL resolution.
         this.renderEvents(events, false);
         this.enrichEventImages(events);
@@ -482,21 +416,19 @@ Page({
 
     var self = this;
 
-    // Fetch from 14 days ago so past-date calendar filter works
-    var fetchFrom = new Date();
-    fetchFrom.setDate(fetchFrom.getDate() - 14);
-    var fetchFromStr = fetchFrom.toISOString().split('T')[0];
-
     this.cloud.callFunction({
       name: 'clientAuth',
-      data: { action: 'getEvents', dateFrom: fetchFromStr }
+      data: { action: 'getEvents' }
     })
       .then(function(res) {
         var result = (res && res.result) || {};
         if (!result.success || !Array.isArray(result.data)) {
           throw new Error(result.message || 'Invalid events response');
         }
-        var events = self.normalizeEventImages(result.data);
+        // A full server page may contain only historical rows. Read active
+        // records directly rather than let that cap hide current events.
+        if (result.data.length >= 1000) return self.fetchEventsDirect();
+        var events = self.normalizeEventImages(result.data.filter(isActiveFeedEvent));
         self.renderEvents(events, true);
         self.enrichEventImages(events);
       })
@@ -505,7 +437,7 @@ Page({
         // clientAuth bundle has not been uploaded yet. The cloud function is
         // primary because client-side DB queries have a lower document cap.
         console.warn('[feed] clientAuth getEvents failed, using DB fallback:', err);
-        self.fetchEventsDirect(fetchFromStr).catch(function(fallbackErr) {
+        self.fetchEventsDirect().catch(function(fallbackErr) {
           console.error('fetchEvents error:', fallbackErr);
           self.setData({ loading: false, refreshing: false });
           wx.showToast({ title: 'Failed to load events', icon: 'none' });
@@ -513,25 +445,33 @@ Page({
       });
   },
 
-  fetchEventsDirect: function(fetchFromStr) {
+  fetchEventsDirect: function() {
     var self = this;
     var db = this.cloud.database();
-    var _ = db.command;
-    return db.collection('events')
-      .where({ date: _.gte(fetchFromStr) })
-      .orderBy('date', 'asc')
-      .limit(100)
-      .get()
-      .then(function(res) {
-        var events = self.normalizeEventImages((res && res.data) || []);
-        self.renderEvents(events, true);
-        self.enrichEventImages(events);
-      });
+    var collected = [];
+    function readPage() {
+      return db.collection('events')
+        .where({ status: 'active' })
+        .orderBy('date', 'asc')
+        .skip(collected.length)
+        .limit(20)
+        .get()
+        .then(function(res) {
+          var batch = (res && res.data) || [];
+          collected = collected.concat(batch);
+          if (batch.length === 20) return readPage();
+          var events = self.normalizeEventImages(collected.filter(isActiveFeedEvent));
+          self.renderEvents(events, true);
+          self.enrichEventImages(events);
+        });
+    }
+    return readPage();
   },
 
   // Render event data immediately, before optional cloud:// image enrichment.
   // A slow/misconfigured image resolver must never leave the feed empty.
   renderEvents: function(events, updateCache) {
+    this._eventDataRevision = (this._eventDataRevision || 0) + 1;
     this.processEvents(events);
     this.setData({ events: events, loading: false, refreshing: false });
     this._eventsReady = true;
@@ -548,7 +488,10 @@ Page({
   // delayed response cannot reorder or replace a newer event fetch.
   enrichEventImages: function(events) {
     var self = this;
+    var revision = this._eventDataRevision;
     resolveEventImages(events).then(function(resolvedEvents) {
+      // An older image request must not restore an event's old active status.
+      if (revision !== self._eventDataRevision) return;
       var byId = {};
       (resolvedEvents || []).forEach(function(event) { if (event && event._id) byId[event._id] = event; });
       var merged = self.data.events.map(function(event) {
@@ -610,7 +553,7 @@ Page({
           event.displayDate = event.date;
         }
         event.displayDatetime = event.displayDate + (event.startTime ? '  ·  ' + event.startTime : '');
-        eventDates.push(event.date);
+        if (isActiveFeedEvent(event)) eventDates.push(event.date);
       }
 
       if (!event.promoImages || !Array.isArray(event.promoImages)) {
