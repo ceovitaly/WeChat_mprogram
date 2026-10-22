@@ -3,6 +3,44 @@ const auth = require('../../utils/auth.js');
 const { resolveEventImages } = require('../../utils/cloud.js');
 const tabDots = require('../../utils/tab-dots.js');
 
+// Event clocks are venue time (Shanghai), not the phone's timezone.
+function feedEventEndAt(event) {
+  var explicitEndDate = event.endDate;
+  var date = String(explicitEndDate || event.date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!date) return null;
+  var year = Number(date[1]), month = Number(date[2]), day = Number(date[3]);
+  var calendarDate = new Date(Date.UTC(year, month - 1, day));
+  if (calendarDate.getUTCFullYear() !== year || calendarDate.getUTCMonth() !== month - 1 ||
+      calendarDate.getUTCDate() !== day) return null;
+
+  function minutes(value) {
+    var clock = String(value || '').match(/^(\d{1,2}):(\d{2})$/);
+    if (!clock || Number(clock[1]) > 23 || Number(clock[2]) > 59) return null;
+    return Number(clock[1]) * 60 + Number(clock[2]);
+  }
+
+  var end = minutes(event.endTime);
+  var start = minutes(event.startTime);
+  var missingEnd = end === null;
+  // Keep the old 05:00 nightlife fallback only for legacy records without an end time.
+  if (missingEnd) end = 5 * 60;
+  var endAt = Date.UTC(year, month - 1, day, 0, end) - 8 * 60 * 60 * 1000;
+  if (!explicitEndDate && (missingEnd || (start !== null && end <= start))) {
+    endAt += 24 * 60 * 60 * 1000;
+  }
+  return endAt;
+}
+
+function isUpcomingFeedEvent(event, now) {
+  if (!event || event.isClosed === true || event.deleting === true) return false;
+  var status = String(event.status || '').trim().toLowerCase();
+  if (['closed', 'ended', 'finished', 'archived', 'cancelled', 'canceled', 'deleted'].indexOf(status) !== -1) {
+    return false;
+  }
+  var endAt = feedEventEndAt(event);
+  return endAt !== null && now < endAt;
+}
+
 Page({
   data: {
     events: [],
@@ -134,13 +172,25 @@ Page({
   },
 
   onShow: function() {
+    this._feedVisible = true;
     this.syncRequestedTopTab();
     this.refreshAuthUI();
+    if (this._eventsReady) {
+      this.applyFilters();
+      if (this.cloud) this.fetchEvents(false);
+    }
     this.loadMyRegistrations();
   },
 
   onHide: function() {
+    this._feedVisible = false;
+    clearTimeout(this._feedExpiryTimer);
     this.clearNewEventLabels(this.data.showPaidEvents ? 'events' : 'feed');
+  },
+
+  onUnload: function() {
+    this._feedVisible = false;
+    clearTimeout(this._feedExpiryTimer);
   },
 
   syncRequestedTopTab: function() {
@@ -261,20 +311,15 @@ Page({
   // ===== FILTERS =====
 
   applyFilters: function() {
-    var filtered = this.data.events.slice();
+    var now = Date.now();
+    var filtered = this.data.events.filter(function(event) {
+      return isUpcomingFeedEvent(event, now);
+    });
 
     if (this.data.selectedDate) {
       filtered = filtered.filter(function(e) {
         return e.date === this.data.selectedDate;
       }.bind(this));
-    } else {
-      // Default: show today and future, with 5 AM cutoff (night events stay visible until 5 AM)
-      var now = new Date();
-      if (now.getHours() < 5) now.setDate(now.getDate() - 1);
-      var today = now.getFullYear() + '-' +
-        String(now.getMonth() + 1).padStart(2, '0') + '-' +
-        String(now.getDate()).padStart(2, '0');
-      filtered = filtered.filter(function(e) { return e.date >= today; });
     }
 
     if (this.data.searchKeyword) {
@@ -336,6 +381,26 @@ Page({
     tabDots.updateWalletDot(dotCollections.feed.some(function(event) {
       return !!(regIds && regIds.indexOf(event._id) !== -1);
     }));
+    this.scheduleFeedExpiry();
+  },
+
+  scheduleFeedExpiry: function() {
+    clearTimeout(this._feedExpiryTimer);
+    this._feedExpiryTimer = null;
+    if (!this._feedVisible) return;
+    var now = Date.now();
+    var nextEnd = null;
+    this.data.events.forEach(function(event) {
+      if (!isUpcomingFeedEvent(event, now)) return;
+      var endAt = feedEventEndAt(event);
+      if (nextEnd === null || endAt < nextEnd) nextEnd = endAt;
+    });
+    if (nextEnd === null) return;
+    var self = this;
+    this._feedExpiryTimer = setTimeout(function() {
+      self._feedExpiryTimer = null;
+      if (self._feedVisible) self.applyFilters();
+    }, Math.min(nextEnd - now + 50, 2147483647));
   },
 
   rememberNewEventIds: function(key, ids) {
@@ -349,13 +414,9 @@ Page({
 
   // Keep notification state independent from temporary search/date filters.
   getNotificationEventCollections: function() {
-    var now = new Date();
-    if (now.getHours() < 5) now.setDate(now.getDate() - 1);
-    var today = now.getFullYear() + '-' +
-      String(now.getMonth() + 1).padStart(2, '0') + '-' +
-      String(now.getDate()).padStart(2, '0');
+    var now = Date.now();
     var upcoming = this.data.events.filter(function(event) {
-      return event.date && event.date >= today;
+      return isUpcomingFeedEvent(event, now);
     });
     var feed = upcoming.filter(function(event) {
       return event.eventsOnly !== true;
@@ -677,6 +738,7 @@ Page({
     if (showPaidEvents !== this.data.showPaidEvents) {
       this.setData({ showPaidEvents: showPaidEvents });
     }
+    this.applyFilters();
     var dotCollections = this.getNotificationEventCollections();
     tabDots.markEventTabSeen(showPaidEvents ? 'events' : 'feed', dotCollections.feed, dotCollections.paid);
   },
