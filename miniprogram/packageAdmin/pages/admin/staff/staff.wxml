@@ -50,9 +50,12 @@
   <view class="staff-sheet" style="padding-bottom: {{keyboardHeight}}px;">
     <view class="modal-header staff-header">
       <text class="modal-title">{{editingId ? 'Edit Counter' : 'New Counter'}}</text>
-      <button class="staff-close" bindtap="closeModal" aria-label="Close editor">✕</button>
+      <view class="staff-header-actions">
+        <button wx:if="{{editingId}}" class="staff-delete" catchtap="deleteEditing" disabled="{{saving || passwordLoading}}">Delete Counter</button>
+        <button class="staff-close" bindtap="closeModal" aria-label="Close editor">✕</button>
+      </view>
     </view>
-    <scroll-view class="staff-editor-scroll" scroll-y enhanced show-scrollbar="{{false}}" style="height: calc(90vh - 112rpx - env(safe-area-inset-bottom) - {{keyboardHeight}}px);">
+    <scroll-view class="staff-editor-scroll" scroll-y enhanced show-scrollbar="{{false}}" style="max-height: calc(90vh - 112rpx - env(safe-area-inset-bottom) - {{keyboardHeight}}px);">
       <view class="staff-editor-content">
         <view class="modal-body staff-form">
           <view class="field-row staff-field">
@@ -98,9 +101,7 @@
           <button class="modal-cancel staff-action" bindtap="closeModal">Cancel</button>
           <button class="modal-save staff-action" bindtap="confirmSave" disabled="{{saving || passwordLoading}}" loading="{{saving}}">{{saving ? 'Saving…' : 'Save'}}</button>
         </view>
-        <view wx:if="{{editingId}}" class="staff-delete-section">
-          <button class="staff-delete" catchtap="deleteEditing" disabled="{{saving || passwordLoading}}">Delete Counter</button>
-        </view>
+
       </view>
     </scroll-view>
   </view>

@@ -74,10 +74,16 @@ page {
   height: 112rpx;
   padding: 24rpx;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
 }
+.staff-header .modal-title { flex: 1; min-width: 0; }
+.staff-header-actions { display: flex; align-items: center; gap: 8rpx; flex-shrink: 0; }
 .staff-editor-scroll {
   width: 100%;
-  max-height: 980rpx;
+  height: auto;
   min-height: 0;
   box-sizing: border-box;
 }
@@ -210,21 +216,21 @@ page {
   font-weight: 600;
 }
 .staff-action[disabled], .staff-delete[disabled] { opacity: 0.5; }
-.staff-delete-section { margin-top: 24rpx; padding-top: 24rpx; border-top: 1rpx solid var(--text-3, #d1d1d6); }
 .staff-delete {
-  width: 100%;
-  height: 76rpx;
-  min-height: 76rpx;
+  width: auto;
+  flex-shrink: 0;
+  height: 64rpx;
+  min-height: 64rpx;
   box-sizing: border-box;
   margin: 0;
-  padding: 0 12rpx;
+  padding: 0 16rpx;
   border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255, 59, 48, 0.08);
   color: #FF3B30;
-  font-size: 28rpx;
+  font-size: 24rpx;
   line-height: 36rpx;
   font-weight: 600;
 }
