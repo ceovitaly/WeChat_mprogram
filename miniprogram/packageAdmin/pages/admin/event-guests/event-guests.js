@@ -6,6 +6,7 @@ const { normalizePhone, buildInternalRoleMap, annotateInternalRole } = require('
 const refCache = require('../../../../utils/refCache')
 const { openAsXls } = require('../../../../utils/xlsx')
 const { hasEnded } = require('../../../../utils/format')
+const { createArrivalGroupAssigner } = require('../../../../utils/arrivalGroups')
 
 // checkedInAt normalizer: the server value (db.serverDate()) crosses the cloud-function
 // JSON boundary as an ISO string or a {$date: <ms>} object depending on SDK serialization.
@@ -297,8 +298,10 @@ Page({
       // Event-wide paid count for the stats bar (the `paid` flag ships with
       // every registration row).
       const paidCount = regs.filter(g => g.paid).length
+      const assignGroup = createArrivalGroupAssigner(ev)
       const arrived = regs
         .filter(g => g.arrivedAt)
+        .sort(compareArrival)
         .map(g => {
           // Global number: arrivals strictly before this one, counted over
           // the full server list — correct across page boundaries.
@@ -307,10 +310,7 @@ Page({
             if (compareArrival(arrivedTimes[i], g) < 0) before++
           }
           const num = before + 1
-          let group = ''
-          if (p > 0 && num <= p) group = 'P'
-          else if (ap > 0 && num <= p + ap) group = 'AP'
-          else if (lap > 0 && num <= p + ap + lap) group = 'LAP'
+          const group = assignGroup(g)
           return { ...g, position: num, group }
         })
         .sort((a, b) => (groupOrder[a.group] ?? 3) - (groupOrder[b.group] ?? 3) || a.position - b.position)
@@ -348,12 +348,12 @@ Page({
       { label: 'Party', tag: 'P' },
       { label: 'After Party', tag: 'AP' },
       { label: 'Late After Party', tag: 'LAP' },
-      { label: 'Overflow', tag: '' }
+      { label: 'Extra', tag: '' }
     ]
     const buckets = {}
     sectionDefs.forEach(s => { buckets[s.tag] = [] })
     arrivedList.forEach(g => {
-      const tag = g.group !== undefined ? g.group : ''
+      const tag = (!g.scannedAt || g.group === undefined) ? '' : g.group
       if (buckets[tag] !== undefined) buckets[tag].push(g)
       else buckets[''].push(g)
     })

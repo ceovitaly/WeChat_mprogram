@@ -316,6 +316,22 @@
 .guest-name--paid { color: #FF3B30; }
 .position-num--paid { color: #FF3B30; }
 
+/* Arrival method is separate from the capacity tier: NO SCAN guests show E. */
+.noscan-chip {
+  flex-shrink: 0;
+  margin-left: 10rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  background: rgba(255, 149, 0, 0.15);
+}
+.noscan-chip-text {
+  font-size: 20rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  color: #FF9500;
+  white-space: nowrap;
+}
+
 @media (prefers-color-scheme: dark) {
   .stat-num--red, .guest-name--paid, .position-num--paid { color: #FF453A; }
 }

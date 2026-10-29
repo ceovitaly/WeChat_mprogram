@@ -7,6 +7,7 @@ const phoneMatch = require('../../../utils/phoneMatch')
 const refCache = require('../../../utils/refCache')
 const { createMatrix } = require('../../../utils/qrCode')
 const { businessToday, hasEnded } = require('../../../utils/format')
+const { createArrivalGroupAssigner } = require('../../../utils/arrivalGroups')
 
 // checkedInAt normalizer: the server value (db.serverDate()) crosses the cloud-function
 // JSON boundary as an ISO string or a {$date: <ms>} object depending on SDK serialization;
@@ -551,10 +552,7 @@ Page({
     const buckets = {}
     sectionDefs.forEach(s => { buckets[s.tag] = [] })
     arrivedList.forEach(g => {
-      // Manual-only (no-scan) marks land in the Extra bucket regardless of
-      // their capacity group — verified (scanned) arrivals fill P/AP/LAP. The
-      // guest's own group/arrivalNumber stay truthful, so a later scan moves
-      // them back into their own section on the next rebuild.
+      // The section and E badge use the same assigned Extra group.
       const tag = (!g.scannedAt || g.group === undefined) ? '' : g.group
       if (buckets[tag] !== undefined) buckets[tag].push(g)
       else buckets[''].push(g)
@@ -577,15 +575,13 @@ Page({
     const ap = Number(ev.afterPartyCapacity) || 0
     const lap = Number(ev.lateAfterPartyCapacity) || 0
     const groupOrder = { 'P': 0, 'AP': 1, 'LAP': 2, '': 3 }
+    const assignGroup = createArrivalGroupAssigner(ev)
     const arrivedGuests = annotated
       .filter(g => g.arrivedAt)
       .sort(compareArrival)
       .map((g, i) => {
         const num = i + 1
-        let group = ''
-        if (p > 0 && num <= p) group = 'P'
-        else if (ap > 0 && num <= p + ap) group = 'AP'
-        else if (lap > 0 && num <= p + ap + lap) group = 'LAP'
+        const group = assignGroup(g)
         return { ...g, arrivalNumber: num, group }
       })
       .sort((a, b) => (groupOrder[a.group] ?? 3) - (groupOrder[b.group] ?? 3))
@@ -682,14 +678,12 @@ Page({
       const ap = Number(ev.afterPartyCapacity) || 0
       const lap = Number(ev.lateAfterPartyCapacity) || 0
 
+      const assignGroup = createArrivalGroupAssigner(ev)
       const newArrived = [...this.data.arrivedGuests, { ...guest, arrivedAt, checkedInAt }]
         .sort(compareArrival)
         .map((g, i) => {
           const num = i + 1
-          let group = ''
-          if (p > 0 && num <= p) group = 'P'
-          else if (ap > 0 && num <= p + ap) group = 'AP'
-          else if (lap > 0 && num <= p + ap + lap) group = 'LAP'
+          const group = assignGroup(g)
           return { ...g, arrivalNumber: num, group }
         })
 
@@ -749,15 +743,13 @@ Page({
       const ap = Number(ev.afterPartyCapacity) || 0
       const lap = Number(ev.lateAfterPartyCapacity) || 0
 
+      const assignGroup = createArrivalGroupAssigner(ev)
       const arrivedGuests = this.data.arrivedGuests
         .filter(g => g._id !== id)
         .sort(compareArrival)
         .map((g, i) => {
           const num = i + 1
-          let group = ''
-          if (p > 0 && num <= p) group = 'P'
-          else if (ap > 0 && num <= p + ap) group = 'AP'
-          else if (lap > 0 && num <= p + ap + lap) group = 'LAP'
+          const group = assignGroup(g)
           return { ...g, arrivalNumber: num, group }
         })
 

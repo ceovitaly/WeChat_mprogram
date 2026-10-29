@@ -133,6 +133,9 @@
                 <text class="tier-badge-text">{{guest.group || 'E'}}</text>
               </view>
               <text class="arrival-time">{{guest.arrivedAt}}</text>
+              <view wx:if="{{!guest.scannedAt}}" class="noscan-chip">
+                <text class="noscan-chip-text">NO SCAN</text>
+              </view>
             </view>
           </view>
         </block>
