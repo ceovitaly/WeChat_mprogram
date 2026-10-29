@@ -45,88 +45,65 @@
 
 </scroll-view>
 
-<!-- Modal -->
+<!-- Keep the editor scrollable inside the shared, clipped sheet shell. -->
 <bottom-sheet show="{{showModal}}" bind:close="closeModal">
-
-    <view class="modal-header">
+  <view class="staff-sheet" style="padding-bottom: {{keyboardHeight}}px;">
+    <view class="modal-header staff-header">
       <text class="modal-title">{{editingId ? 'Edit Counter' : 'New Counter'}}</text>
-      <view bindtap="closeModal">
-        <text class="modal-close">✕</text>
-      </view>
+      <button class="staff-close" bindtap="closeModal" aria-label="Close editor">✕</button>
     </view>
-
-    <view class="modal-body">
-      <view class="field-row">
-        <text class="field-label">Name</text>
-        <input
-          class="field-input"
-          placeholder="Full name"
-          placeholder-class="field-placeholder"
-          value="{{tempName}}"
-          bindinput="onInputName"
-          confirm-type="next"
-        />
-      </view>
-      <view class="field-row">
-        <text class="field-label">Phone</text>
-        <input
-          class="field-input"
-          type="number"
-          placeholder="Phone number"
-          placeholder-class="field-placeholder"
-          value="{{tempPhone}}"
-          bindinput="onInputPhone"
-          confirm-type="next"
-        />
-      </view>
-      <view class="field-row">
-        <text class="field-label">Password</text>
-        <input
-          class="field-input"
-          password
-          placeholder="{{editingId ? 'Leave blank to keep current password' : 'Leave blank to generate password'}}"
-          placeholder-class="field-placeholder"
-          value="{{tempPassword}}"
-          bindinput="onInputPassword"
-          confirm-type="done"
-        />
-      </view>
-    </view>
-
-    <view class="role-section">
-      <text class="section-title">Role</text>
-      <view class="role-options">
-        <view
-          class="role-option {{tempRole === 'counter' ? 'role-option--active' : ''}}"
-          bindtap="selectRole"
-          data-role="counter"
-        >
-          <text class="role-option-text">Counter</text>
-          <text class="role-option-sub">Door check-in</text>
+    <scroll-view class="staff-editor-scroll" scroll-y enhanced show-scrollbar="{{false}}" style="height: calc(90vh - 112rpx - env(safe-area-inset-bottom) - {{keyboardHeight}}px);">
+      <view class="staff-editor-content">
+        <view class="modal-body staff-form">
+          <view class="field-row staff-field">
+            <text class="field-label staff-label">Name</text>
+            <input class="field-input staff-input" placeholder="Full name" placeholder-class="field-placeholder" value="{{tempName}}" bindinput="onInputName" disabled="{{saving}}" confirm-type="next" adjust-position="{{false}}" bindkeyboardheightchange="onKeyboardHeightChange" />
+          </view>
+          <view class="field-row staff-field">
+            <text class="field-label staff-label">Phone</text>
+            <input class="field-input staff-input" type="number" placeholder="Phone number" placeholder-class="field-placeholder" value="{{tempPhone}}" bindinput="onInputPhone" disabled="{{saving}}" confirm-type="next" adjust-position="{{false}}" bindkeyboardheightchange="onKeyboardHeightChange" />
+          </view>
+          <view class="field-row staff-field staff-password-field">
+            <text class="field-label staff-label">Password</text>
+            <view class="staff-password-control">
+              <input class="field-input staff-input" password="{{!passwordVisible}}" placeholder="{{passwordLoading ? 'Loading current password…' : (editingId ? 'Enter a new password' : 'Blank: generate password')}}" placeholder-class="field-placeholder" value="{{tempPassword}}" bindinput="onInputPassword" disabled="{{saving}}" maxlength="-1" confirm-type="done" adjust-position="{{false}}" bindkeyboardheightchange="onKeyboardHeightChange" />
+              <button class="staff-eye" bindtap="togglePasswordVisibility" aria-label="{{passwordVisible ? 'Hide password' : 'Show password'}}">
+                <view class="staff-eye-shape"><view class="staff-eye-pupil" /></view>
+                <view wx:if="{{!passwordVisible}}" class="staff-eye-slash" />
+              </button>
+            </view>
+          </view>
         </view>
-        <view
-          class="role-option {{tempRole === 'admin' ? 'role-option--active' : ''}}"
-          bindtap="selectRole"
-          data-role="admin"
-        >
-          <text class="role-option-text">Admin</text>
-          <text class="role-option-sub">Full access</text>
+        <view class="staff-password-help" aria-live="polite">
+          <text wx:if="{{passwordLoading}}">Loading the current password. You can type a replacement while it loads.</text>
+          <text wx:elif="{{passwordMessage}}">{{passwordMessage}}</text>
+          <text wx:elif="{{editingId}}">{{passwordEdited ? 'Save applies your edits.' : 'Current password shown. Edit it to change it, or leave it unchanged to keep it.'}}</text>
+          <text wx:else>Leave blank to generate a password, or enter your own. You can view it again in Edit Counter.</text>
+          <button wx:if="{{editingId && passwordMessage && !passwordLoading}}" class="staff-retry" bindtap="retryPassword" disabled="{{saving}}">Reload current password</button>
+        </view>
+        <view class="staff-role-section">
+          <text class="section-title staff-role-label">Role</text>
+          <view class="staff-role-options">
+            <button class="staff-role-option {{tempRole === 'counter' ? 'staff-role-option--active' : ''}}" bindtap="selectRole" data-role="counter" disabled="{{saving}}" aria-label="Counter role">
+              <text class="staff-role-text">Counter</text>
+              <text class="staff-role-sub">Door check-in</text>
+            </button>
+            <button class="staff-role-option {{tempRole === 'admin' ? 'staff-role-option--active' : ''}}" bindtap="selectRole" data-role="admin" disabled="{{saving}}" aria-label="Admin role">
+              <text class="staff-role-text">Admin</text>
+              <text class="staff-role-sub">Full access</text>
+            </button>
+          </view>
+        </view>
+        <view class="modal-footer staff-footer">
+          <button class="modal-cancel staff-action" bindtap="closeModal">Cancel</button>
+          <button class="modal-save staff-action" bindtap="confirmSave" disabled="{{saving || passwordLoading}}" loading="{{saving}}">{{saving ? 'Saving…' : 'Save'}}</button>
+        </view>
+        <view wx:if="{{editingId}}" class="staff-delete-section">
+          <button class="staff-delete" catchtap="deleteEditing" disabled="{{saving || passwordLoading}}">Delete Counter</button>
         </view>
       </view>
-    </view>
-
-    <view wx:if="{{editingId}}" class="modal-delete-row" catchtap="deleteEditing">
-      <text class="modal-delete-text">Delete Counter</text>
-    </view>
-    <view class="modal-footer">
-      <view class="modal-cancel" bindtap="closeModal">
-        <text>Cancel</text>
-      </view>
-      <view class="modal-save" bindtap="confirmSave">
-        <text>Save</text>
-      </view>
-    </view>
-
+    </scroll-view>
+  </view>
 </bottom-sheet>
 
 </view>

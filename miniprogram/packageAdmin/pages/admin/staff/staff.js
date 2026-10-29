@@ -11,11 +11,42 @@ Page({
     tempPhone: '',
     tempPassword: '',
     tempRole: 'counter',
-    editingId: null
+    editingId: null,
+    passwordVisible: true,
+    passwordLoading: false,
+    passwordAvailable: false,
+    passwordEdited: false,
+    passwordMessage: '',
+    saving: false,
+    keyboardHeight: 0
   },
 
   onShow() {
+    this._pageVisible = true
+    this._unloaded = false
     this._fetchStaff()
+  },
+
+  onHide() {
+    this._pageVisible = false
+    this.closeModal()
+  },
+
+  onUnload() {
+    this._pageVisible = false
+    this.closeModal()
+    this._unloaded = true
+  },
+
+  // Only roster fields belong in page data or the shared reference cache.
+  // Older deployments may still return credential fields in getAll.
+  _sanitizeStaff(rows) {
+    return (Array.isArray(rows) ? rows : []).map(item => ({
+      _id: item._id,
+      name: item.name || '',
+      phone: item.phone || '',
+      role: item.role || 'counter'
+    }))
   },
 
   goBack() {
@@ -30,119 +61,171 @@ Page({
     try {
       const res = await callFunction('manageStaff', { action: 'getAll' })
       if (res && res.success) {
-        refCache.set(refCache.KEYS.STAFF, res.data || [])
-        this.setData({ staffList: res.data })
+        const staffList = this._sanitizeStaff(res.data)
+        refCache.set(refCache.KEYS.STAFF, staffList)
+        if (!this._unloaded) this.setData({ staffList })
       } else if (isUnauthorized(res)) {
         handleAuthFailure()
       } else {
         wx.showToast({ title: 'Load failed', icon: 'none' })
       }
     } catch (err) {
-      console.error('[Staff] fetch error:', err)
       wx.showToast({ title: 'Load failed', icon: 'none' })
     } finally {
-      this.setData({ loading: false })
+      if (!this._unloaded) this.setData({ loading: false })
+    }
+  },
+
+  _resetEditor() {
+    this._editorVersion = (this._editorVersion || 0) + 1
+    this._loadedPassword = ''
+    this._passwordEdited = false
+    return {
+      tempName: '', tempPhone: '', tempPassword: '', tempRole: 'counter',
+      editingId: null, passwordVisible: true, passwordLoading: false,
+      passwordAvailable: false, passwordEdited: false, passwordMessage: '',
+      keyboardHeight: 0
     }
   },
 
   openCreateModal() {
-    this.setData({
-      showModal: true,
-      tempName: '',
-      tempPhone: '',
-      tempPassword: '',
-      tempRole: 'counter',
-      editingId: null
-    })
+    if (this._saving) return
+    this.setData({ ...this._resetEditor(), showModal: true })
   },
 
   openEditModal(e) {
+    if (this._saving) return
     const id = e.currentTarget.dataset.id
     const item = this.data.staffList.find(s => s._id === id)
     if (!item) return
     this.setData({
+      ...this._resetEditor(),
       showModal: true,
       tempName: item.name,
       tempPhone: item.phone || '',
-      tempPassword: '',
       tempRole: item.role || 'counter',
-      editingId: item._id
+      editingId: id,
+      passwordLoading: true
     })
+    this._loadPassword(id, this._editorVersion)
+  },
+
+  async _loadPassword(id, version) {
+    const isCurrent = () => !this._unloaded && this.data.showModal &&
+      this._editorVersion === version && this.data.editingId === id
+    try {
+      const res = await callFunction('manageStaff', { action: 'getPassword', id })
+      if (!isCurrent()) return
+      if (res && res.success && res.passwordAvailable === true && typeof res.password === 'string') {
+        this._loadedPassword = res.password
+        const next = { passwordAvailable: true, passwordMessage: '' }
+        // A delayed response must never replace a password the admin is typing.
+        if (!this._passwordEdited) next.tempPassword = res.password
+        this.setData(next)
+      } else if (res && res.success && res.passwordAvailable === false && res.code === 'PASSWORD_NOT_RECOVERABLE') {
+        this.setData({
+          passwordAvailable: false,
+          passwordMessage: 'The current password cannot be displayed. It remains valid. Leave this field unchanged to keep it, or enter a new password.'
+        })
+      } else {
+        this.setData({ passwordMessage: 'Could not load the current password. It will stay unchanged unless you enter a new one.' })
+        if (isUnauthorized(res)) handleAuthFailure()
+      }
+    } catch (err) {
+      if (isCurrent()) this.setData({ passwordMessage: 'Could not load the current password. It will stay unchanged unless you enter a new one.' })
+    } finally {
+      if (isCurrent()) this.setData({ passwordLoading: false })
+    }
+  },
+
+  retryPassword() {
+    if (this._saving || this.data.passwordLoading || !this.data.editingId) return
+    const version = this._editorVersion = (this._editorVersion || 0) + 1
+    this.setData({ passwordLoading: true })
+    this._loadPassword(this.data.editingId, version)
   },
 
   closeModal() {
-    this.setData({ showModal: false })
+    this.setData({ ...this._resetEditor(), showModal: false })
   },
 
   stopPropagation() {},
 
-  onInputName(e) { this.setData({ tempName: e.detail.value }) },
-  onInputPhone(e) { this.setData({ tempPhone: e.detail.value }) },
-  onInputPassword(e) { this.setData({ tempPassword: e.detail.value }) },
+  onInputName(e) { if (!this._saving) this.setData({ tempName: e.detail.value }) },
+  onInputPhone(e) { if (!this._saving) this.setData({ tempPhone: e.detail.value }) },
+  onInputPassword(e) {
+    if (this._saving) return
+    this._passwordEdited = true
+    this.setData({ tempPassword: e.detail.value, passwordEdited: true })
+  },
+
+  togglePasswordVisibility() {
+    this.setData({ passwordVisible: !this.data.passwordVisible })
+  },
+
+  onKeyboardHeightChange(e) {
+    if (this.data.showModal) this.setData({ keyboardHeight: Math.max(0, e.detail.height || 0) })
+  },
 
   selectRole(e) {
-    this.setData({ tempRole: e.currentTarget.dataset.role })
+    if (!this._saving) this.setData({ tempRole: e.currentTarget.dataset.role })
   },
 
   async confirmSave() {
-    const { tempName, tempPhone, tempPassword, tempRole, editingId } = this.data
-
+    if (this._saving || this.data.passwordLoading || !this.data.showModal) return
+    const { tempName, tempPhone, tempPassword, tempRole, editingId, passwordAvailable } = this.data
+    const passwordChanged = editingId
+      ? this._passwordEdited && (passwordAvailable ? tempPassword !== this._loadedPassword : tempPassword !== '')
+      : tempPassword !== ''
     if (!tempName.trim()) {
       wx.showToast({ title: 'Enter name', icon: 'none' })
       return
     }
+    if (passwordChanged && tempPassword === '') {
+      wx.showToast({ title: 'Enter password', icon: 'none' })
+      return
+    }
 
+    const version = this._editorVersion
+    const isCurrent = () => !this._unloaded && this._pageVisible &&
+      this.data.showModal && this._editorVersion === version
+    const payload = {
+      action: editingId ? 'update' : 'add',
+      name: tempName.trim(), phone: tempPhone.trim(), role: tempRole
+    }
+    if (editingId) payload.id = editingId
+    // Omit untouched passwords: even a readable current password must not be rehashed.
+    if (passwordChanged) payload.password = tempPassword
+    this._saving = true
+    this.setData({ saving: true })
     wx.showLoading({ title: 'Saving...', mask: true })
-
     try {
-      if (editingId) {
-        const res = await callFunction('manageStaff', {
-          action: 'update',
-          id: editingId,
-          name: tempName.trim(),
-          phone: tempPhone.trim(),
-          password: tempPassword,
-          role: tempRole
-        })
-        if (!res || !res.success) {
-          if (isUnauthorized(res)) { handleAuthFailure(); return }
-          wx.showToast({ title: (res && res.message) || 'Save failed', icon: 'none' })
-          return
-        }
-        wx.vibrateShort({ type: 'medium' })
-        wx.showToast({ title: 'Saved!', icon: 'success' })
-        refCache.invalidate(refCache.KEYS.STAFF)
-        this.closeModal()
-        const updated = this.data.staffList.map(s =>
-          s._id === editingId ? { ...s, name: tempName.trim(), phone: tempPhone.trim(), role: tempRole } : s
-        )
-        this.setData({ staffList: updated })
-      } else {
-        const res = await callFunction('manageStaff', {
-          action: 'add',
-          name: tempName.trim(),
-          phone: tempPhone.trim(),
-          password: tempPassword,
-          role: tempRole
-        })
-        if (!res || !res.success) {
-          if (isUnauthorized(res)) { handleAuthFailure(); return }
-          wx.showToast({ title: (res && res.message) || 'Save failed', icon: 'none' })
-          return
-        }
-        wx.vibrateShort({ type: 'medium' })
-        wx.showToast({ title: 'Saved!', icon: 'success' })
-        refCache.invalidate(refCache.KEYS.STAFF)
-        this.closeModal()
-        // _fetchStaff re-seeds the cache with the roster including the new member.
-        await this._fetchStaff()
-        this._showIssuedCredentials(tempName.trim(), res.password)
+      const res = await callFunction('manageStaff', payload)
+      if (!res || !res.success) {
+        if (isUnauthorized(res)) { handleAuthFailure(); return }
+        if (isCurrent()) wx.showToast({ title: 'Save failed', icon: 'none' })
+        return
       }
-
+      refCache.invalidate(refCache.KEYS.STAFF)
+      if (editingId && !this._unloaded) {
+        this.setData({ staffList: this.data.staffList.map(s => s._id === editingId
+          ? { ...s, name: payload.name, phone: payload.phone, role: tempRole } : s) })
+      }
+      if (!isCurrent()) return
+      wx.vibrateShort({ type: 'medium' })
+      this.closeModal()
+      wx.hideLoading()
+      wx.showToast({ title: 'Saved!', icon: 'success' })
+      if (!editingId) {
+        // Show issued credentials once; never seed them into the public roster.
+        this._showIssuedCredentials(payload.name, res.password)
+        this._fetchStaff()
+      }
     } catch (err) {
-      console.error('[Staff] save error:', err)
-      wx.showToast({ title: 'Save failed', icon: 'none' })
+      if (isCurrent()) wx.showToast({ title: 'Save failed', icon: 'none' })
     } finally {
+      this._saving = false
+      if (!this._unloaded) this.setData({ saving: false })
       wx.hideLoading()
     }
   },
@@ -181,6 +264,7 @@ Page({
   },
 
   deleteEditing() {
+    if (this._saving || this.data.passwordLoading) return
     const id = this.data.editingId
     const name = this.data.tempName
     if (!id) return
@@ -190,7 +274,7 @@ Page({
       confirmColor: '#FF3B30',
       confirmText: 'Delete',
       success: (res) => {
-        if (res.confirm) {
+        if (res.confirm && !this._saving && this.data.showModal && this.data.editingId === id) {
           this.closeModal()
           this._deleteById(id)
         }

@@ -2,7 +2,6 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const crypto = require('crypto');
-const { hashPassword } = require('./passwords');
 
 const generatePassword = (length = 12) => {
   const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -36,9 +35,35 @@ exports.main = async (event, context) => {
     return { success: false, message: 'Unauthorized' };
   }
   // Roster mutations are admin-only — counters may only read (getAll, field-restricted below).
-  const ADMIN_ONLY_ACTIONS = ['add', 'update', 'delete'];
+  const ADMIN_ONLY_ACTIONS = ['add', 'update', 'delete', 'getPassword'];
   if (caller.role !== 'admin' && ADMIN_ONLY_ACTIONS.includes(action)) {
     return { success: false, message: 'Forbidden' };
+  }
+
+  // Read one managed credential only after resolving the authenticated admin.
+  // Keep credentials out of roster responses and reference caches.
+  if (action === 'getPassword') {
+    if (caller.role !== 'admin') return { success: false, message: 'Forbidden' };
+    if (typeof id !== 'string' || !id.trim()) {
+      return { success: false, message: 'Missing staff ID' };
+    }
+    try {
+      const res = await db.collection('staff').where({ _id: id })
+        .field({ _id: true, password: true }).limit(1).get();
+      const member = (res.data || [])[0];
+      if (!member) return { success: false, message: 'Staff member not found' };
+      const value = member.password;
+      // Never display a hash as if it were the employee's original password.
+      if (typeof value !== 'string' || !value || value.startsWith('scrypt$')) {
+        return {
+          success: true, password: '', passwordAvailable: false,
+          code: 'PASSWORD_NOT_RECOVERABLE'
+        };
+      }
+      return { success: true, password: value, passwordAvailable: true };
+    } catch (_) {
+      return { success: false, message: 'Unable to load password' };
+    }
   }
 
   // GET ALL STAFF
@@ -76,14 +101,14 @@ exports.main = async (event, context) => {
   if (action === 'add') {
     try {
       const finalPassword = password ? String(password) : generatePassword();
-      if (finalPassword.length < 10) {
-        return { success: false, message: 'Password must be at least 10 characters' };
+      if (finalPassword.startsWith('scrypt$')) {
+        return { success: false, message: 'Password uses a reserved format' };
       }
-      const passwordHash = await hashPassword(finalPassword);
       await db.collection('staff').add({
         data: {
           name: name.trim(),
-          password: passwordHash,
+          // Preserve the deployed login format, explicitly requested by the admin.
+          password: finalPassword,
           role: role || 'counter',
           phone: (phone || '').trim(),
           createdAt: db.serverDate(),
@@ -106,10 +131,10 @@ exports.main = async (event, context) => {
         updatedAt: db.serverDate()
       };
       if (password) {
-        if (String(password).length < 10) {
-          return { success: false, message: 'Password must be at least 10 characters' };
+        if (String(password).startsWith('scrypt$')) {
+          return { success: false, message: 'Password uses a reserved format' };
         }
-        updateData.password = await hashPassword(String(password));
+        updateData.password = String(password);
         updateData.passwordChangedAt = db.serverDate();
       }
       await db.collection('staff').doc(id).update({ data: updateData });

@@ -1,0 +1,14 @@
+{
+  "function": "manageStaff",
+  "environment": "cloud1-9g2yewom6a2d5467",
+  "status": "Active",
+  "deployed_index_sha256": "6b4193bf2e7dfac47c6966b8be5090d91526d6f1044455c007d17c2f6cbfe913",
+  "loginStaff_source_unchanged": true,
+  "runtime_and_timeout_unchanged": true,
+  "non_index_source_unchanged": true,
+  "staff_passwords_or_records_changed": false,
+  "tests_builds_or_app_walkthroughs_run": false,
+  "storage_policy": "Keep deployed plaintext managed-password storage, explicitly selected by the administrator.",
+  "credential_read_access": "Authenticated admin only; one requested staff ID; credentials excluded from roster responses.",
+  "verification": "Downloaded exact live source and compared the deployed artifact; no credential read or login flow invoked."
+}
