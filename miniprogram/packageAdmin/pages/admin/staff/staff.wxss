@@ -79,8 +79,40 @@ page {
   justify-content: space-between;
   gap: 12rpx;
 }
-.staff-header .modal-title { flex: 1; min-width: 0; }
-.staff-header-actions { display: flex; align-items: center; gap: 8rpx; flex-shrink: 0; }
+.staff-header .modal-title {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  white-space: nowrap;
+  font-size: 30rpx;
+  line-height: 64rpx;
+}
+.staff-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16rpx;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+}
+.staff-header-actions > .staff-delete {
+  flex: 0 0 200rpx;
+  width: 200rpx;
+  min-width: 200rpx;
+  max-width: 200rpx;
+  white-space: nowrap;
+}
+.staff-header-actions > .staff-close {
+  flex: 0 0 56rpx;
+  width: 56rpx;
+  min-width: 56rpx;
+  max-width: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
 .staff-editor-scroll {
   width: 100%;
   height: auto;
