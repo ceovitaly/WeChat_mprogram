@@ -20,6 +20,10 @@ Removing a registration increments the old event's `freeRegistrationRemovalVersi
 
 ## Delivery / rollout boundary
 
+The owner authorized activation in the shared environment. Both `checkInGuest` and `clientAuth` were updated using a private live-based overlay. The deployed source was downloaded again and every file compared: required entries/helpers match the approved overlay, unrelated bundle files and runtime/timeout are unchanged. See `release.json`. No registration or arrival handler was invoked for verification, and no customer records were migrated by the deployment. Client publication remains separate.
+
+`apply-live-policy.py` reproduces the scoped entry-point transformation on a separately downloaded baseline without printing its contents or copying embedded configuration into Git. Supporting helper files must accompany the transformed entries.
+
 Changed source is in Alpha only; Beta source is not synchronized. The backend environment is shared, so deploying `clientAuth` changes behavior for every caller of that environment, not just a locally named Alpha folder.
 
 Deploy the policy modules with `clientAuth`, and the policy module with `checkInGuest`, before publishing updated clients. Download the actual live bundles first and apply only these policy edits to them: local cloud-function files have unrelated pre-existing changes and must not be blindly uploaded wholesale. Upload supporting modules before entry points if incremental deployment is used. Preserve runtime settings, authorization configuration, payment functions and credentials. Back up the live sources and verify the exact deployed files by downloading them again.

@@ -1,0 +1,28 @@
+{
+  "environment": "cloud1-9g2yewom6a2d5467",
+  "functions": {
+    "checkInGuest": {
+      "status": "Active",
+      "files": {
+        "freeRegistrationPolicy.js": "af8c5427af98fbfa6d03e0e3a1319e7586fa8f29b9975dbf396f64d339f06236",
+        "index.js": "ff6fdd92e7e23b83dec80a935dc1aa800ea3d159ef86bc819e0e78309bea4d91"
+      },
+      "runtime_and_timeout_unchanged": true,
+      "unrelated_bundle_files_unchanged": true
+    },
+    "clientAuth": {
+      "status": "Active",
+      "files": {
+        "freeRegistrationPolicy.js": "af8c5427af98fbfa6d03e0e3a1319e7586fa8f29b9975dbf396f64d339f06236",
+        "index.js": "20bec81f7737bb22aef56638cfa6eda214e33f75a8459ed1be4f6e606135a44f",
+        "switchFreeRegistration.js": "de4229d3d244b21b07c43cecfaa4fe8a171c255193ff4b539f1411f4d6ff09b6"
+      },
+      "runtime_and_timeout_unchanged": true,
+      "unrelated_bundle_files_unchanged": true
+    }
+  },
+  "staff_or_guest_records_written_by_deployment": false,
+  "payments_or_login_functions_deployed": false,
+  "tests_builds_or_app_walkthroughs_run": false,
+  "verification": "Downloaded exact deployed bundles and compared all file hashes. Registration/arrival handlers were not invoked."
+}
