@@ -1,6 +1,7 @@
 'use strict';
 
-const { isFreeRegistration, eventHasFinished, attendanceMs, retentionReason } = require('./freeRegistrationPolicy');
+const crypto = require('crypto');
+const { isFreeRegistration, eventHasFinished, attendanceMs, retentionReason, timestampMs } = require('./freeRegistrationPolicy');
 
 function policyError(code, message) {
   const err = new Error(message);
@@ -101,6 +102,32 @@ async function switchFreeRegistration(db, options) {
           throw policyError('REGISTRATION_PAYMENT_PENDING', 'A previous ticket payment must be resolved first');
         }
         removals.push(row);
+      }
+      // New Alpha clients request a write-free preview before replacing an
+      // entry. Bind confirmation to this owner, destination and exact records
+      // (including their current arrival/revision), not a blanket boolean.
+      // Older published clients retain their existing protocol until upgraded.
+      if (options.requireReplacementConfirmation === true && removals.length > 0) {
+        const replacements = removals.map(row => ({
+          registrationId: row._id,
+          eventId: row.eventId,
+          eventTitle: eventDocs.get(row.eventId).title || row.eventTitle || row.eventId
+        })).sort((a, b) => a.registrationId.localeCompare(b.registrationId));
+        const scope = replacements.map(item => {
+          const row = removals.find(r => r._id === item.registrationId);
+          return [item.registrationId, item.eventId, item.eventTitle,
+            timestampMs(row.createdAt) || null, timestampMs(row.updatedAt) || null,
+            row.arrivedAt || '', timestampMs(row.checkedInAt) || null, timestampMs(row.scannedAt) || null];
+        });
+        const confirmation = crypto.createHash('sha256')
+          .update(JSON.stringify([openid, eventId, scope])).digest('hex');
+        if (options.replacementConfirmation !== confirmation) {
+          await tx.rollback();
+          return {
+            success: true, code: 'REGISTRATION_CONFIRMATION_REQUIRED',
+            replacements, replacementConfirmation: confirmation
+          };
+        }
       }
       // Every read and policy gate precedes the first write.
       const countChanges = new Map();
