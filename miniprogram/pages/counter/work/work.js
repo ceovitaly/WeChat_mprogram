@@ -399,6 +399,11 @@ Page({
         })
         if (res && res.success && res.delta) {
           if (silent && this.data.currentEvent && this.data.currentEvent._id !== eventId) return
+          const removalVersion = Number(res.event && res.event.freeRegistrationRemovalVersion) || 0
+          if (removalVersion !== (this._freeRegistrationRemovalVersion || 0)) {
+            // A delta cannot describe a physically removed registration.
+            return await this._fetchGuests(eventId, { silent: true })
+          }
           this._lastSyncMs = res.serverNow || Date.now()
           if (this._lastRawGuests) {
             const byId = {}
@@ -442,6 +447,7 @@ Page({
       // A slow silent refetch can land after the user already left this event — drop it.
       if (silent && this.data.currentEvent && this.data.currentEvent._id !== eventId) return
       this._lastRawGuests = all
+      this._freeRegistrationRemovalVersion = Number(res.event && res.event.freeRegistrationRemovalVersion) || 0
       this._lastSyncMs = res.serverNow || Date.now()
       this._lastFullAt = Date.now()
       // Record-only pass: full loads update the per-guest scan marks so a

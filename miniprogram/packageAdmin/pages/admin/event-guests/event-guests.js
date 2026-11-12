@@ -217,6 +217,10 @@ Page({
         })
         if (res && res.success && res.delta) {
           if (this.data.eventId !== eventId) return
+          const removalVersion = Number(res.event && res.event.freeRegistrationRemovalVersion) || 0
+          if (removalVersion !== (this._freeRegistrationRemovalVersion || 0)) {
+            return await this._fetch({ silent: true })
+          }
           this._lastSyncMs = res.serverNow || Date.now()
           const byId = {}
           this._allRegs.forEach(r => { byId[r._id] = r })
@@ -257,6 +261,7 @@ Page({
       // Full refresh: reset both cursors — the delta channel continues from
       // the server's notion of "now".
       this._lastSyncMs = regRes.serverNow || Date.now()
+      this._freeRegistrationRemovalVersion = Number(regRes.event && regRes.event.freeRegistrationRemovalVersion) || 0
       this._lastFullAt = Date.now()
       this._applyRegResponse(regRes, silent)
     } catch (e) {

@@ -1,6 +1,7 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const { retentionReason } = require('./freeRegistrationPolicy');
 
 async function getCallerStaff(db) {
   const wxContext = cloud.getWXContext();
@@ -41,8 +42,8 @@ exports.main = async (event) => {
 
     await db.collection('registrations').doc(registrationId).update({
       data: {
-        arrivedAt,
-        checkedInAt: db.serverDate()
+        arrivedAt: reg.arrivedAt || arrivedAt,
+        checkedInAt: reg.checkedInAt || db.serverDate()
       }
     });
 
@@ -71,7 +72,8 @@ exports.main = async (event) => {
           .then(res => { eventDocs[id] = res.data; })
           .catch(() => {})
       ));
-      const toClear = marked.filter(r => overlaps(thisWindow, eventWindowMs(eventDocs[r.eventId])));
+      const toClear = marked.filter(r => !retentionReason(r, eventDocs[r.eventId], Date.now()) &&
+        overlaps(thisWindow, eventWindowMs(eventDocs[r.eventId])));
       await Promise.all(toClear.map(r =>
         db.collection('registrations').doc(r._id).update({
           data: { arrivedAt: null, checkedInAt: null }
