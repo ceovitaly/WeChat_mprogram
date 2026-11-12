@@ -1,0 +1,10 @@
+{
+  "function": "manageApplications",
+  "environment": "cloud1-9g2yewom6a2d5467",
+  "status": "Active",
+  "index_sha256": "704d7929c861bd265bbf8c619152660e8b5008752a1c13a7d9defccedb8f5b5a",
+  "unrelated_bundle_files_unchanged": true,
+  "runtime_and_timeout_unchanged": true,
+  "tests_builds_or_app_walkthroughs_run": false,
+  "verification": "Exact live bundle downloaded and compared; no event/registration business handler invoked."
+}

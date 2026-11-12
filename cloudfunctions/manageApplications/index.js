@@ -105,8 +105,22 @@ const dateFieldToMs = (v) => {
   return isNaN(t) ? 0 : t;
 };
 
-async function attachGuestCounts(db, events) {
+async function attachGuestCounts(db, events, includeArrivedCounts = false) {
   return Promise.all(events.map(async ev => {
+    if (includeArrivedCounts) {
+      let arrivedCount = null;
+      try {
+        // Count every valid arrival, including manual NO SCAN marks and paid
+        // guests. Database count() has no client page-size truncation.
+        const count = await db.collection('registrations').where(db.command.and([
+          { eventId: ev._id },
+          { arrivedAt: db.command.exists(true) },
+          { arrivedAt: db.command.nin([null, '', false, 0]) }
+        ])).count();
+        arrivedCount = Number(count.total) || 0;
+      } catch (_) { /* unknown is not zero; the client displays a dash */ }
+      ev = Object.assign({}, ev, { arrivedCount });
+    }
     const hasStored = typeof ev.guestCount === 'number';
     const fresh = hasStored && (Date.now() - dateFieldToMs(ev.guestCountSyncedAt)) < COUNT_STALE_MS;
     if (fresh) return Object.assign({}, ev, { guestCount: ev.guestCount });
@@ -1833,7 +1847,7 @@ exports.main = async (event, context) => {
         }
 
         const events = openEvents.filter(ev => endedIds.indexOf(ev._id) === -1);
-        return { success: true, data: await attachGuestCounts(db, events) };
+        return { success: true, data: await attachGuestCounts(db, events, event.includeArrivedCounts === true) };
       } else if (mode === 'active') {
         // Query yesterday + today to catch night events spanning midnight
         const prev = new Date(dateFilter);
@@ -1852,7 +1866,7 @@ exports.main = async (event, context) => {
 
       const evRes = await eventsQuery.get();
       const events = evRes.data || [];
-      return { success: true, data: await attachGuestCounts(db, events) };
+      return { success: true, data: await attachGuestCounts(db, events, event.includeArrivedCounts === true) };
     } catch (e) {
       return { success: false, message: e.message };
     }

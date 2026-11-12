@@ -48,7 +48,8 @@ Page({
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
         action: 'getEventsWithGuestCounts',
         dateFilter: todayStr,
-        mode: 'upcoming'
+        mode: 'upcoming',
+        includeArrivedCounts: true
       })
       if (!res || !res.success) {
         if (isUnauthorized(res)) { handleAuthFailure(); return }
@@ -59,6 +60,10 @@ Page({
       // end time (see getEventsWithGuestCounts 'upcoming'), so whatever
       // arrives here is active by flag — no extra time filtering client-side.
       const actual = (res.data || [])
+        .map(ev => ({
+          ...ev,
+          arrivedCountLabel: typeof ev.arrivedCount === 'number' ? ev.arrivedCount : '—'
+        }))
         .sort((a, b) =>
           (a.date || '').localeCompare(b.date || '') ||
           String(a.startTime || '').localeCompare(String(b.startTime || '')))

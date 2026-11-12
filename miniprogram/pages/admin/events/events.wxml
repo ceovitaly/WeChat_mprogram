@@ -18,9 +18,7 @@
     </view>
   </view>
 
-  <!-- One section per date: "Today" first, then future dates ascending.
-       Each card's number = registrations for that event (tap → the
-       event-guests statistics page). -->
+  <!-- Each event shows arrivals above its total registration count. -->
   <view wx:else>
     <view wx:for="{{groups}}" wx:for-item="group" wx:key="label" class="section">
       <text class="section-title">{{group.label}}</text>
@@ -37,6 +35,9 @@
             <text class="event-meta">{{item.venueName || 'Venue'}}{{item.startTime ? ' · ' + item.startTime : ''}}</text>
           </view>
           <view class="event-card-right">
+            <text class="guest-count arrived-count">{{item.arrivedCountLabel}}</text>
+            <text class="guest-label arrived-label">arrived</text>
+            <view class="guest-count-divider" />
             <text class="guest-count">{{item.guestCount || 0}}</text>
             <text class="guest-label">guests</text>
           </view>
