@@ -2,7 +2,7 @@
 const app = getApp();
 const auth = require('../../utils/auth.js');
 const tabDots = require('../../utils/tab-dots.js');
-const { freeRegistrationError } = require('../../utils/freeRegistration.js');
+const { freeRegistrationError, requestFreeRegistration } = require('../../utils/freeRegistration.js');
 
 Page({
   data: {
@@ -382,14 +382,12 @@ Page({
     }
 
     try {
-      // Server-side registration (clientAuth.submitRegistration): limits,
-      // the timed free→paid switch and duplicate protection all live on the
-      // server now — the direct client write is retired.
-      const res = await cloud.callFunction({
-        name: 'clientAuth',
-        data: { action: 'submitRegistration', eventId: pendingEventId }
-      });
-      const r = (res && res.result) || {};
+      const r = await requestFreeRegistration(cloud, pendingEventId);
+      if (!r) {
+        app.globalData.guestTopTab = 'wallet';
+        wx.switchTab({ url: '/pages/mytickets/mytickets' });
+        return; // Keep the previous ticket when the guest selects Cancel.
+      }
       if (!r.success) {
         wx.showModal({
           title: 'Registration unchanged', content: freeRegistrationError(r), showCancel: false,

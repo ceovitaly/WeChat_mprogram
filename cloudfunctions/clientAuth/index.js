@@ -317,12 +317,14 @@ exports.main = async (event, context) => {
       return { success: true, free, tickets };
     }
 
-    if (action === 'submitRegistration') {
+    if (action === 'submitRegistration' || action === 'submitRegistrationWithConfirmation') {
       if (!eventId) return { success: false, message: 'Missing eventId' };
       const guestsRes = await db.collection('guests').where({ _openid: openid }).limit(1).get();
       const guest = (guestsRes.data || [])[0];
       return await switchFreeRegistration(cloud.database({ throwOnNotFound: false }), {
         openid, eventId, guest, validateTarget: freeEntryState,
+        requireReplacementConfirmation: action === 'submitRegistrationWithConfirmation' || event.requireReplacementConfirmation === true,
+        replacementConfirmation: event.replacementConfirmation,
         registrationData: {
           guestName: guest && (guest.nickName || guest.name) || '',
           guestAvatar: guest && guest.avatarUrl || '',
@@ -349,6 +351,8 @@ exports.main = async (event, context) => {
       const guest = (guestsRes.data || [])[0];
       return await switchFreeRegistration(cloud.database({ throwOnNotFound: false }), {
         openid, eventId, guest, validateTarget: freeEntryState,
+        requireReplacementConfirmation: action === 'submitRegistrationWithConfirmation' || event.requireReplacementConfirmation === true,
+        replacementConfirmation: event.replacementConfirmation,
         registrationData: {
           guestName: guest && (guest.nickName || guest.name) || '',
           guestAvatar: guest && guest.avatarUrl || '',

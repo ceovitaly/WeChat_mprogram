@@ -1,0 +1,14 @@
+{
+  "function": "clientAuth",
+  "environment": "cloud1-9g2yewom6a2d5467",
+  "status": "Active",
+  "index_sha256": "414ce8821cf4357fd3a0e0908cbb4295f81727315ecea4e54189cb0f4f39c50d",
+  "overlay_sha256": {
+    "index.js": "414ce8821cf4357fd3a0e0908cbb4295f81727315ecea4e54189cb0f4f39c50d",
+    "switchFreeRegistration.js": "40bab8f14fd7301044cb810317cf1dbeeffcc8212fa0771ccc6501cabe2318b2"
+  },
+  "unrelated_bundle_files_unchanged": true,
+  "runtime_and_timeout_unchanged": true,
+  "tests_builds_or_app_walkthroughs_run": false,
+  "verification": "Exact live bundle downloaded and compared; no event/registration business handler invoked."
+}

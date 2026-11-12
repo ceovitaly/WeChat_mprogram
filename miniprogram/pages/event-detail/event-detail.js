@@ -2,7 +2,7 @@ const app = getApp();
 const auth = require('../../utils/auth.js');
 const { resolveEventImages, callFunction, getTempUrls } = require('../../utils/cloud.js');
 const pay = require('../../utils/pay.js');
-const { freeRegistrationError } = require('../../utils/freeRegistration.js');
+const { freeRegistrationError, requestFreeRegistration } = require('../../utils/freeRegistration.js');
 
 // Short competitor-style datetime line ("Sat, Jul 18 • 22:00") for the
 // info block and the related-events cards. Rendered uppercase via CSS
@@ -429,6 +429,7 @@ Page({
     }
 
     auth.getAuth((guest) => {
+      if (this._freeRegistrationPending) return;
       if (!guest) {
         // Anonymous: route into the existing register flow (which stores
         // pendingEventId via goRegister) instead of the old dead-end
@@ -437,18 +438,11 @@ Page({
         return;
       }
 
-      wx.showLoading({ title: 'Registering...', mask: true });
       const eventId = this.data.event._id;
-
-      // Server-side registration (clientAuth.submitRegistration): limits,
-      // the timed free→paid switch and duplicate protection all live on the
-      // server now — the direct client write is retired.
-      this.cloud.callFunction({
-        name: 'clientAuth',
-        data: { action: 'submitRegistration', eventId },
-        success: (res) => {
-          wx.hideLoading();
-          const r = (res && res.result) || {};
+      this._freeRegistrationPending = true;
+      requestFreeRegistration(this.cloud, eventId)
+        .then((r) => {
+          if (!r) return; // Cancel: no registration or cancellation was written.
           if (!r.success) {
             console.error('Registration failed:', r);
             wx.showModal({ title: 'Registration unchanged', content: freeRegistrationError(r), showCancel: false });
@@ -485,13 +479,12 @@ Page({
               wx.switchTab({ url: '/pages/mytickets/mytickets' });
             }
           }, 1200);
-        },
-        fail: (err) => {
-          wx.hideLoading();
+        })
+        .catch((err) => {
           console.error('Registration failed:', err);
           wx.showToast({ title: 'Registration failed', icon: 'none' });
-        }
-      });
+        })
+        .finally(() => { this._freeRegistrationPending = false; });
     });
   },
 
