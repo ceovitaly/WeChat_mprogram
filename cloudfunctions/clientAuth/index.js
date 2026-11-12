@@ -3,6 +3,8 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const { parseToken } = require('./checkinTokens');
 const { loadWechatConfig } = require('./wechatConfig');
+const { switchFreeRegistration } = require('./switchFreeRegistration');
+const { retentionReason } = require('./freeRegistrationPolicy');
 
 // ─── Door check-in tokens ───────────────────────────────────────────────────
 // Validator side of manageApplications' issueCheckinToken — see the design
@@ -72,7 +74,9 @@ async function supersedeOverlappingMarks(openid, eventId, excludeRegId) {
       .then(res => { eventDocs[id] = res.data; })
       .catch(() => {})
   ));
-  const toClear = marked.filter(r => windowsOverlap(thisWindow, eventWindowMs(eventDocs[r.eventId])));
+  // Visits retained by the free-entry rule must survive a later venue scan.
+  const toClear = marked.filter(r => !retentionReason(r, eventDocs[r.eventId], Date.now()) &&
+    windowsOverlap(thisWindow, eventWindowMs(eventDocs[r.eventId])));
   await Promise.all(toClear.map(r =>
     db.collection('registrations').doc(r._id).update({
       data: { arrivedAt: null, checkedInAt: null }
@@ -315,135 +319,47 @@ exports.main = async (event, context) => {
 
     if (action === 'submitRegistration') {
       if (!eventId) return { success: false, message: 'Missing eventId' };
-      const evRes = await db.collection('events').doc(eventId).get().catch(() => null);
-      const eventDoc = evRes && evRes.data;
-      if (!eventDoc) return { success: false, message: 'Event not found' };
-      if (eventEnded(eventDoc)) {
-        return { success: true, code: 'EVENT_OVER' };
-      }
-      // One registration per (event, guest) — the deterministic id enforces it.
-      const regId = eventId + '_' + openid;
-      const existing = await db.collection('registrations').doc(regId).get().catch(() => null);
-      if (existing && existing.data) {
-        return { success: true, code: 'ALREADY_REGISTERED' };
-      }
-      const free = await freeEntryState(eventDoc);
-      if (!free.available) {
-        return { success: true, code: free.reason === 'time' ? 'FREE_CLOSED_BY_TIME' : 'FREE_SOLD_OUT' };
-      }
       const guestsRes = await db.collection('guests').where({ _openid: openid }).limit(1).get();
-      const guest = (guestsRes.data && guestsRes.data[0]) || {};
-      try {
-        await db.collection('registrations').add({
-          data: {
-            _id: regId,
-            _openid: openid,
-            eventId,
-            eventTitle: eventDoc.title || '',
-            eventDate: eventDoc.date || '',
-            guestName: guest.nickName || guest.name || '',
-            guestAvatar: guest.avatarUrl || '',
-            guestPhone: guest.phone || '',
-            promoCode: guest.promoCode || '',
-            promoterId: guest.promoterId || '',
-            promoterName: guest.promoterName || '',
-            ticketType: 'Free Entry',
-            status: 'confirmed',
-            createdAt: db.serverDate()
-          }
-        });
-      } catch (addErr) {
-        const msg = String((addErr && (addErr.errMsg || addErr.message)) || addErr);
-        if (/duplicat|already exist/i.test(msg)) return { success: true, code: 'ALREADY_REGISTERED' };
-        throw addErr;
-      }
-      // Instant stored counter (read side: attachGuestCounts).
-      await db.collection('events').doc(eventId).update({
-        data: { guestCount: db.command.inc(1), guestCountSyncedAt: db.serverDate() }
-      }).catch(() => {});
-      return { success: true };
+      const guest = (guestsRes.data || [])[0];
+      return await switchFreeRegistration(cloud.database({ throwOnNotFound: false }), {
+        openid, eventId, guest, validateTarget: freeEntryState,
+        registrationData: {
+          guestName: guest && (guest.nickName || guest.name) || '',
+          guestAvatar: guest && guest.avatarUrl || '',
+          guestPhone: guest && guest.phone || '',
+          promoCode: guest && guest.promoCode || '',
+          promoterId: guest && guest.promoterId || '',
+          promoterName: guest && guest.promoterName || ''
+        }
+      });
     }
-    
-    // Action: complete registration with promo code
+
+    // Legacy promo-code entry uses exactly the same atomic free-entry policy.
     if (action === 'completeRegistration') {
       if (!promoCode || !eventId || !ticketType) {
         return { success: false, message: 'Missing required fields' };
       }
-      
-      // Verify promo code
       const promoterCheck = await db.collection('promoters')
-        .where({ promoCode: promoCode.toUpperCase().trim() })
-        .get();
-
-      if (promoterCheck.data.length === 0 || promoterCheck.data[0].status === 'suspended' || promoterCheck.data[0].status === 'revoked') {
+        .where({ promoCode: promoCode.toUpperCase().trim() }).get();
+      const promoter = (promoterCheck.data || [])[0];
+      if (!promoter || promoter.status === 'suspended' || promoter.status === 'revoked') {
         return { success: false, message: 'Invalid promo code' };
       }
-      
-      const promoter = promoterCheck.data[0];
-      
-      // Fetch user data
-      const guests = await db.collection('guests')
-        .where({ _openid: openid })
-        .get();
-      
-      if (guests.data.length === 0) {
-        return { success: false, message: 'User profile not found' };
-      }
-      
-      const user = guests.data[0];
-      
-      // Check for existing registration
-      const existingReg = await db.collection('registrations')
-        .where({
-          _openid: openid,
-          eventId: eventId
-        })
-        .get();
-      
-      if (existingReg.data.length > 0) {
-        return { success: false, message: 'Already registered' };
-      }
-      
-      // Fetch event data
-      const evRes = await db.collection('events').doc(eventId).get();
-      const eventDoc = evRes.data;
-      // Same gates as submitRegistration: this legacy path must not be a
-      // bypass around the limits / timed free→paid switch / event end.
-      if (eventEnded(eventDoc)) {
-        return { success: true, code: 'EVENT_OVER' };
-      }
-      const freeState = await freeEntryState(eventDoc);
-      if (!freeState.available) {
-        return { success: true, code: freeState.reason === 'time' ? 'FREE_CLOSED_BY_TIME' : 'FREE_SOLD_OUT' };
-      }
-
-      // Create registration
-      await db.collection('registrations').add({
-        data: {
-          _openid: openid,
-          eventId: eventId,
-          eventTitle: eventDoc.title || '',
-          eventDate: eventDoc.date || '',
-          guestName: user.nickName || user.name || '',
-          guestAvatar: user.avatarUrl || '',
-          guestPhone: user.phone || '',
+      const guestsRes = await db.collection('guests').where({ _openid: openid }).limit(1).get();
+      const guest = (guestsRes.data || [])[0];
+      return await switchFreeRegistration(cloud.database({ throwOnNotFound: false }), {
+        openid, eventId, guest, validateTarget: freeEntryState,
+        registrationData: {
+          guestName: guest && (guest.nickName || guest.name) || '',
+          guestAvatar: guest && guest.avatarUrl || '',
+          guestPhone: guest && guest.phone || '',
+          promoCode: promoCode.toUpperCase().trim(),
           promoterId: promoter._id,
-          promoterName: promoter.name,
-          ticketType: ticketType,
-          status: 'confirmed',
-          createdAt: db.serverDate()
+          promoterName: promoter.name
         }
       });
-
-      // New registration → bump the event's stored guest counter (read side:
-      // attachGuestCounts in manageApplications).
-      await db.collection('events').doc(eventId).update({
-        data: { guestCount: db.command.inc(1), guestCountSyncedAt: db.serverDate() }
-      }).catch(() => {});
-      
-      return { success: true, message: 'Registration successful' };
     }
-    
+
     if (action === 'verifyPromoCode') {
       if (!promoCode) {
         return { success: false, message: 'No promo code provided' };

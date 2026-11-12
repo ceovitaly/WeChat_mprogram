@@ -739,6 +739,14 @@ button::after { border: none; }
   color: var(--text-secondary);
 }
 
+.free-registration-note {
+  display: block;
+  margin: 0 0 24rpx;
+  font-size: 23rpx;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
 .ticket-price-tag {
   font-size: 30rpx;
   font-weight: 700;

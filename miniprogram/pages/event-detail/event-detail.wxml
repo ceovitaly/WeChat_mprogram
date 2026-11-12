@@ -261,6 +261,8 @@
       <text class="ticket-price-tag free-tag">FREE</text>
     </view>
 
+    <text wx:if="{{selectedTicketId === 'free' && !isRegistered}}" class="free-registration-note">Choosing another free event replaces your previous free entry, including a visit shorter than 3 hours. Visits lasting 3+ hours or to an ended event are kept. Paid tickets are unaffected.</text>
+
     <!-- Paid tickets from tickets array -->
     <view
       wx:for="{{event.tickets}}"

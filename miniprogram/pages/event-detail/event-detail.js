@@ -2,6 +2,7 @@ const app = getApp();
 const auth = require('../../utils/auth.js');
 const { resolveEventImages, callFunction, getTempUrls } = require('../../utils/cloud.js');
 const pay = require('../../utils/pay.js');
+const { freeRegistrationError } = require('../../utils/freeRegistration.js');
 
 // Short competitor-style datetime line ("Sat, Jul 18 • 22:00") for the
 // info block and the related-events cards. Rendered uppercase via CSS
@@ -106,6 +107,11 @@ Page({
       if (id) this.getEventDetails(id);
       this.checkProfile();
     });
+  },
+
+  onShow: function() {
+    // Another event may have replaced this page's former free registration.
+    if (this.cloud && this.data.event) this.checkIfRegistered(this.data.event._id);
   },
 
   getEventDetails: function(id) {
@@ -295,6 +301,8 @@ Page({
           if (res.data.length > 0) {
             const paid = !!res.data[0].paid;
             this.setData({ isRegistered: true, registrationPaid: paid, canUpgrade: this._computeCanUpgrade(paid) });
+          } else {
+            this.setData({ isRegistered: false, registrationPaid: false, canUpgrade: false });
           }
         },
         fail: err => console.error('Check registration failed:', err)
@@ -443,7 +451,7 @@ Page({
           const r = (res && res.result) || {};
           if (!r.success) {
             console.error('Registration failed:', r);
-            wx.showToast({ title: 'Registration failed', icon: 'none' });
+            wx.showModal({ title: 'Registration unchanged', content: freeRegistrationError(r), showCancel: false });
             return;
           }
           if (r.code === 'ALREADY_REGISTERED') {

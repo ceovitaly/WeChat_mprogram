@@ -2,6 +2,7 @@
 const app = getApp();
 const auth = require('../../utils/auth.js');
 const tabDots = require('../../utils/tab-dots.js');
+const { freeRegistrationError } = require('../../utils/freeRegistration.js');
 
 Page({
   data: {
@@ -389,7 +390,13 @@ Page({
         data: { action: 'submitRegistration', eventId: pendingEventId }
       });
       const r = (res && res.result) || {};
-      if (!r.success) throw new Error(r.message || 'failed');
+      if (!r.success) {
+        wx.showModal({
+          title: 'Registration unchanged', content: freeRegistrationError(r), showCancel: false,
+          complete: () => wx.reLaunch({ url: '/pages/feed/feed' })
+        });
+        return;
+      }
       if (r.code === 'EVENT_OVER') {
         wx.showToast({ title: 'Event has ended', icon: 'none' });
         setTimeout(() => wx.reLaunch({ url: '/pages/feed/feed' }), 1500);
