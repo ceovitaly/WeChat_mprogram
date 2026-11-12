@@ -50,9 +50,11 @@ function attendanceMs(reg, ev) {
 
 function retentionReason(reg, ev, now) {
   if (!isFreeRegistration(reg)) return 'protected_ticket';
-  if (reg.freeVisitRetainedAt) return 'retained_visit';
   if (eventHasFinished(ev, now)) return 'event_finished';
   const since = attendanceMs(reg, ev);
+  // A revoked arrival must not retain its exemption after a later new entry.
+  const retainedAt = timestampMs(reg.freeVisitRetainedAt);
+  if (Number.isFinite(since) && Number.isFinite(retainedAt) && since <= retainedAt) return 'retained_visit';
   if (Number.isFinite(since) && now - since >= THREE_HOURS_MS) return 'three_hours';
   return '';
 }
