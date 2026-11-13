@@ -4,38 +4,42 @@ const crypto = require('crypto');
 const { isFreeRegistration, eventHasFinished, attendanceMs, retentionReason, timestampMs } = require('./freeRegistrationPolicy');
 
 function policyError(code, message) {
-  const err = new Error(message);
-  err.policyCode = code;
-  return err;
+  const error = new Error(message);
+  error.policyCode = code;
+  return error;
 }
 
-async function readOwnedRegistrations(db, openid) {
-  const rows = [];
-  const pageSize = 100;
-  for (let offset = 0; offset < 50000; offset += pageSize) {
-    const res = await db.collection('registrations').where({ _openid: openid })
-      .orderBy('_id', 'asc').skip(offset).limit(pageSize).get();
-    rows.push(...(res.data || []));
-    if ((res.data || []).length < pageSize) return rows;
+// Bootstrap ONE recent entry only for profiles without a current-booking
+// cursor. Yesterday covers overnight Shanghai events; never scan all history.
+async function currentEntryFallback(db, openid, eventId, guest, since) {
+  if (guest.activeFreeRegistrationId) return null;
+  try {
+    const result = await db.collection('registrations').where({
+      _openid: openid, eventId: db.command.neq(eventId), ticketType: 'Free Entry',
+      paid: db.command.neq(true), eventDate: db.command.gte(since)
+    }).orderBy('createdAt', 'desc').limit(1).get();
+    return (result.data || [])[0] || null;
+  } catch (_) {
+    return null; // Preserve unavailable old data; do not prohibit a new booking.
   }
-  throw policyError('REGISTRATION_HISTORY_TOO_LARGE', 'Registration history could not be read completely');
 }
 
-// The caller passes a database configured with throwOnNotFound:false. Every
-// old-registration removal, new registration, owner cursor and event count is
-// committed together. Never delete the first ticket before the second is valid.
 async function switchFreeRegistration(db, options) {
   const { openid, eventId, guest, registrationData, validateTarget } = options;
   if (!openid || !guest || !guest._id) {
     return { success: false, code: 'UNAUTHORIZED', message: 'Guest profile is required' };
   }
   const regId = eventId + '_' + openid;
-  const owned = await readOwnedRegistrations(db, openid);
-  const candidateIds = owned.filter(isFreeRegistration).map(r => r._id);
-  // Same-event paid/legacy records must also prevent a duplicate free ticket.
-  owned.filter(r => r.eventId === eventId).forEach(r => candidateIds.push(r._id));
+  const since = new Date(Date.now() + 8 * 3600000 - 86400000).toISOString().slice(0, 10);
+  // This lookup is scoped to the destination, not guest history.
+  const destination = await db.collection('registrations')
+    .where({ _openid: openid, eventId }).limit(1).get();
+  const destinationId = ((destination.data || [])[0] || {})._id;
+  const fallback = await currentEntryFallback(db, openid, eventId, guest, since);
+  let preservePrevious = false;
+  let previousSnapshot = fallback;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 4; attempt++) {
     const tx = await db.startTransaction();
     try {
       const cache = new Map();
@@ -47,6 +51,14 @@ async function switchFreeRegistration(db, options) {
         }
         return cache.get(key);
       };
+      const optionalRead = async (collection, id) => {
+        try { return await read(collection, id); }
+        catch (_) {
+          const error = new Error('Previous entry lookup unavailable');
+          error.previousLookupUnavailable = true;
+          throw error;
+        }
+      };
       const owner = await read('guests', guest._id);
       if (!owner || owner._openid !== openid) throw policyError('UNAUTHORIZED', 'Guest profile changed');
       const target = await read('events', eventId);
@@ -55,137 +67,125 @@ async function switchFreeRegistration(db, options) {
       if ((target.status && target.status !== 'active') || eventHasFinished(target, now)) {
         throw policyError('EVENT_OVER', 'Event has ended');
       }
-      const ids = [...new Set(candidateIds.concat(owner.activeFreeRegistrationId || [], regId))];
-      if (ids.length > 200) throw policyError('REGISTRATION_HISTORY_TOO_LARGE', 'Registration history needs administrative review');
-      const rows = [];
-      for (const id of ids) {
-        const row = await read('registrations', id);
-        if (row && id === regId && row._openid !== openid) {
-          throw policyError('REGISTRATION_OWNER_CONFLICT', 'Existing ticket ownership needs administrative review');
-        }
-        if (row && row._openid === openid) rows.push(row);
+      const deterministic = await read('registrations', regId);
+      if (deterministic && deterministic._openid !== openid) {
+        throw policyError('REGISTRATION_OWNER_CONFLICT', 'Existing destination ticket ownership needs review');
       }
-      const current = rows.find(r => r.eventId === eventId);
-      if (current && !isFreeRegistration(current)) {
+      const legacy = !deterministic && destinationId ? await read('registrations', destinationId) : null;
+      const current = deterministic || (legacy && legacy._openid === openid && legacy.eventId === eventId ? legacy : null);
+      if (current) {
         await tx.rollback();
-        return { success: true, code: 'ALREADY_REGISTERED', replacedEventIds: [] };
+        return { success: true, code: 'ALREADY_REGISTERED', replacedEventIds: [], retainedEventIds: [] };
       }
-      if (!current) {
-        const targetOrder = await read('orders', regId);
-        if (targetOrder && !['cancelled', 'canceled', 'closed', 'failed', 'refunded'].includes(targetOrder.status)) {
-          throw policyError('REGISTRATION_PAYMENT_PENDING', 'Finish or cancel the existing payment first');
-        }
-        // All existing availability checks still run before any write.
-        const availability = await validateTarget(target);
-        if (!availability.available) {
-          throw policyError(availability.reason === 'time' ? 'FREE_CLOSED_BY_TIME' : 'FREE_SOLD_OUT', 'Free entry is closed');
+      // Only destination availability applies. Old payments, missing attendance
+      // times and unavailable old events are never registration refusal reasons.
+      const availability = await validateTarget(target);
+      if (!availability.available) {
+        throw policyError(availability.reason === 'time' ? 'FREE_CLOSED_BY_TIME' : 'FREE_SOLD_OUT', 'Free entry is closed');
+      }
+      const previousId = owner.activeFreeRegistrationId || (fallback && fallback._id);
+      let previous = null;
+      let previousEvent = null;
+      let outcome = null;
+      let retainReason = '';
+      if (previousId && previousId !== regId && previousId !== destinationId) {
+        if (preservePrevious) {
+          const snapshot = previousSnapshot && previousSnapshot._id === previousId ? previousSnapshot : null;
+          outcome = {
+            registrationId: previousId, eventId: snapshot && snapshot.eventId || owner.activeFreeEventId || '',
+            eventTitle: snapshot && snapshot.eventTitle || owner.activeFreeEventTitle || '',
+            outcome: 'kept', reason: 'unavailable'
+          };
+        } else {
+          previous = await optionalRead('registrations', previousId);
+          if (previous && previous._openid === openid && previous.eventId !== eventId && isFreeRegistration(previous)) {
+            previousSnapshot = previous;
+            // A stale cursor does not justify looking up historical events.
+            const oldSnapshot = /^\d{4}-\d{2}-\d{2}$/.test(previous.eventDate || '') && previous.eventDate < since;
+            if (!oldSnapshot) {
+              previousEvent = previous.eventId ? await optionalRead('events', previous.eventId) : null;
+              retainReason = !previousEvent ? 'unavailable' : retentionReason(previous, previousEvent, now);
+              if (!retainReason && (previous.arrivedAt || previous.scannedAt) && !Number.isFinite(attendanceMs(previous, previousEvent))) {
+                retainReason = 'unknown_arrival';
+              }
+              if (!retainReason) {
+                const order = await optionalRead('orders', previous.eventId + '_' + openid);
+                if (order && !['cancelled', 'canceled', 'closed', 'failed', 'refunded'].includes(order.status)) {
+                  retainReason = 'protected_payment';
+                }
+              }
+              const previousTitle = previousEvent && previousEvent.title || previous.eventTitle || '';
+              if (!retainReason && !previousTitle) retainReason = 'unavailable';
+              outcome = {
+                registrationId: previous._id, eventId: previous.eventId || '',
+                eventTitle: previousTitle,
+                outcome: retainReason ? 'kept' : 'cancelled', reason: retainReason || 'switch_event'
+              };
+            }
+          }
         }
       }
-      const removals = [];
-      const retained = [];
-      const eventDocs = new Map([[eventId, target]]);
-      for (const row of rows) {
-        if (row.eventId === eventId || !isFreeRegistration(row)) continue;
-        const previous = await read('events', row.eventId);
-        if (!previous) {
-          // A successfully read but missing event cannot be a competing live
-          // booking. Keep its orphaned registration/history untouched. Database
-          // read errors still throw from read(); they are not treated as absence.
-          continue;
-        }
-        eventDocs.set(row.eventId, previous);
-        const reason = retentionReason(row, previous, now);
-        if (reason) {
-          if (reason === 'three_hours') retained.push(row);
-          continue;
-        }
-        if ((row.arrivedAt || row.scannedAt) && !Number.isFinite(attendanceMs(row, previous))) {
-          throw policyError('REGISTRATION_TIME_UNAVAILABLE', 'Previous arrival time needs administrative review');
-        }
-        const order = await read('orders', row.eventId + '_' + openid);
-        if (order && !['cancelled', 'canceled', 'closed', 'failed', 'refunded'].includes(order.status)) {
-          throw policyError('REGISTRATION_PAYMENT_PENDING', 'A previous ticket payment must be resolved first');
-        }
-        removals.push(row);
-      }
-      // New Alpha clients request a write-free preview before replacing an
-      // entry. Bind confirmation to this owner, destination and exact records
-      // (including their current arrival/revision), not a blanket boolean.
-      // Older published clients retain their existing protocol until upgraded.
-      if (options.requireReplacementConfirmation === true && removals.length > 0) {
-        const replacements = removals.map(row => ({
-          registrationId: row._id,
-          eventId: row.eventId,
-          eventTitle: eventDocs.get(row.eventId).title || row.eventTitle || row.eventId
-        })).sort((a, b) => a.registrationId.localeCompare(b.registrationId));
-        const scope = replacements.map(item => {
-          const row = removals.find(r => r._id === item.registrationId);
-          return [item.registrationId, item.eventId, item.eventTitle,
-            timestampMs(row.createdAt) || null, timestampMs(row.updatedAt) || null,
-            row.arrivedAt || '', timestampMs(row.checkedInAt) || null, timestampMs(row.scannedAt) || null];
-        });
-        const confirmation = crypto.createHash('sha256')
-          .update(JSON.stringify([openid, eventId, scope])).digest('hex');
+      const cancelling = outcome && outcome.outcome === 'cancelled';
+      const notify = options.requireReplacementConfirmation === true && outcome &&
+        (cancelling || options.notifyRegistrationConsequences === true);
+      if (notify) {
+        const confirmation = crypto.createHash('sha256').update(JSON.stringify([
+          openid, eventId, outcome.registrationId, outcome.eventId, outcome.eventTitle,
+          outcome.outcome, outcome.reason, previous ? timestampMs(previous.createdAt) || null : null
+        ])).digest('hex');
         if (options.replacementConfirmation !== confirmation) {
           await tx.rollback();
           return {
             success: true, code: 'REGISTRATION_CONFIRMATION_REQUIRED',
-            replacements, replacementConfirmation: confirmation
+            replacements: cancelling ? [outcome] : [], previousRegistrations: [outcome],
+            replacementConfirmation: confirmation
           };
         }
       }
-      // Every read and policy gate precedes the first write.
-      const countChanges = new Map();
-      for (const row of removals) {
-        await tx.collection('registrations').doc(row._id).remove();
-        countChanges.set(row.eventId, (countChanges.get(row.eventId) || 0) - 1);
-      }
-      for (const row of retained) {
-        await tx.collection('registrations').doc(row._id).update({ data: {
-          freeVisitRetainedAt: db.serverDate(), freeVisitRetentionReason: 'three_hours', updatedAt: db.serverDate()
-        } });
-      }
-      if (!current) {
-        // The server-derived owner and canonical free type cannot be overridden.
-        await tx.collection('registrations').doc(regId).set({ data: {
-          ...registrationData, _openid: openid, eventId,
-          eventTitle: target.title || '', eventDate: target.date || '',
-          ticketType: 'Free Entry', status: 'confirmed', createdAt: db.serverDate(), updatedAt: db.serverDate()
-        } });
-        countChanges.set(eventId, (countChanges.get(eventId) || 0) + 1);
-      }
-      // Touching the shared profile serializes even two requests aimed at
-      // different events. A retry reads the latest cursor inside its transaction.
-      await tx.collection('guests').doc(guest._id).update({ data: {
-        activeFreeRegistrationId: current ? current._id : regId,
-        activeFreeEventId: eventId, freeRegistrationUpdatedAt: db.serverDate()
+      // Apply only this current-entry consequence. No other history is read,
+      // removed or revalidated, and no old-record problem prohibits the booking.
+      if (cancelling) await tx.collection('registrations').doc(previous._id).remove();
+      await tx.collection('registrations').doc(regId).set({ data: {
+        ...registrationData, _openid: openid, eventId, eventTitle: target.title || '', eventDate: target.date || '',
+        ticketType: 'Free Entry', status: 'confirmed', createdAt: db.serverDate(), updatedAt: db.serverDate()
       } });
-      for (const [id, delta] of countChanges) {
-        const ev = eventDocs.get(id);
-        await tx.collection('events').doc(id).update({ data: {
-          guestCount: Math.max(0, (Number(ev.guestCount) || 0) + delta),
+      await tx.collection('guests').doc(guest._id).update({ data: {
+        activeFreeRegistrationId: regId, activeFreeEventId: eventId, activeFreeEventTitle: target.title || '',
+        freeRegistrationUpdatedAt: db.serverDate()
+      } });
+      if (cancelling) {
+        await tx.collection('events').doc(previous.eventId).update({ data: {
+          guestCount: Math.max(0, (Number(previousEvent.guestCount) || 0) - 1),
           guestCountSyncedAt: db.serverDate(), registrationsChangedAt: db.serverDate(),
-          ...(delta < 0 ? { freeRegistrationRemovalVersion: (Number(ev.freeRegistrationRemovalVersion) || 0) + 1 } : {})
+          freeRegistrationRemovalVersion: (Number(previousEvent.freeRegistrationRemovalVersion) || 0) + 1
         } });
       }
+      await tx.collection('events').doc(eventId).update({ data: {
+        guestCount: (Number(target.guestCount) || 0) + 1,
+        guestCountSyncedAt: db.serverDate(), registrationsChangedAt: db.serverDate()
+      } });
       await tx.commit();
       return {
-        success: true,
-        ...(current ? { code: 'ALREADY_REGISTERED' } : {}),
-        replacedEventIds: [...new Set(removals.map(r => r.eventId))],
-        retainedEventIds: [...new Set(retained.map(r => r.eventId))]
+        success: true, replacedEventIds: cancelling ? [previous.eventId] : [],
+        retainedEventIds: outcome && !cancelling && outcome.eventId ? [outcome.eventId] : []
       };
-    } catch (err) {
+    } catch (error) {
       await tx.rollback().catch(() => {});
-      if (err.policyCode) return {
-        success: /^(EVENT_|FREE_)/.test(err.policyCode), code: err.policyCode, message: err.message
+      if (error.previousLookupUnavailable && attempt < 3) {
+        // A fresh transaction can still register the valid destination while
+        // preserving the previous entry whose data could not be verified.
+        preservePrevious = true;
+        continue;
+      }
+      if (error.policyCode) return {
+        success: /^(EVENT_|FREE_)/.test(error.policyCode), code: error.policyCode, message: error.message
       };
-      const text = String(err && (err.errMsg || err.message || err.code) || err);
-      if (attempt < 2 && /conflict|transaction.*abort|transaction.*retry|lock.*(fail|timeout)/i.test(text)) continue;
-      throw err;
+      const text = String(error && (error.errMsg || error.message || error.code) || error);
+      if (attempt < 3 && /conflict|transaction.*abort|transaction.*retry|lock.*(fail|timeout)/i.test(text)) continue;
+      throw error;
     }
   }
-  throw new Error('Free registration transaction could not complete');
+  throw new Error('Registration transaction could not complete');
 }
 
 module.exports = { switchFreeRegistration };

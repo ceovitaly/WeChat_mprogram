@@ -1,0 +1,26 @@
+{
+  "environment": "cloud1-9g2yewom6a2d5467",
+  "functions": {
+    "checkInGuest": {
+      "status": "Active",
+      "files": {
+        "index.js": "aa5cfcc94a557add28d99aea665dd4bdfdcc15de9156c3d81b513e15391279b0"
+      },
+      "runtime_and_timeout_unchanged": true,
+      "unrelated_bundle_files_unchanged": true
+    },
+    "clientAuth": {
+      "status": "Active",
+      "files": {
+        "index.js": "d4c8a54c370ea3362640d7cc32bf8cfdfc007a3e2565104625bdc2571283e98f",
+        "switchFreeRegistration.js": "df98aa6305b530aa0354757457a4daf22312ea68e28bffff724131c2b08fc3fa"
+      },
+      "runtime_and_timeout_unchanged": true,
+      "unrelated_bundle_files_unchanged": true
+    }
+  },
+  "staff_or_guest_records_written_by_deployment": false,
+  "payments_or_login_functions_deployed": false,
+  "tests_builds_or_app_walkthroughs_run": false,
+  "verification": "Downloaded exact deployed bundles and compared all file hashes. Registration/arrival handlers were not invoked."
+}

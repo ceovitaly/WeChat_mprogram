@@ -4,7 +4,6 @@ const db = cloud.database();
 const { parseToken } = require('./checkinTokens');
 const { loadWechatConfig } = require('./wechatConfig');
 const { switchFreeRegistration } = require('./switchFreeRegistration');
-const { retentionReason } = require('./freeRegistrationPolicy');
 
 // ─── Door check-in tokens ───────────────────────────────────────────────────
 // Validator side of manageApplications' issueCheckinToken — see the design
@@ -18,29 +17,6 @@ function parseCheckinToken(token) {
   return parseToken(token, { graceSec: CHECKIN_GRACE_SEC });
 }
 
-// ─── One guest — one simultaneous venue ─────────────────────────────────────
-// Same rule as checkInGuest (separate deploy — helpers duplicated verbatim,
-// keep in sync). Absolute-ms window of an event: date "YYYY-MM-DD" plus
-// startTime/endTime "HH:MM"; Date.UTC on both sides keeps the comparison
-// timezone-independent, and an endTime earlier than startTime means the party
-// crosses midnight (+1 day).
-function eventWindowMs(event) {
-  if (!event || !event.date || !event.startTime || !event.endTime) return null;
-  const parse = (date, time, dayShift) => {
-    const [y, m, d] = date.split('-').map(Number);
-    const [hh, mm] = time.split(':').map(Number);
-    return Date.UTC(y, m - 1, d + (dayShift || 0), hh, mm, 0);
-  };
-  const start = parse(event.date, event.startTime);
-  let end = parse(event.date, event.endTime);
-  if (end <= start) end = parse(event.date, event.endTime, 1);
-  return { start, end };
-}
-
-function windowsOverlap(a, b) {
-  return !!(a && b && a.start < b.end && b.start < a.end);
-}
-
 // arrivedAt is a "HH:MM" display/sort string in the venue's local time
 // (Shanghai, UTC+8) — a counter's device writes the same format from its
 // clock, so the scan-generated mark must too. Cloud functions run in UTC.
@@ -48,41 +24,6 @@ function shanghaiHHMM() {
   const d = new Date(Date.now() + 8 * 3600 * 1000);
   const p = (n) => String(n).padStart(2, '0');
   return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes());
-}
-
-// Clears the guest's arrival marks on events whose window overlaps eventId's
-// (they physically moved venues — last venue wins). Marks on non-overlapping
-// (sequential) events are kept. Mirrors the logic in checkInGuest; returns
-// the superseded events' titles for optional caller feedback.
-async function supersedeOverlappingMarks(openid, eventId, excludeRegId) {
-  const thisEventRes = await db.collection('events').doc(eventId).get().catch(() => null);
-  const thisWindow = eventWindowMs(thisEventRes && thisEventRes.data);
-  if (!thisWindow) return [];
-  const othersRes = await db.collection('registrations')
-    .where({ _openid: openid })
-    .limit(1000)
-    .get();
-  // Same-eventId excluded: a legacy duplicate registration of the SAME event
-  // must never clear its own event's mark.
-  const marked = (othersRes.data || []).filter(r =>
-    r.arrivedAt && r._id !== excludeRegId && r.eventId !== eventId
-  );
-  const eventIds = Array.from(new Set(marked.map(r => r.eventId)));
-  const eventDocs = {};
-  await Promise.all(eventIds.map(id =>
-    db.collection('events').doc(id).get()
-      .then(res => { eventDocs[id] = res.data; })
-      .catch(() => {})
-  ));
-  // Visits retained by the free-entry rule must survive a later venue scan.
-  const toClear = marked.filter(r => !retentionReason(r, eventDocs[r.eventId], Date.now()) &&
-    windowsOverlap(thisWindow, eventWindowMs(eventDocs[r.eventId])));
-  await Promise.all(toClear.map(r =>
-    db.collection('registrations').doc(r._id).update({
-      data: { arrivedAt: null, checkedInAt: null }
-    })
-  ));
-  return toClear.map(r => (eventDocs[r.eventId] && eventDocs[r.eventId].title) || r.eventId);
 }
 
 // Same normalization as the admin app's phone matcher (utils/phoneMatch.js):
@@ -324,6 +265,7 @@ exports.main = async (event, context) => {
       return await switchFreeRegistration(cloud.database({ throwOnNotFound: false }), {
         openid, eventId, guest, validateTarget: freeEntryState,
         requireReplacementConfirmation: action === 'submitRegistrationWithConfirmation' || event.requireReplacementConfirmation === true,
+        notifyRegistrationConsequences: event.registrationNoticeVersion === 2,
         replacementConfirmation: event.replacementConfirmation,
         registrationData: {
           guestName: guest && (guest.nickName || guest.name) || '',
@@ -352,6 +294,7 @@ exports.main = async (event, context) => {
       return await switchFreeRegistration(cloud.database({ throwOnNotFound: false }), {
         openid, eventId, guest, validateTarget: freeEntryState,
         requireReplacementConfirmation: action === 'submitRegistrationWithConfirmation' || event.requireReplacementConfirmation === true,
+        notifyRegistrationConsequences: event.registrationNoticeVersion === 2,
         replacementConfirmation: event.replacementConfirmation,
         registrationData: {
           guestName: guest && (guest.nickName || guest.name) || '',
@@ -432,8 +375,7 @@ exports.main = async (event, context) => {
       // Repeat scan (or the row is already marked by a counter tap): reply
       // with an explicit "already" flag so the guest gets told instead of a
       // replayed success. Marks stay idempotent — the first scan/mark keeps
-      // its times — and the overlap rule still runs below (a scan at THIS
-      // venue keeps winning over overlapping events).
+      // its original arrival and scan timestamps.
       const already = !!(reg.scannedAt || reg.arrivedAt);
       const patch = {};
       if (!reg.scannedAt) patch.scannedAt = db.serverDate();
@@ -444,9 +386,8 @@ exports.main = async (event, context) => {
       if (Object.keys(patch).length > 0) {
         await db.collection('registrations').doc(reg._id).update({ data: patch });
       }
-      // Same one-guest-one-simultaneous-venue rule as the counter tap: a scan
-      // at this venue supersedes the guest's marks on overlapping events.
-      const supersededEvents = await supersedeOverlappingMarks(openid, parsed.eventId, reg._id);
+      // Registration changes handle the current entry; scanning never rechecks history.
+      const supersededEvents = [];
       return { success: true, already, guestName: reg.guestName || '', supersededEvents };
     }
 
