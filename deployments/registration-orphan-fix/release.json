@@ -1,0 +1,10 @@
+{
+  "function": "clientAuth",
+  "environment": "cloud1-9g2yewom6a2d5467",
+  "status": "Active",
+  "switch_helper_sha256": "3ba2b6249fca6483e59094e7c41d7f81ff1b7e21f0c2b0dae8392b68a11147fe",
+  "unrelated_bundle_files_unchanged": true,
+  "runtime_and_timeout_unchanged": true,
+  "tests_builds_or_app_walkthroughs_run": false,
+  "verification": "Exact live bundle downloaded and compared; no event/registration business handler invoked."
+}

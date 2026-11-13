@@ -87,7 +87,12 @@ async function switchFreeRegistration(db, options) {
       for (const row of rows) {
         if (row.eventId === eventId || !isFreeRegistration(row)) continue;
         const previous = await read('events', row.eventId);
-        if (!previous) throw policyError('REGISTRATION_EVENT_UNAVAILABLE', 'Previous event could not be resolved');
+        if (!previous) {
+          // A successfully read but missing event cannot be a competing live
+          // booking. Keep its orphaned registration/history untouched. Database
+          // read errors still throw from read(); they are not treated as absence.
+          continue;
+        }
         eventDocs.set(row.eventId, previous);
         const reason = retentionReason(row, previous, now);
         if (reason) {
