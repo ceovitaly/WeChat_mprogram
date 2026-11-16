@@ -4,6 +4,7 @@ const db = cloud.database();
 const { parseToken } = require('./checkinTokens');
 const { loadWechatConfig } = require('./wechatConfig');
 const { switchFreeRegistration } = require('./switchFreeRegistration');
+const { eventHasFinished } = require('./freeRegistrationPolicy');
 
 // ─── Door check-in tokens ───────────────────────────────────────────────────
 // Validator side of manageApplications' issueCheckinToken — see the design
@@ -399,12 +400,12 @@ exports.main = async (event, context) => {
     // (dateFrom/dateTo) instead of fetching all history, so the ceiling is
     // never approached. Returns display-safe fields only — no `description`
     // (heavy HTML the feed cards never render; event-detail loads its own
-    // doc). The client's hasEnded() filter still decides visibility.
+    // doc). Server-owned completion keeps stored status and registration aligned.
     if (action === 'getEvents') {
       try {
         const { dateFrom, dateTo } = event;
         const _ = db.command;
-        const where = {};
+        const where = { status: 'active', isClosed: _.neq(true), deleting: _.neq(true) };
         if (dateFrom && dateTo) where.date = _.gte(dateFrom).and(_.lte(dateTo));
         else if (dateFrom) where.date = _.gte(dateFrom);
         else if (dateTo) where.date = _.lte(dateTo);
@@ -413,11 +414,37 @@ exports.main = async (event, context) => {
           .orderBy('date', 'asc')
           .limit(1000)
           .get();
+        // The feed and registration share one server-side Shanghai deadline.
+        // Persist completion here too: it must not depend on opening Admin.
+        // Leave isClosed/reports/photos to the existing archival workflow.
+        const nowMs = Date.now();
+        const activeEvents = [];
+        const rows = res.data || [];
+        for (let offset = 0; offset < rows.length; offset += 10) {
+          const batch = await Promise.all(rows.slice(offset, offset + 10).map(async ev => {
+            if (!eventHasFinished(ev, nowMs)) return ev;
+            // Do not close an event that an admin concurrently rescheduled.
+            const expected = { _id: ev._id, status: 'active', isClosed: _.neq(true), deleting: _.neq(true) };
+            ['date', 'startTime', 'endTime'].forEach(key => {
+              if (ev[key] !== undefined) expected[key] = ev[key];
+            });
+            const changed = await db.collection('events').where(expected).update({
+              data: { status: 'closed', updatedAt: db.serverDate() }
+            });
+            if (changed.stats && changed.stats.updated === 0) {
+              const fresh = (await db.collection('events').doc(ev._id).get()).data;
+              if (fresh && fresh.status === 'active' && fresh.isClosed !== true &&
+                  fresh.deleting !== true && !eventHasFinished(fresh, Date.now())) return fresh;
+            }
+            return null;
+          }));
+          activeEvents.push(...batch.filter(Boolean));
+        }
         const SAFE_FIELDS = ['_id', 'title', 'date', 'startTime', 'endTime',
           'venueName', 'venueId', 'isClosed', 'status', 'partyCapacity',
           'afterPartyCapacity', 'lateAfterPartyCapacity', 'isFree', 'isPaid',
           'hasFreeEntry', 'hasPaidPackages', 'eventsOnly', 'coverImage', 'images', 'promoImages'];
-        const data = (res.data || []).map(e => {
+        const data = activeEvents.map(e => {
           const safe = {};
           SAFE_FIELDS.forEach(k => { if (e[k] !== undefined) safe[k] = e[k]; });
           // Closed events have their photos PURGED from storage (see
