@@ -9,7 +9,7 @@ const root = path.join(__dirname, '..')
 const mini = path.join(root, 'miniprogram')
 const read = rel => fs.readFileSync(path.join(mini, rel), 'utf8')
 
-test('top navigation switches Feed, Wallet, Events and Profile as persistent tabs', () => {
+test('top navigation switches Main, Wallet, Events and Profile as persistent tabs', () => {
   const app = JSON.parse(read('app.json'))
   const component = read('components/app-tabs/index.wxml')
   const componentJs = read('components/app-tabs/index.js')
@@ -24,9 +24,11 @@ test('top navigation switches Feed, Wallet, Events and Profile as persistent tab
   ])
   assert.equal(app.tabBar.custom, true)
   assert.match(read('custom-tab-bar/index.wxss'), /display:\s*none/)
-  for (const label of ['Feed', 'Wallet', 'Events', 'Profile']) {
+  for (const label of ['Main', 'Wallet', 'Events', 'Profile']) {
     assert.match(component, new RegExp('>' + label + '<'))
   }
+  assert.doesNotMatch(component, />Feed</)
+  assert.doesNotMatch(component, /app-tab-icon|icon--(?:home|list|calendar|user)/)
   assert.equal((component.match(/class="app-tab-dot"/g) || []).length, 4)
   assert.match(componentJs, /wx\.switchTab/)
   assert.match(componentJs, /guestTopTab/)

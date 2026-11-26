@@ -387,6 +387,14 @@ page {
   gap: 20rpx;
 }
 
+/* Subtract the full gap before halving: WXSS rounds each rpx value to px,
+   so two separately rounded 10rpx offsets may not equal the 20rpx gap. */
+.event-grid-container .event-tile {
+  flex: 0 0 calc((100% - 20rpx) / 2);
+  width: calc((100% - 20rpx) / 2);
+  max-width: calc((100% - 20rpx) / 2);
+}
+
 .list-bottom-pad {
   width: 100%;
   height: calc(40rpx + env(safe-area-inset-bottom));
@@ -440,7 +448,6 @@ page {
 
 /* ===== EVENT TILE GRID ===== */
 .event-tile {
-  width: calc(50% - 10rpx);
   height: 540rpx;
   min-width: 0;
   box-sizing: border-box;
@@ -915,7 +922,7 @@ page {
 }
 
 .event-grid-container .skeleton-card {
-  width: calc(50% - 10rpx);
+  width: calc((100% - 20rpx) / 2);
 }
 
 .event-grid-container .skeleton-img {

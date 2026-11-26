@@ -395,6 +395,11 @@ Page({
         });
         return;
       }
+      if (r.code === 'EVENT_DELETING') {
+        wx.showToast({ title: 'Event is no longer available', icon: 'none' });
+        setTimeout(() => wx.reLaunch({ url: '/pages/feed/feed' }), 1500);
+        return;
+      }
       if (r.code === 'EVENT_OVER') {
         wx.showToast({ title: 'Event has ended', icon: 'none' });
         setTimeout(() => wx.reLaunch({ url: '/pages/feed/feed' }), 1500);

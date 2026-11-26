@@ -61,7 +61,7 @@
 
 .app-tab-label {
   color: var(--text-primary);
-  font-size: 24rpx;
+  font-size: 28rpx;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -85,7 +85,7 @@
 }
 
 .app-tabs-row--compact .app-tab-label {
-  font-size: 20rpx;
+  font-size: 24rpx;
 }
 
 .app-tabs-row--compact .app-tab-dot {

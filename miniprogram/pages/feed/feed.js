@@ -2,6 +2,8 @@ const app = getApp();
 const auth = require('../../utils/auth.js');
 const { resolveEventImages } = require('../../utils/cloud.js');
 const tabDots = require('../../utils/tab-dots.js');
+const { splitVisibleEvents } = require('../../utils/event-visibility.js');
+const { makeEventsRenderSafe } = require('../../utils/event-images.js');
 
 // The backend/admin owns completion. The guest feed only reads stored status.
 function isActiveFeedEvent(event) {
@@ -311,17 +313,14 @@ Page({
       '_sessionNewPaidIds',
       tabDots.getUnseenEventIds(dotCollections.paid, 'events')
     );
-    var paidEvents = filtered.filter(function(e) {
-      return e.isPaid === true || e.hasPaidPackages === true;
-    }).map(function(e) {
+    var visible = splitVisibleEvents(filtered);
+    var paidEvents = visible.events.map(function(e) {
       return Object.assign({}, e, {
         isRegistered: !!(regIds && regIds.indexOf(e._id) !== -1),
         isNew: newPaidIds.indexOf(e._id) !== -1
       });
     });
-    var marked = filtered.filter(function(e) {
-      return e.eventsOnly !== true;
-    }).map(function(e) {
+    var marked = visible.main.map(function(e) {
       return Object.assign({}, e, {
         isRegistered: !!(regIds && regIds.indexOf(e._id) !== -1),
         isNew: newFeedIds.indexOf(e._id) !== -1
@@ -335,7 +334,7 @@ Page({
       app.globalData.guestTopTab || 'feed',
       this._eventsReady === true
     );
-    tabDots.updateWalletDot(dotCollections.feed.some(function(event) {
+    tabDots.updateWalletDot(dotCollections.upcoming.some(function(event) {
       return !!(regIds && regIds.indexOf(event._id) !== -1);
     }));
   },
@@ -352,13 +351,8 @@ Page({
   // Keep notification state independent from temporary search/date filters.
   getNotificationEventCollections: function() {
     var upcoming = this.data.events.filter(isActiveFeedEvent);
-    var feed = upcoming.filter(function(event) {
-      return event.eventsOnly !== true;
-    });
-    var paid = upcoming.filter(function(event) {
-      return event.isPaid === true || event.hasPaidPackages === true;
-    });
-    return { feed: feed, paid: paid };
+    var visible = splitVisibleEvents(upcoming);
+    return { upcoming: upcoming, feed: visible.main, paid: visible.events };
   },
 
   // ===== REGISTRATIONS =====
@@ -473,7 +467,8 @@ Page({
   renderEvents: function(events, updateCache) {
     this._eventDataRevision = (this._eventDataRevision || 0) + 1;
     this.processEvents(events);
-    this.setData({ events: events, loading: false, refreshing: false });
+    var renderableEvents = makeEventsRenderSafe(events);
+    this.setData({ events: renderableEvents, loading: false, refreshing: false });
     this._eventsReady = true;
     this.applyFilters();
     if (updateCache) {
@@ -492,16 +487,18 @@ Page({
     resolveEventImages(events).then(function(resolvedEvents) {
       // An older image request must not restore an event's old active status.
       if (revision !== self._eventDataRevision) return;
+      self.processEvents(resolvedEvents || []);
+      var safeResolvedEvents = makeEventsRenderSafe(resolvedEvents);
       var byId = {};
-      (resolvedEvents || []).forEach(function(event) { if (event && event._id) byId[event._id] = event; });
+      safeResolvedEvents.forEach(function(event) { if (event && event._id) byId[event._id] = event; });
       var merged = self.data.events.map(function(event) {
         return byId[event._id] ? Object.assign({}, event, byId[event._id]) : event;
       });
-      self.processEvents(merged);
       self.setData({ events: merged });
       self.applyFilters();
       try {
-        wx.setStorageSync('events_cache', JSON.stringify(merged));
+        // Keep unresolved cloud IDs retryable in cache; page state stays sanitized.
+        wx.setStorageSync('events_cache', JSON.stringify(resolvedEvents));
         wx.setStorageSync('events_cache_time', Date.now());
       } catch (e) {}
     }).catch(function(err) {

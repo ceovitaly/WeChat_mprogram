@@ -143,6 +143,11 @@ Page({
         // endTime, compared against the current moment.
         var eventEndDate = computeEventEndDate(event.date, event.startTime, event.endTime);
         event.isEventOver = !!(eventEndDate && Date.now() > eventEndDate.getTime());
+        // Copy follows the selected ticket; inventory supplies the initial label.
+        event.hasPaidTicketOptions = !!(event.isPaid || event.hasPaidPackages ||
+          [].concat(event.tickets || [], event.paidPackages || []).some(function(ticket) {
+            return ticket && (Number(ticket.price) > 0 || ticket.paymentLink);
+          }));
         this.setData({ event });
         wx.setNavigationBarTitle({ title: event.title || '' });
 
@@ -451,6 +456,11 @@ Page({
           if (r.code === 'ALREADY_REGISTERED') {
             this.setData({ isRegistered: true, showTicketModal: false, selectedTicketId: '' });
             wx.showToast({ title: 'Already registered!', icon: 'none' });
+            return;
+          }
+          if (r.code === 'EVENT_DELETING') {
+            this.setData({ showTicketModal: false, selectedTicketId: '' });
+            wx.showToast({ title: 'Event is no longer available', icon: 'none' });
             return;
           }
           if (r.code === 'EVENT_OVER') {

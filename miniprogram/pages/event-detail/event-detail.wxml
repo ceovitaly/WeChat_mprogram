@@ -206,7 +206,7 @@
   <view wx:else class="action-row">
     <button class="btn-register pressable" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="openTicketModal">
       <view class="icon icon--list btn-register-icon"></view>
-      <text>Get on list</text>
+      <text>{{(selectedTicketId ? (selectedTicketPrice > 0 || selectedPackageLink) : event.hasPaidTicketOptions) ? 'GET THE TICKET' : 'Get on list'}}</text>
     </button>
     <button wx:if="{{event.externalLink}}" class="btn-share btn-icon-action btn-copy-link pressable" aria-label="Copy event link" hover-class="pressed" hover-start-time="20" hover-stay-time="80" bindtap="copyExternalLink">
       <view class="icon icon--link btn-copy-icon"></view>
@@ -235,7 +235,7 @@
     </view>
 
     <block wx:else>
-    <text class="modal-title">ADD ME ON GUESTS LIST</text>
+    <text class="modal-title">{{(selectedTicketId ? (selectedTicketPrice > 0 || selectedPackageLink) : event.hasPaidTicketOptions) ? 'TICKETS AVAILABLE NOW' : 'ADD ME ON GUESTS LIST'}}</text>
     <text class="modal-subtitle">{{isRegistered ? 'UPGRADE YOUR TICKET' : 'SELECT TICKET TYPE'}}</text>
 
     <!-- Free entry option. Greyed out for a registered guest: it's their

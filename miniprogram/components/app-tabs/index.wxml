@@ -2,7 +2,7 @@
   <view class="app-tabs-row {{compactNav ? 'app-tabs-row--compact' : ''}}" style="height:{{navBarHeight}}px; width:{{navRowWidth}}px">
     <view class="app-tab {{activeTab === 'feed' ? 'app-tab--active' : ''}}" hover-class="app-tab--pressed" data-tab="feed" bindtap="onTabTap">
       <view class="app-tab-label-wrap">
-        <text class="app-tab-label">Feed</text>
+        <text class="app-tab-label">Main</text>
         <view wx:if="{{dots.feed}}" class="app-tab-dot"></view>
       </view>
     </view>

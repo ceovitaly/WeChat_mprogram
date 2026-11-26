@@ -515,7 +515,8 @@ page {
    match the feed page's .get-ticket-btn (feed.wxss) so the same CTA
    reads consistently across both pages. */
 .btn-register {
-  flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
   height: 76rpx;
   display: flex;
   align-items: center;
@@ -547,22 +548,24 @@ page {
 /* Share action with a visible label — same height as .btn-register so the
    buttons stay aligned in every action-bar state. */
 .btn-share {
-  width: auto;
+  width: 192rpx;
   height: 76rpx;
-  min-width: 156rpx;
+  min-width: 192rpx;
+  max-width: 192rpx;
+  flex: 0 0 192rpx;
   line-height: 76rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10rpx;
+  gap: 8rpx;
   background: var(--bg-inset);
   color: var(--text-primary);
   border-radius: 999rpx;
   border: none;
-  flex-shrink: 0;
   box-sizing: border-box;
   margin: 0;
   padding: 0 24rpx;
+  white-space: nowrap;
   overflow: hidden;
 }
 .btn-share::after {
@@ -572,9 +575,11 @@ page {
 .btn-share-icon {
   width: 28rpx;
   height: 28rpx;
+  flex-shrink: 0;
   background-color: var(--text-primary);
 }
 .btn-share-text {
+  flex-shrink: 0;
   font-size: 26rpx;
   font-weight: 600;
   color: var(--text-primary);
@@ -583,8 +588,12 @@ page {
   min-width: 174rpx;
 }
 .btn-icon-action {
-  width: 76rpx;
-  min-width: 76rpx;
+  width: 64rpx;
+  min-width: 64rpx;
+  max-width: 64rpx;
+  flex-basis: 64rpx;
+  height: 64rpx;
+  line-height: 64rpx;
   padding: 0;
   border-radius: 50%;
 }
