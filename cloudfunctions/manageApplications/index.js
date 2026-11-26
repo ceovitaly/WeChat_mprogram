@@ -763,11 +763,18 @@ exports.main = async (event, context) => {
       ? { staffName: current.staffName, startedAt: current.startedAt, lastActiveAt: current.lastActiveAt,
           eventTitle: current.eventTitle, eventId: current.eventId } : null };
     if (current) {
-      const updated = await db.collection('venues').where({ _id: id, 'counterSession.idHash': current.idHash })
-        .update({ data: { counterSession: db.command.remove() } });
-      if (!updated.stats || updated.stats.updated !== 1) return { success: false, message: 'Session changed; refresh' };
-      await counterSession.log(db, 'COUNTER_FORCE_LOGOUT', venue, null, { adminId: caller._id, adminName: caller.name,
-        eventId: current.eventId, eventTitle: current.eventTitle, reason: 'admin', result: 'success' });
+      const auditId = require('crypto').randomBytes(16).toString('hex');
+      try {
+        return await db.runTransaction(async tx => {
+          const live = (await tx.collection('venues').doc(id).get()).data;
+          if (!live || !live.counterSession || live.counterSession.idHash !== current.idHash) throw new Error('Session changed; refresh');
+          await tx.collection('venues').doc(id).update({ data: { counterSession: db.command.remove() } });
+          await tx.collection('counter_session_history').doc(auditId).set({ data:
+            counterSession.auditData(db, 'COUNTER_FORCE_LOGOUT', live, null, { adminId: caller._id, adminName: caller.name,
+              eventId: current.eventId, eventTitle: current.eventTitle, reason: 'admin', result: 'success' }) });
+          return { success: true };
+        });
+      } catch (_) { return { success: false, message: 'Session changed or history unavailable; refresh' }; }
     }
     return { success: true };
   }
@@ -1377,6 +1384,17 @@ exports.main = async (event, context) => {
       if (!targetType || !targetId || !eventId) return { success: false, message: 'Missing params' };
       const collectionName = targetType === 'staff' ? 'staff' : 'promoters';
       const fieldName = targetType === 'staff' ? 'workedEventIds' : 'attendedEventIds';
+      if (caller.role === 'counter' && event.counterSession) {
+        return counterSession.mutate(db, caller, event.counterSession, eventId, async tx => {
+          const row = (await tx.collection(collectionName).doc(targetId).get()).data;
+          if (!row) throw new Error('Target not found');
+          const currentIds = row[fieldName] || [];
+          const nextIds = present ? (currentIds.includes(eventId) ? currentIds : [...currentIds, eventId])
+            : currentIds.filter(value => value !== eventId);
+          await tx.collection(collectionName).doc(targetId).update({ data: { [fieldName]: nextIds } });
+          return { success: true };
+        });
+      }
       const doc = await db.collection(collectionName).doc(targetId).get();
       const current = (doc.data && doc.data[fieldName]) || [];
       let next;
@@ -1420,6 +1438,18 @@ exports.main = async (event, context) => {
     try {
       const { registrationId } = event;
       if (!registrationId) return { success: false, message: 'No registrationId' };
+      if (caller.role === 'counter' && event.counterSession) {
+        const target = await db.collection('registrations').doc(registrationId).get().catch(() => null);
+        if (!target || !target.data) return { success: false, message: 'Registration not found' };
+        return counterSession.mutate(db, caller, event.counterSession, target.data.eventId, async (tx, session) => {
+            const reg = (await tx.collection('registrations').doc(registrationId).get()).data;
+            if (!reg || reg.eventId !== session.eventId) throw new Error('COUNTER_SESSION_INVALID');
+            await tx.collection('registrations').doc(registrationId).update({
+              data: { arrivedAt: null, checkedInAt: null, scannedAt: null, updatedAt: db.serverDate() }
+            });
+            return { success: true };
+          });
+      }
       await db.collection('registrations').doc(registrationId).update({
         data: { arrivedAt: null, checkedInAt: null, scannedAt: null, updatedAt: db.serverDate() }
       });
@@ -1541,19 +1571,21 @@ exports.main = async (event, context) => {
         const existing = existingRes.data;
         if (!existing) return { success: false, message: 'Venue not found' };
         if (existing.password !== venueData.password) {
-          const gate = { _id: id, password: existing.password,
-            passwordVersion: Object.prototype.hasOwnProperty.call(existing, 'passwordVersion')
-              ? existing.passwordVersion : db.command.exists(false) };
-          const updated = await db.collection('venues').where(gate).update({ data: {
-            ...venueData, passwordVersion: (existing.passwordVersion || 0) + 1,
-            revokedCounterSessionHash: existing.counterSession && existing.counterSession.idHash || '',
-            counterSession: db.command.remove()
-          } });
-          if (!updated.stats || updated.stats.updated !== 1) return { success: false, message: 'Venue changed; refresh' };
-          await counterSession.log(db, 'VENUE_PASSWORD_CHANGED', existing, null, { adminId: caller._id, adminName: caller.name,
-            eventId: existing.counterSession && existing.counterSession.eventId,
-            eventTitle: existing.counterSession && existing.counterSession.eventTitle,
-            reason: 'password_changed', result: 'success' });
+          const auditId = require('crypto').randomBytes(16).toString('hex');
+          await db.runTransaction(async tx => {
+            const live = (await tx.collection('venues').doc(id).get()).data;
+            if (!live || live.password !== existing.password || live.passwordVersion !== existing.passwordVersion) throw new Error('Venue changed; refresh');
+            await tx.collection('venues').doc(id).update({ data: {
+              ...venueData, passwordVersion: (live.passwordVersion || 0) + 1,
+              revokedCounterSessionHash: live.counterSession && live.counterSession.idHash || '',
+              counterSession: db.command.remove()
+            } });
+            await tx.collection('counter_session_history').doc(auditId).set({ data:
+              counterSession.auditData(db, 'VENUE_PASSWORD_CHANGED', live, null, { adminId: caller._id, adminName: caller.name,
+                eventId: live.counterSession && live.counterSession.eventId,
+                eventTitle: live.counterSession && live.counterSession.eventTitle,
+                reason: 'password_changed', result: 'success' }) });
+          });
         } else {
           await db.collection('venues').doc(id).update({ data: venueData });
         }

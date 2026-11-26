@@ -60,6 +60,7 @@ const startLiveSync = (options = {}) => {
     onChange,
     debounceMs = 600,
     pollMs = 30000,
+    pollOnly = false,
     label = '[liveSync]'
   } = options
 
@@ -97,6 +98,10 @@ const startLiveSync = (options = {}) => {
   }
 
   if (!collectionName || typeof onChange !== 'function') return stop
+
+  // Counter must never open a direct registration watcher: it exposes raw rows
+  // outside the cloud-function session gate. Use the authenticated fetch instead.
+  if (pollOnly) { startPolling(); return stop }
 
   try {
     watcher = collection(collectionName).where(where).watch({

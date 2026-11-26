@@ -25,6 +25,9 @@ exports.main = async (event) => {
         !(await counterSession.validate(db, caller, event.counterSession, reg.eventId))) {
       return { success: false, code: 'COUNTER_SESSION_INVALID', message: 'Session expired' };
     }
+    if (caller.role === 'counter' && event.counterSession) {
+      return counterSession.checkIn(db, caller, event.counterSession, registrationId, arrivedAt);
+    }
 
     await db.collection('registrations').doc(registrationId).update({
       data: {

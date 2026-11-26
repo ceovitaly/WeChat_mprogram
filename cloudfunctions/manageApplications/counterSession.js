@@ -17,25 +17,53 @@ function ended(ev, time = now()) {
   return time >= Date.parse(ev.date + 'T00:00:00+08:00') + (h * 60 + m) * 60000 + offset;
 }
 
+function auditData(db, type, venue, caller, extra = {}) {
+  // Fixed fields only: no passwords, tokens, client-supplied explanations or PII.
+  return { type, at: db.serverDate(), venueId: venue && venue._id || '',
+    venueName: venue && venue.name || '', staffId: caller && caller._id || '',
+    staffName: caller && caller.name || '', role: caller && caller.role || '',
+    eventId: extra.eventId || '', eventTitle: extra.eventTitle || '',
+    adminId: extra.adminId || '', adminName: extra.adminName || '',
+    reason: extra.reason || '', result: extra.result || '' };
+}
+
 async function log(db, type, venue, caller, extra = {}) {
-  // Never log credentials, session IDs, or arbitrary client-supplied strings.
+  const data = auditData(db, type, venue, caller, extra);
+  if (type === 'COUNTER_INVALID_PASSWORD' || type === 'COUNTER_LOGIN_DENIED') {
+    const id = hash(type + ':' + (caller && caller._id || '') + ':' + (venue && venue._id || '') + ':' + Math.floor(now() / 300000));
+    await db.collection('counter_session_history').doc(id).set({ data });
+  } else {
+    await db.collection('counter_session_history').add({ data });
+  }
+}
+
+// Every protected mutation writes the same venue and event documents as revocation
+// and closure. Snapshot-isolation read/write conflicts then abort stale operations.
+async function mutate(db, caller, token, eventId, change) {
+  if (!token || typeof token.venueId !== 'string' || typeof token.sessionId !== 'string') return result('COUNTER_SESSION_INVALID', 'Session expired');
   try {
-    const data = {
-      type, at: db.serverDate(), venueId: venue && venue._id || '',
-      venueName: venue && venue.name || '', staffId: caller && caller._id || '',
-      staffName: caller && caller.name || '', role: caller && caller.role || '',
-      eventId: extra.eventId || '', eventTitle: extra.eventTitle || '',
-      adminId: extra.adminId || '', adminName: extra.adminName || '',
-      reason: extra.reason || '', result: extra.result || ''
-    };
-    if (type === 'COUNTER_INVALID_PASSWORD' || type === 'COUNTER_LOGIN_DENIED') {
-      const bucket = Math.floor(now() / 300000);
-      const id = hash(type + ':' + (caller && caller._id || '') + ':' + (venue && venue._id || '') + ':' + bucket);
-      await db.collection('counter_session_history').doc(id).set({ data });
-    } else {
-      await db.collection('counter_session_history').add({ data });
-    }
-  } catch (e) { console.error('[counter-session] audit write failed', type); }
+    return await db.runTransaction(async tx => {
+      const staff = (await tx.collection('staff').doc(caller._id).get()).data;
+      if (!staff || staff.role !== 'counter' || staff.lastOpenid !== caller.lastOpenid) throw new Error('COUNTER_SESSION_INVALID');
+      const venue = (await tx.collection('venues').doc(token.venueId).get()).data;
+      const session = venue && venue.counterSession;
+      if (!session || session.idHash !== hash(token.sessionId) || session.staffId !== caller._id ||
+          session.openid !== caller.lastOpenid || session.version !== (venue.passwordVersion || 0) ||
+          session.expiresAt <= now() || session.eventId !== eventId) throw new Error('COUNTER_SESSION_INVALID');
+      const ev = (await tx.collection('events').doc(eventId).get()).data;
+      if (ended(ev) || (ev.venueId ? ev.venueId !== venue._id : ev.venueName !== venue.name)) throw new Error('COUNTER_SESSION_INVALID');
+      await tx.collection('venues').doc(venue._id).update({ data: { 'counterSession.guardAt': db.serverDate() } });
+      await tx.collection('staff').doc(staff._id).update({ data: { counterSessionGuardAt: db.serverDate() } });
+      await tx.collection('events').doc(eventId).update({ data: { counterSessionGuardAt: db.serverDate() } });
+      const response = await change(tx, session, venue, ev);
+      if (session.expiresAt <= now()) throw new Error('COUNTER_SESSION_INVALID');
+      return response;
+    });
+  } catch (e) {
+    if (e.message === 'COUNTER_SESSION_INVALID') return result('COUNTER_SESSION_INVALID', 'Session expired');
+    // A failed transaction (including a write conflict) never falls back to an unguarded write.
+    return result('COUNTER_OPERATION_RETRY', 'Operation could not be completed. Please retry.');
+  }
 }
 
 async function validate(db, caller, token, eventId, refresh = false) {
@@ -64,27 +92,40 @@ async function validate(db, caller, token, eventId, refresh = false) {
     return result('COUNTER_SESSION_INVALID', 'Session expired');
   }
   if (refresh) {
-    const updated = await db.collection('venues').where({ _id: venueId, 'counterSession.idHash': session.idHash,
-      'counterSession.expiresAt': session.expiresAt, passwordVersion: session.version })
-      .update({ data: { 'counterSession.expiresAt': now() + TTL, 'counterSession.lastActiveAt': db.serverDate() } });
-    if (!updated.stats || updated.stats.updated !== 1) return result('COUNTER_SESSION_INVALID', 'Session expired');
+    try {
+      await db.runTransaction(async tx => {
+        const fresh = (await tx.collection('venues').doc(venueId).get()).data;
+        const current = fresh && fresh.counterSession;
+        if (!current || current.idHash !== hash(sessionId) || current.staffId !== caller._id ||
+            current.version !== (fresh.passwordVersion || 0) || current.expiresAt <= now()) throw new Error('COUNTER_SESSION_INVALID');
+        const currentEvent = (await tx.collection('events').doc(current.eventId).get()).data;
+        if (ended(currentEvent)) throw new Error('COUNTER_SESSION_INVALID');
+        await tx.collection('venues').doc(venueId).update({ data: {
+          'counterSession.expiresAt': now() + TTL, 'counterSession.lastActiveAt': db.serverDate()
+        } });
+      });
+    } catch (_) { return result('COUNTER_SESSION_INVALID', 'Session expired'); }
   }
   return { success: true, venue, session };
 }
 
 async function release(db, caller, token, type = 'COUNTER_LOGOUT') {
   if (!token || !token.venueId || !token.sessionId) return result('COUNTER_SESSION_INVALID', 'Session expired');
-  const current = await venueRef(db, token.venueId).get().catch(() => null);
-  const venue = current && current.data;
-  const session = venue && venue.counterSession;
-  if (!session || session.idHash !== hash(token.sessionId) || session.staffId !== caller._id) return result('COUNTER_SESSION_INVALID', 'Session expired');
-  const updated = await db.collection('venues').where({ _id: token.venueId, 'counterSession.idHash': session.idHash })
-    .update({ data: { counterSession: db.command.remove() } });
-  if (updated.stats && updated.stats.updated === 1) {
-    await log(db, type, venue, caller, { eventId: session.eventId, eventTitle: session.eventTitle, result: 'success' });
-    return { success: true };
+  const auditId = crypto.randomBytes(16).toString('hex');
+  try {
+    return await db.runTransaction(async tx => {
+      const venue = (await tx.collection('venues').doc(token.venueId).get()).data;
+      const session = venue && venue.counterSession;
+      if (!session || session.idHash !== hash(token.sessionId) || session.staffId !== caller._id) throw new Error('COUNTER_SESSION_INVALID');
+      await tx.collection('venues').doc(token.venueId).update({ data: { counterSession: db.command.remove() } });
+      await tx.collection('counter_session_history').doc(auditId).set({ data: auditData(db, type, venue, caller,
+        { eventId: session.eventId, eventTitle: session.eventTitle, result: 'success' }) });
+      return { success: true };
+    });
+  } catch (e) {
+    return result(e.message === 'COUNTER_SESSION_INVALID' ? 'COUNTER_SESSION_INVALID' : 'COUNTER_OPERATION_RETRY',
+      'Session could not be ended. Please retry.');
   }
-  return result('COUNTER_SESSION_INVALID', 'Session expired');
 }
 
 async function begin(db, caller, password, eventId) {
@@ -95,30 +136,36 @@ async function begin(db, caller, password, eventId) {
   const evRes = await db.collection('events').doc(eventId).get().catch(() => null);
   const ev = evRes && evRes.data;
   if (!ev || ended(ev) || (ev.venueId ? ev.venueId !== venue._id : ev.venueName !== venue.name)) return result('COUNTER_SESSION_INVALID', 'Event unavailable');
-  const old = venue.counterSession;
-  if (old && old.expiresAt > now()) {
-    await log(db, 'COUNTER_LOGIN_DENIED', venue, caller, { eventId, eventTitle: ev.title, reason: 'occupied', result: 'denied' });
-    return result('COUNTER_VENUE_OCCUPIED', 'Venue is currently occupied');
-  }
   const sessionId = crypto.randomBytes(32).toString('hex');
-  const session = { idHash: hash(sessionId), staffId: caller._id, staffName: caller.name || '',
-    openid: caller.lastOpenid, eventId, eventTitle: ev.title || '', version: venue.passwordVersion || 0,
-    startedAt: db.serverDate(), lastActiveAt: db.serverDate(), expiresAt: now() + TTL };
-  const versionGate = Object.prototype.hasOwnProperty.call(venue, 'passwordVersion') ? venue.passwordVersion : db.command.exists(false);
-  const gate = { _id: venue._id, password: password.trim(), passwordVersion: versionGate };
-  gate['counterSession.expiresAt'] = db.command.lte(now());
-  const vacant = { _id: venue._id, password: password.trim(), passwordVersion: versionGate,
-    counterSession: db.command.exists(false) };
-  // CAS against both the password/version and the occupancy; no read-then-write race.
-  let updated = await db.collection('venues').where(old ? gate : vacant).update({ data: { counterSession: session } });
-  if (!updated.stats || updated.stats.updated !== 1) {
-    await log(db, 'COUNTER_LOGIN_DENIED', venue, caller, { eventId, eventTitle: ev.title, reason: 'occupied_or_password_changed', result: 'denied' });
-    return result('COUNTER_VENUE_OCCUPIED', 'Venue is currently occupied');
+  try {
+    return await db.runTransaction(async tx => {
+      const staff = (await tx.collection('staff').doc(caller._id).get()).data;
+      if (!staff || staff.role !== 'counter' || staff.lastOpenid !== caller.lastOpenid) throw new Error('COUNTER_SESSION_INVALID');
+      const current = (await tx.collection('venues').doc(venue._id).get()).data;
+      if (!current || current.password !== password.trim()) throw new Error('COUNTER_INVALID_PASSWORD');
+      const activeEvent = (await tx.collection('events').doc(eventId).get()).data;
+      if (ended(activeEvent) || (activeEvent.venueId ? activeEvent.venueId !== current._id : activeEvent.venueName !== current.name)) throw new Error('COUNTER_SESSION_INVALID');
+      const old = current.counterSession;
+      if (old && old.expiresAt > now()) throw new Error('COUNTER_VENUE_OCCUPIED');
+      const session = { idHash: hash(sessionId), staffId: caller._id, staffName: caller.name || '',
+        openid: caller.lastOpenid, eventId, eventTitle: activeEvent.title || '', version: current.passwordVersion || 0,
+        startedAt: db.serverDate(), lastActiveAt: db.serverDate(), expiresAt: now() + TTL };
+      await tx.collection('venues').doc(current._id).update({ data: { counterSession: session } });
+      await tx.collection('staff').doc(staff._id).update({ data: { counterSessionGuardAt: db.serverDate() } });
+      if (old) await tx.collection('counter_session_history').doc(hash('expired:' + old.idHash)).set({ data:
+        auditData(db, 'COUNTER_SESSION_EXPIRED', current, { _id: old.staffId, name: old.staffName, role: 'counter' },
+          { eventId: old.eventId, eventTitle: old.eventTitle, reason: 'inactivity', result: 'expired' }) });
+      await tx.collection('counter_session_history').doc(hash('login:' + session.idHash)).set({ data:
+        auditData(db, 'COUNTER_LOGIN_SUCCESS', current, caller, { eventId, eventTitle: activeEvent.title, result: 'success' }) });
+      return { success: true, venue: { _id: current._id, name: current.name }, sessionId };
+    });
+  } catch (e) {
+    if (e.message === 'COUNTER_VENUE_OCCUPIED') {
+      await log(db, 'COUNTER_LOGIN_DENIED', venue, caller, { eventId, eventTitle: ev.title, reason: 'occupied', result: 'denied' });
+      return result('COUNTER_VENUE_OCCUPIED', 'Venue is currently occupied');
+    }
+    return result('COUNTER_OPERATION_RETRY', 'Login could not be completed. Please retry.');
   }
-  if (old && old.expiresAt <= now()) await log(db, 'COUNTER_SESSION_EXPIRED', venue,
-    { _id: old.staffId, name: old.staffName, role: 'counter' }, { eventId: old.eventId, eventTitle: old.eventTitle, reason: 'inactivity', result: 'expired' });
-  await log(db, 'COUNTER_LOGIN_SUCCESS', venue, caller, { eventId, eventTitle: ev.title, result: 'success' });
-  return { success: true, venue: { _id: venue._id, name: venue.name }, event: ev, sessionId };
 }
 
-module.exports = { enforcement, ended, log, begin, validate, release, result };
+module.exports = { enforcement, ended, auditData, log, begin, validate, release, mutate, result };

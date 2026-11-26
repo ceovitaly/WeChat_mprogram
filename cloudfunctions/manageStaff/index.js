@@ -28,21 +28,28 @@ async function getCallerStaff(db) {
   return rows.find(s => s.role === 'admin') || rows[0];
 }
 
-async function revokeCounterSessions(staffId, admin) {
-  const active = await db.collection('venues').where({ 'counterSession.staffId': staffId }).limit(100).get();
-  for (const venue of active.data || []) {
-    const session = venue.counterSession;
-    const changed = await db.collection('venues').where({ _id: venue._id, 'counterSession.idHash': session.idHash })
-      .update({ data: { counterSession: db.command.remove() } });
-    if (changed.stats && changed.stats.updated === 1) {
-      await db.collection('counter_session_history').add({ data: {
+async function changeStaffAndRevoke(staffId, admin, update) {
+  const active = await db.collection('venues').where({ 'counterSession.staffId': staffId }).limit(101).get();
+  if ((active.data || []).length > 100) throw new Error('Too many active sessions');
+  const auditIds = (active.data || []).map(() => crypto.randomBytes(16).toString('hex'));
+  await db.runTransaction(async tx => {
+    const staff = (await tx.collection('staff').doc(staffId).get()).data;
+    if (!staff) throw new Error('Staff not found');
+    for (const [i, snapshot] of (active.data || []).entries()) {
+      const venue = (await tx.collection('venues').doc(snapshot._id).get()).data;
+      const session = venue && venue.counterSession;
+      if (!session || session.staffId !== staffId) continue;
+      await tx.collection('venues').doc(venue._id).update({ data: { counterSession: db.command.remove() } });
+      await tx.collection('counter_session_history').doc(auditIds[i]).set({ data: {
         type: 'COUNTER_ACCESS_REVOKED', at: db.serverDate(), venueId: venue._id,
         venueName: venue.name || '', eventId: session.eventId || '', eventTitle: session.eventTitle || '',
         staffId, staffName: session.staffName || '', adminId: admin._id,
         adminName: admin.name || '', role: 'admin', reason: 'access_revoked', result: 'success'
-      } }).catch(() => { console.error('[counter-session] audit write failed', 'COUNTER_ACCESS_REVOKED'); });
+      } });
     }
-  }
+    if (update) await tx.collection('staff').doc(staffId).update({ data: update });
+    else await tx.collection('staff').doc(staffId).remove();
+  });
 }
 
 exports.main = async (event, context) => {
@@ -159,8 +166,8 @@ exports.main = async (event, context) => {
         updateData.password = String(password);
         updateData.passwordChangedAt = db.serverDate();
       }
-      await db.collection('staff').doc(id).update({ data: updateData });
-      if (updateData.role !== 'counter') await revokeCounterSessions(id, caller);
+      if (updateData.role !== 'counter') await changeStaffAndRevoke(id, caller, updateData);
+      else await db.collection('staff').doc(id).update({ data: updateData });
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };
@@ -170,8 +177,7 @@ exports.main = async (event, context) => {
   // DELETE STAFF
   if (action === 'delete') {
     try {
-      await db.collection('staff').doc(id).remove();
-      await revokeCounterSessions(id, caller);
+      await changeStaffAndRevoke(id, caller, null);
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };

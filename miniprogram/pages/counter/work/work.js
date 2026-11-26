@@ -288,6 +288,7 @@ Page({
     this._stopLiveSync = startLiveSync({
       collection: COLLECTIONS.REGISTRATIONS,
       where: { eventId },
+      pollOnly: true,
       label: '[work]',
       onChange: () => {
         if (this._watchedEventId !== eventId) return
