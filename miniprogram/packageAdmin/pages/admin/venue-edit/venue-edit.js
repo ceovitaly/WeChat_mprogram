@@ -15,7 +15,8 @@ Page({
     longitude: 0,
     // Gallery photos of this venue: [{ fileID, url }] — fileID is stored on
     // the venue doc, url is the temp https link for display.
-    gallery: []
+    gallery: [],
+    counterSession: null
   },
 
   onLoad(options) {
@@ -24,6 +25,37 @@ Page({
       isEdit: !!options.id
     })
     if (options.id) this._loadVenue(options.id)
+  },
+
+  onShow() {
+    if (this.data.id) this.loadCounterSession()
+  },
+
+  async loadCounterSession() {
+    const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS,
+      { action: 'getCounterSession', id: this.data.id }).catch(() => null)
+    if (!res || !res.success) return
+    const s = res.session
+    const dateMs = v => v && new Date(v.$date !== undefined ? v.$date : v).getTime()
+    this.setData({ counterSession: s && {
+      ...s, startedLabel: new Date(dateMs(s.startedAt)).toLocaleString(),
+      activeLabel: new Date(dateMs(s.lastActiveAt)).toLocaleString(),
+      duration: Math.max(0, Math.floor((Date.now() - dateMs(s.startedAt)) / 60000)) + ' min'
+    } })
+  },
+
+  forceCounterLogout() {
+    wx.showModal({ title: 'End counter session?',
+      content: 'The employee will be logged out and will need to enter the venue password again.',
+      confirmText: 'Confirm', cancelText: 'Cancel',
+      success: async ({ confirm }) => {
+        if (!confirm) return
+        const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS,
+          { action: 'forceCounterLogout', id: this.data.id }).catch(() => null)
+        if (!res || !res.success) wx.showToast({ title: 'Failed; refresh', icon: 'none' })
+        this.loadCounterSession()
+      }
+    })
   },
 
   async _loadVenue(id) {

@@ -1,0 +1,11 @@
+# Counter sessions — staged rollout (Admin Alpha)
+
+Server switch: `COUNTER_SESSION_ENFORCEMENT=ENFORCED` activates strict checks in **manageApplications**, **checkInGuest** and **manageStaff**. An absent value or `COMPATIBILITY` leaves old published Counter clients on legacy routes; a new client carrying an invalid session is rejected. The client cannot set this switch. Never set ENFORCED before the owner authorizes it and all relevant Admin clients are published.
+
+Before deploying any of these functions, download their live source and overlay only the changes in this commit. Deploy incrementally, download again and compare hashes. All three functions must use the same switch value; otherwise protection is incomplete. Do not overwrite other live modifications. The shared environment also serves Beta; retain COMPATIBILITY until coordinated rollout.
+
+The session lock lives in `venues.counterSession` and authorization generation in `venues.passwordVersion`; both are server-only fields. Cloud database rules for `venues` must deny direct client writes and reads (including session hashes and password). The new `counter_session_history` collection must be created with **no client read/write/delete permissions**, granting access only to cloud functions. Provision and verify these rules before deployment; otherwise do not deploy. History stores server snapshots, not credentials. Failed-login audit entries coalesce per employee/venue/five-minute bucket. Do not create a public collection or allow the client to mutate the lock.
+
+The lease expires after 90 seconds of no server heartbeat; the client renews every 30 seconds. Closing the app is best-effort; abrupt termination relies on the lease. Server-side close/force logout/password rotation removes the lock. No persistent client session ID exists; a new app process always asks for the password. No client upload or release is performed here.
+
+Limitations before ENFORCED: old published clients can still use legacy Counter calls, so exclusivity only applies to newly issued sessions. Direct client database rules for `registrations` and any other collection used by older clients require a separate compatibility-aware review before asserting that ENFORCED blocks *all* access. The audit collection and live function overlays have not been provisioned or deployed by Git push alone.

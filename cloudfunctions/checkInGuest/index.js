@@ -1,6 +1,7 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const counterSession = require('./counterSession');
 
 async function getCallerStaff(db) {
   const wxContext = cloud.getWXContext();
@@ -20,6 +21,10 @@ exports.main = async (event) => {
     const regRes = await db.collection('registrations').doc(registrationId).get();
     const reg = regRes && regRes.data;
     if (!reg) return { success: false, message: 'Registration not found' };
+    if (caller.role === 'counter' && (event.counterSession || counterSession.enforced()) &&
+        !(await counterSession.validate(db, caller, event.counterSession, reg.eventId))) {
+      return { success: false, code: 'COUNTER_SESSION_INVALID', message: 'Session expired' };
+    }
 
     await db.collection('registrations').doc(registrationId).update({
       data: {

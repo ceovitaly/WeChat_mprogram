@@ -41,6 +41,21 @@
 </view>
 
 <!-- Address -->
+<view wx:if="{{isEdit}}" class="section">
+  <text class="section-title">Counter Session</text>
+  <view class="card session-card">
+    <text>{{counterSession ? 'Occupied' : 'Available'}}</text>
+    <block wx:if="{{counterSession}}">
+      <text>{{counterSession.staffName}} · {{counterSession.eventTitle}}</text>
+      <text>Started: {{counterSession.startedLabel}} · {{counterSession.duration}}</text>
+      <text>Last activity: {{counterSession.activeLabel}}</text>
+      <view class="session-action" bindtap="forceCounterLogout">Force Logout</view>
+    </block>
+    <view class="session-refresh" bindtap="loadCounterSession">Refresh</view>
+  </view>
+</view>
+
+<!-- Address -->
 <view class="section">
   <text class="section-title">Location</text>
   <view class="card">

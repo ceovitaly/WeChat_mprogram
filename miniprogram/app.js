@@ -47,7 +47,8 @@ App({
       role: null,
       isLogged: false,
       currentVenueId: null,
-      currentEventId: null
+      currentEventId: null,
+      counterSession: null
     }
 
     const cachedUser = getStoredUser()
@@ -63,7 +64,31 @@ App({
     wx.reLaunch({ url })
   },
 
+  endCounterSessionLocal(message) {
+    this.globalData.counterSession = null
+    wx.removeStorageSync('currentVenueId')
+    wx.removeStorageSync('currentVenueName')
+    wx.removeStorageSync('currentEvent')
+    const pages = getCurrentPages()
+    const page = pages[pages.length - 1]
+    if (page && page.route === 'pages/counter/work/work' && page.resetCounterWorkspace) {
+      page.resetCounterWorkspace(message)
+    }
+  },
+
+  onHide() {
+    const session = this.globalData && this.globalData.counterSession
+    if (!session) return
+    this.endCounterSessionLocal()
+    wx.cloud.callFunction({ name: 'manageApplications', data: { action: 'endCounterSession', counterSession: session } }).catch(() => {})
+  },
+
   logout() {
+    const session = this.globalData.counterSession
+    if (session) {
+      this.endCounterSessionLocal()
+      wx.cloud.callFunction({ name: 'manageApplications', data: { action: 'endCounterSession', counterSession: session } }).catch(() => {})
+    }
     const { clearUser } = require('./utils/auth')
     clearUser()
     this.globalData.userInfo = null

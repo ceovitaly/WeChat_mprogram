@@ -14,6 +14,9 @@ const saveUser = (userData) => {
 // one account's venues/promoters/staff must never survive into the next login.
 const clearUser = () => {
   wx.removeStorageSync(STORAGE_KEYS.STAFF_USER)
+  wx.removeStorageSync('currentVenueId')
+  wx.removeStorageSync('currentVenueName')
+  wx.removeStorageSync('currentEvent')
   refCache.invalidateAll()
 }
 
@@ -42,6 +45,7 @@ const handleAuthFailure = () => {
   clearUser()
   const app = getApp()
   if (app && app.globalData) {
+    app.globalData.counterSession = null
     app.globalData.userInfo = null
     app.globalData.role = null
     app.globalData.isLogged = false

@@ -44,6 +44,9 @@
 }
 
 .field-picker { flex: 1; }
+.session-card { display: flex; flex-direction: column; gap: 12rpx; padding: 24rpx; color: var(--text); }
+.session-action { color: #ff3b30; padding: 12rpx 0; }
+.session-refresh { color: var(--text-3); padding: 12rpx 0; }
 
 .safe-area-bottom {
   height: calc(40rpx + env(safe-area-inset-bottom));

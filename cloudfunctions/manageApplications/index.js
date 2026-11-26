@@ -1,6 +1,7 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const counterSession = require('./counterSession');
 const { createToken: createCheckinToken } = require('./checkinTokens');
 
 // ─── Door check-in tokens ───────────────────────────────────────────────────
@@ -725,9 +726,63 @@ exports.main = async (event, context) => {
   if (!caller) {
     return { success: false, message: 'Unauthorized' };
   }
-  const COUNTER_ALLOWED_ACTIONS = ['getRegistrations', 'getPromoters', 'getEventPromoters', 'getPromoterGuests', 'markAttendance', 'uncheckGuest', 'verifyVenuePassword', 'getEvents', 'issueCheckinToken'];
+  const COUNTER_ALLOWED_ACTIONS = ['getRegistrations', 'getPromoters', 'getEventPromoters', 'getPromoterGuests', 'markAttendance', 'uncheckGuest', 'verifyVenuePassword', 'getEvents', 'issueCheckinToken', 'prepareCounterVenue', 'beginCounterSession', 'heartbeatCounterSession', 'endCounterSession'];
   if (caller.role !== 'admin' && !COUNTER_ALLOWED_ACTIONS.includes(action)) {
     return { success: false, message: 'Forbidden' };
+  }
+  if (action === 'beginCounterSession') return counterSession.begin(db, caller, event.password, event.eventId);
+  if (action === 'prepareCounterVenue') {
+    if (caller.role !== 'counter' || typeof event.password !== 'string' || !event.password.trim()) return { success: false, message: 'Invalid password' };
+    const found = await db.collection('venues').where({ password: event.password.trim() }).limit(1).get();
+    const venue = found.data && found.data[0];
+    if (!venue) { await counterSession.log(db, 'COUNTER_INVALID_PASSWORD', null, caller, { result: 'denied' }); return { success: false, message: 'Invalid password' }; }
+    const events = await db.collection('events').where({ venueId: venue._id }).limit(100).get();
+    const legacy = await db.collection('events').where({ venueName: venue.name }).limit(100).get();
+    const byId = {};
+    (events.data || []).concat(legacy.data || []).forEach(ev => {
+      if (!counterSession.ended(ev)) byId[ev._id] = {
+        _id: ev._id, title: ev.title, date: ev.date, startTime: ev.startTime, endTime: ev.endTime,
+        venueId: ev.venueId, venueName: ev.venueName, partyCapacity: ev.partyCapacity,
+        afterPartyCapacity: ev.afterPartyCapacity, lateAfterPartyCapacity: ev.lateAfterPartyCapacity
+      };
+    });
+    return { success: true, venue: { _id: venue._id, name: venue.name }, events: Object.values(byId) };
+  }
+  if (action === 'heartbeatCounterSession') {
+    const valid = await counterSession.validate(db, caller, event.counterSession, event.eventId, true);
+    return valid.success ? { success: true } : valid;
+  }
+  if (action === 'endCounterSession') return counterSession.release(db, caller, event.counterSession);
+  if (action === 'getCounterSession' || action === 'forceCounterLogout') {
+    if (caller.role !== 'admin' || !id) return { success: false, message: 'Forbidden' };
+    const doc = await db.collection('venues').doc(id).get().catch(() => null);
+    const venue = doc && doc.data;
+    if (!venue) return { success: false, message: 'Venue not found' };
+    const current = venue.counterSession;
+    if (action === 'getCounterSession') return { success: true, session: current && current.expiresAt > Date.now()
+      ? { staffName: current.staffName, startedAt: current.startedAt, lastActiveAt: current.lastActiveAt,
+          eventTitle: current.eventTitle, eventId: current.eventId } : null };
+    if (current) {
+      const updated = await db.collection('venues').where({ _id: id, 'counterSession.idHash': current.idHash })
+        .update({ data: { counterSession: db.command.remove() } });
+      if (!updated.stats || updated.stats.updated !== 1) return { success: false, message: 'Session changed; refresh' };
+      await counterSession.log(db, 'COUNTER_FORCE_LOGOUT', venue, null, { adminId: caller._id, adminName: caller.name,
+        eventId: current.eventId, eventTitle: current.eventTitle, reason: 'admin', result: 'success' });
+    }
+    return { success: true };
+  }
+  if (caller.role === 'counter' && action !== 'verifyVenuePassword' && action !== 'beginCounterSession' && action !== 'prepareCounterVenue') {
+    if (event.counterSession || counterSession.enforcement()) {
+      const scopeEventId = event.eventId || null;
+      const valid = await counterSession.validate(db, caller, event.counterSession, scopeEventId);
+      if (!valid.success) return valid;
+      if (action === 'getRegistrations' && event.eventId !== valid.session.eventId) return counterSession.result('COUNTER_SESSION_INVALID', 'Session expired');
+      if (action === 'getEvents' && event.venueName !== valid.venue.name) return counterSession.result('COUNTER_SESSION_INVALID', 'Session expired');
+      if (['uncheckGuest'].includes(action)) {
+        const reg = await db.collection('registrations').doc(event.registrationId).get().catch(() => null);
+        if (!reg || !reg.data || reg.data.eventId !== valid.session.eventId) return counterSession.result('COUNTER_SESSION_INVALID', 'Session expired');
+      }
+    }
   }
 
   // GET TEMP FILE URLS (resolves cloud:// IDs server-side for any user)
@@ -1407,6 +1462,7 @@ exports.main = async (event, context) => {
   // member, enforced by the getCallerStaff gate above). Returns only id + name;
   // never echoes the password back to the client.
   if (action === 'verifyVenuePassword') {
+    if (counterSession.enforcement()) return counterSession.result('COUNTER_SESSION_INVALID', 'Session expired');
     try {
       const { password } = event;
       const code = (password || '').trim();
@@ -1481,7 +1537,26 @@ exports.main = async (event, context) => {
         updatedAt: db.serverDate()
       };
       if (id) {
-        await db.collection('venues').doc(id).update({ data: venueData });
+        const existingRes = await db.collection('venues').doc(id).get();
+        const existing = existingRes.data;
+        if (!existing) return { success: false, message: 'Venue not found' };
+        if (existing.password !== venueData.password) {
+          const gate = { _id: id, password: existing.password,
+            passwordVersion: Object.prototype.hasOwnProperty.call(existing, 'passwordVersion')
+              ? existing.passwordVersion : db.command.exists(false) };
+          const updated = await db.collection('venues').where(gate).update({ data: {
+            ...venueData, passwordVersion: (existing.passwordVersion || 0) + 1,
+            revokedCounterSessionHash: existing.counterSession && existing.counterSession.idHash || '',
+            counterSession: db.command.remove()
+          } });
+          if (!updated.stats || updated.stats.updated !== 1) return { success: false, message: 'Venue changed; refresh' };
+          await counterSession.log(db, 'VENUE_PASSWORD_CHANGED', existing, null, { adminId: caller._id, adminName: caller.name,
+            eventId: existing.counterSession && existing.counterSession.eventId,
+            eventTitle: existing.counterSession && existing.counterSession.eventTitle,
+            reason: 'password_changed', result: 'success' });
+        } else {
+          await db.collection('venues').doc(id).update({ data: venueData });
+        }
         return { success: true, id };
       } else {
         const res = await db.collection('venues').add({ data: { ...venueData, createdAt: db.serverDate() } });

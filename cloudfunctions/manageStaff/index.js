@@ -2,6 +2,7 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const crypto = require('crypto');
+const counterSession = require('./counterSession');
 
 const generatePassword = (length = 12) => {
   const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -25,6 +26,23 @@ async function getCallerStaff(db) {
   const rows = res.data || [];
   if (rows.length === 0) return null;
   return rows.find(s => s.role === 'admin') || rows[0];
+}
+
+async function revokeCounterSessions(staffId, admin) {
+  const active = await db.collection('venues').where({ 'counterSession.staffId': staffId }).limit(100).get();
+  for (const venue of active.data || []) {
+    const session = venue.counterSession;
+    const changed = await db.collection('venues').where({ _id: venue._id, 'counterSession.idHash': session.idHash })
+      .update({ data: { counterSession: db.command.remove() } });
+    if (changed.stats && changed.stats.updated === 1) {
+      await db.collection('counter_session_history').add({ data: {
+        type: 'COUNTER_ACCESS_REVOKED', at: db.serverDate(), venueId: venue._id,
+        venueName: venue.name || '', eventId: session.eventId || '', eventTitle: session.eventTitle || '',
+        staffId, staffName: session.staffName || '', adminId: admin._id,
+        adminName: admin.name || '', role: 'admin', reason: 'access_revoked', result: 'success'
+      } }).catch(() => { console.error('[counter-session] audit write failed', 'COUNTER_ACCESS_REVOKED'); });
+    }
+  }
 }
 
 exports.main = async (event, context) => {
@@ -69,6 +87,10 @@ exports.main = async (event, context) => {
   // GET ALL STAFF
   if (action === 'getAll') {
     try {
+      if (caller.role === 'counter' && (event.counterSession || process.env.COUNTER_SESSION_ENFORCEMENT === 'ENFORCED') &&
+          !(await counterSession.valid(db, caller, event.counterSession))) {
+        return { success: false, code: 'COUNTER_SESSION_INVALID', message: 'Session expired' };
+      }
       if (caller.role === 'admin') {
         const res = await db.collection('staff')
           .orderBy('createdAt', 'desc')
@@ -138,6 +160,7 @@ exports.main = async (event, context) => {
         updateData.passwordChangedAt = db.serverDate();
       }
       await db.collection('staff').doc(id).update({ data: updateData });
+      if (updateData.role !== 'counter') await revokeCounterSessions(id, caller);
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };
@@ -148,6 +171,7 @@ exports.main = async (event, context) => {
   if (action === 'delete') {
     try {
       await db.collection('staff').doc(id).remove();
+      await revokeCounterSessions(id, caller);
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };
