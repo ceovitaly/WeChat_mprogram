@@ -32,6 +32,7 @@ async function changeStaffAndRevoke(staffId, admin, update) {
   const active = await db.collection('venues').where({ 'counterSession.staffId': staffId }).limit(101).get();
   if ((active.data || []).length > 100) throw new Error('Too many active sessions');
   const auditIds = (active.data || []).map(() => crypto.randomBytes(16).toString('hex'));
+  const staffAuditId = crypto.randomBytes(16).toString('hex');
   await db.runTransaction(async tx => {
     const staff = (await tx.collection('staff').doc(staffId).get()).data;
     if (!staff) throw new Error('Staff not found');
@@ -44,11 +45,20 @@ async function changeStaffAndRevoke(staffId, admin, update) {
         type: 'COUNTER_ACCESS_REVOKED', at: db.serverDate(), venueId: venue._id,
         venueName: venue.name || '', eventId: session.eventId || '', eventTitle: session.eventTitle || '',
         staffId, staffName: session.staffName || '', adminId: admin._id,
-        adminName: admin.name || '', role: 'admin', reason: 'access_revoked', result: 'success'
+        adminName: admin.name || '', role: 'admin', actorId: admin._id, actorName: admin.name || '',
+        actorRole: 'admin', sessionId: session.idHash, reason: 'access_revoked', result: 'success'
       } });
     }
     if (update) await tx.collection('staff').doc(staffId).update({ data: update });
     else await tx.collection('staff').doc(staffId).remove();
+    const roleChanged = update && staff.role !== update.role;
+    await tx.collection('counter_session_history').doc(staffAuditId).set({ data: {
+      type: update ? (roleChanged ? 'STAFF_ROLE_CHANGED' : 'STAFF_UPDATED') : 'STAFF_REMOVED',
+      at: db.serverDate(), venueId: '', venueName: '', eventId: '', eventTitle: '',
+      actorId: admin._id, actorName: admin.name || '', actorRole: 'admin',
+      targetId: staffId, targetName: staff.name || '', sessionId: '', result: 'success',
+      details: roleChanged ? { role: { from: staff.role || '', to: update.role } } : {}
+    } });
   });
 }
 
@@ -133,8 +143,9 @@ exports.main = async (event, context) => {
       if (finalPassword.startsWith('scrypt$')) {
         return { success: false, message: 'Password uses a reserved format' };
       }
-      await db.collection('staff').add({
-        data: {
+      const auditId = crypto.randomBytes(16).toString('hex');
+      await db.runTransaction(async tx => {
+        const created = await tx.collection('staff').add({ data: {
           name: name.trim(),
           // Preserve the deployed login format, explicitly requested by the admin.
           password: finalPassword,
@@ -142,7 +153,13 @@ exports.main = async (event, context) => {
           phone: (phone || '').trim(),
           createdAt: db.serverDate(),
           updatedAt: db.serverDate()
-        }
+        } });
+        await tx.collection('counter_session_history').doc(auditId).set({ data: {
+          type: 'STAFF_ADDED', at: db.serverDate(), venueId: '', venueName: '', eventId: '', eventTitle: '',
+          actorId: caller._id, actorName: caller.name || '', actorRole: 'admin',
+          targetId: created._id, targetName: name.trim(), sessionId: '', result: 'success',
+          details: { role: role || 'counter' }
+        } });
       });
       return { success: true, password: finalPassword };
     } catch (e) {
@@ -166,8 +183,7 @@ exports.main = async (event, context) => {
         updateData.password = String(password);
         updateData.passwordChangedAt = db.serverDate();
       }
-      if (updateData.role !== 'counter') await changeStaffAndRevoke(id, caller, updateData);
-      else await db.collection('staff').doc(id).update({ data: updateData });
+      await changeStaffAndRevoke(id, caller, updateData);
       return { success: true };
     } catch (e) {
       return { success: false, error: e.message };

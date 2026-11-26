@@ -1,6 +1,7 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const crypto = require('crypto');
 const { parseToken } = require('./checkinTokens');
 const { loadWechatConfig } = require('./wechatConfig');
 const { switchFreeRegistration } = require('./switchFreeRegistration');
@@ -385,7 +386,32 @@ exports.main = async (event, context) => {
         patch.checkedInAt = db.serverDate();
       }
       if (Object.keys(patch).length > 0) {
-        await db.collection('registrations').doc(reg._id).update({ data: patch });
+        await db.runTransaction(async tx => {
+          const current = (await tx.collection('registrations').doc(reg._id).get()).data;
+          if (!current || current._openid !== openid || current.eventId !== parsed.eventId) throw new Error('Registration changed');
+          if (current.scannedAt) return;
+          const ev = (await tx.collection('events').doc(parsed.eventId).get()).data;
+          const venue = ev && ev.venueId ? (await tx.collection('venues').doc(ev.venueId).get()).data : null;
+          const session = venue && venue.counterSession;
+          const effectivePatch = { scannedAt: db.serverDate() };
+          if (!current.arrivedAt) {
+            effectivePatch.arrivedAt = patch.arrivedAt;
+            effectivePatch.checkedInAt = db.serverDate();
+          }
+          await tx.collection('registrations').doc(reg._id).update({ data: effectivePatch });
+          const entryId = crypto.createHash('sha256').update('guest-scan:' + reg._id + ':'
+            + String(current.updatedAt && current.updatedAt.$date || current.updatedAt || current.createdAt || '')).digest('hex');
+          await tx.collection('counter_session_history').doc(entryId).set({ data: {
+            type: current.arrivedAt ? 'QR_SCAN' : 'QR_CHECKIN', at: db.serverDate(), venueId: ev && ev.venueId || '',
+            venueName: ev && ev.venueName || '', eventId: parsed.eventId,
+            eventTitle: ev && ev.title || current.eventTitle || '', eventDate: ev && ev.date || '',
+            actorId: crypto.createHash('sha256').update(openid).digest('hex'),
+            actorName: String(current.guestName || '').slice(0, 160), actorRole: 'guest',
+            targetId: reg._id, targetName: String(current.guestName || '').slice(0, 160),
+            sessionId: session && session.eventId === parsed.eventId && session.expiresAt > Date.now()
+              ? session.idHash : '', result: 'success', details: { method: 'guest_qr' }
+          } });
+        });
       }
       // Registration changes handle the current entry; scanning never rechecks history.
       const supersededEvents = [];

@@ -24,7 +24,10 @@ function auditData(db, type, venue, caller, extra = {}) {
     staffName: caller && caller.name || '', role: caller && caller.role || '',
     eventId: extra.eventId || '', eventTitle: extra.eventTitle || '',
     adminId: extra.adminId || '', adminName: extra.adminName || '',
-    reason: extra.reason || '', result: extra.result || '' };
+    reason: extra.reason || '', result: extra.result || '',
+    actorId: caller && caller._id || extra.adminId || '', actorName: caller && caller.name || extra.adminName || '',
+    actorRole: caller && caller.role || (extra.adminId ? 'admin' : 'system'),
+    sessionId: extra.sessionId || '', targetId: '', targetName: '', details: {} };
 }
 
 async function log(db, type, venue, caller, extra = {}) {
@@ -119,7 +122,7 @@ async function release(db, caller, token, type = 'COUNTER_LOGOUT') {
       if (!session || session.idHash !== hash(token.sessionId) || session.staffId !== caller._id) throw new Error('COUNTER_SESSION_INVALID');
       await tx.collection('venues').doc(token.venueId).update({ data: { counterSession: db.command.remove() } });
       await tx.collection('counter_session_history').doc(auditId).set({ data: auditData(db, type, venue, caller,
-        { eventId: session.eventId, eventTitle: session.eventTitle, result: 'success' }) });
+        { eventId: session.eventId, eventTitle: session.eventTitle, sessionId: session.idHash, result: 'success' }) });
       return { success: true };
     });
   } catch (e) {
@@ -154,9 +157,10 @@ async function begin(db, caller, password, eventId) {
       await tx.collection('staff').doc(staff._id).update({ data: { counterSessionGuardAt: db.serverDate() } });
       if (old) await tx.collection('counter_session_history').doc(hash('expired:' + old.idHash)).set({ data:
         auditData(db, 'COUNTER_SESSION_EXPIRED', current, { _id: old.staffId, name: old.staffName, role: 'counter' },
-          { eventId: old.eventId, eventTitle: old.eventTitle, reason: 'inactivity', result: 'expired' }) });
+          { eventId: old.eventId, eventTitle: old.eventTitle, sessionId: old.idHash, reason: 'inactivity', result: 'expired' }) });
       await tx.collection('counter_session_history').doc(hash('login:' + session.idHash)).set({ data:
-        auditData(db, 'COUNTER_LOGIN_SUCCESS', current, caller, { eventId, eventTitle: activeEvent.title, result: 'success' }) });
+        auditData(db, 'COUNTER_LOGIN_SUCCESS', current, caller, { eventId, eventTitle: activeEvent.title,
+          sessionId: session.idHash, result: 'success' }) });
       return { success: true, venue: { _id: current._id, name: current.name }, sessionId };
     });
   } catch (e) {

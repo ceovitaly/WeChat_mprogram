@@ -1,7 +1,8 @@
 const ADMIN_LIST = [
   { pagePath: '/pages/admin/calendar/calendar', text: 'Schedule', icon: 'calendar' },
   { pagePath: '/pages/admin/events/events', text: 'Events', icon: 'events' },
-  { pagePath: '/pages/admin/main/main', text: 'Main', icon: 'main' }
+  { pagePath: '/pages/admin/main/main', text: 'Main', icon: 'main' },
+  { pagePath: '/pages/admin/history/history', text: 'History', icon: 'history' }
 ]
 
 const COUNTER_LIST = [

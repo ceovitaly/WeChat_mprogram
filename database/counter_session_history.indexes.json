@@ -2,5 +2,9 @@
   { "name": "venue_time", "fields": [{ "field": "venueId", "direction": 1 }, { "field": "at", "direction": -1 }] },
   { "name": "event_time", "fields": [{ "field": "eventId", "direction": 1 }, { "field": "at", "direction": -1 }] },
   { "name": "staff_time", "fields": [{ "field": "staffId", "direction": 1 }, { "field": "at", "direction": -1 }] },
+  { "name": "venue_event_time", "fields": [{ "field": "venueId", "direction": 1 }, { "field": "eventId", "direction": 1 }, { "field": "at", "direction": -1 }] },
+  { "name": "session_time", "fields": [{ "field": "sessionId", "direction": 1 }, { "field": "at", "direction": -1 }] },
+  { "name": "type_time", "fields": [{ "field": "type", "direction": 1 }, { "field": "at", "direction": -1 }] },
+  { "name": "venue_type_time", "fields": [{ "field": "venueId", "direction": 1 }, { "field": "type", "direction": 1 }, { "field": "at", "direction": -1 }] },
   { "name": "history_time", "fields": [{ "field": "at", "direction": -1 }] }
 ]

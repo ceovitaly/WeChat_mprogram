@@ -2,6 +2,7 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const counterSession = require('./counterSession');
+const activityHistory = require('./activityHistory');
 const { createToken: createCheckinToken } = require('./checkinTokens');
 
 // ─── Door check-in tokens ───────────────────────────────────────────────────
@@ -507,7 +508,7 @@ async function archiveClosedEvents(db) {
 }
 
 // Compatible event-deletion hotfix: no auth, environment or payment changes.
-async function deleteEventSafely(db, targetId, context) {
+async function deleteEventSafely(db, targetId, context, caller) {
   const startedAt = Date.now();
   const budgetMs = 40000;
   const batchSize = 100;
@@ -677,10 +678,15 @@ async function deleteEventSafely(db, targetId, context) {
     await ensureNoOrders();
     await ensureNoPaidTickets();
     budget();
-    const eventSelector = ownsGate
-      ? { _id: targetId, deletionOperationId: operationId }
-      : { _id: targetId };
-    await db.collection('events').where(eventSelector).remove();
+    const deletionAuditId = activityHistory.id();
+    await db.runTransaction(async tx => {
+      const snapshot = (await tx.collection('events').doc(targetId).get()).data;
+      if (!snapshot) return;
+      if (ownsGate && snapshot.deletionOperationId !== operationId) fail('EVENT_DELETE_RETRY', 'Deletion gate changed.');
+      await tx.collection('events').doc(targetId).remove();
+      await activityHistory.append(tx, db, 'EVENT_DELETED', caller, null, snapshot,
+        { _id: targetId, name: snapshot.title }, {}, deletionAuditId);
+    });
     const finalRemoved = await drainFreeRegistrations();
     const [events, registrations] = await Promise.all([
       db.collection('events').where({ _id: targetId }).count(),
@@ -730,6 +736,15 @@ exports.main = async (event, context) => {
   if (caller.role !== 'admin' && !COUNTER_ALLOWED_ACTIONS.includes(action)) {
     return { success: false, message: 'Forbidden' };
   }
+  if (action === 'historyVenues' || action === 'historyEvents' || action === 'historyTimeline' || action === 'historySessions') {
+    if (caller.role !== 'admin') return { success: false, message: 'Forbidden' };
+    try {
+      if (action === 'historyVenues') return await activityHistory.venuePage(db, event);
+      if (action === 'historyEvents') return await activityHistory.eventPage(db, event);
+      if (action === 'historySessions') return await activityHistory.sessions(db, event);
+      return await activityHistory.timeline(db, event);
+    } catch (_) { return { success: false, message: 'History unavailable' }; }
+  }
   if (action === 'beginCounterSession') return counterSession.begin(db, caller, event.password, event.eventId);
   if (action === 'prepareCounterVenue') {
     if (caller.role !== 'counter' || typeof event.password !== 'string' || !event.password.trim()) return { success: false, message: 'Invalid password' };
@@ -771,7 +786,8 @@ exports.main = async (event, context) => {
           await tx.collection('venues').doc(id).update({ data: { counterSession: db.command.remove() } });
           await tx.collection('counter_session_history').doc(auditId).set({ data:
             counterSession.auditData(db, 'COUNTER_FORCE_LOGOUT', live, null, { adminId: caller._id, adminName: caller.name,
-              eventId: current.eventId, eventTitle: current.eventTitle, reason: 'admin', result: 'success' }) });
+              eventId: current.eventId, eventTitle: current.eventTitle, sessionId: current.idHash,
+              reason: 'admin', result: 'success' }) });
           return { success: true };
         });
       } catch (_) { return { success: false, message: 'Session changed or history unavailable; refresh' }; }
@@ -1415,13 +1431,28 @@ exports.main = async (event, context) => {
     try {
       const { id, eventData } = event;
       if (!eventData) return { success: false, message: 'No event data' };
-      const now = db.serverDate();
+      const historyId = activityHistory.id();
       if (id) {
-        await db.collection('events').doc(id).update({ data: { ...eventData, updatedAt: now } });
+        await db.runTransaction(async tx => {
+          const before = (await tx.collection('events').doc(id).get()).data;
+          if (!before) throw new Error('Event not found');
+          const after = { ...before, ...eventData, _id: id };
+          const diff = activityHistory.changes(before, after);
+          await tx.collection('events').doc(id).update({ data: { ...eventData, updatedAt: db.serverDate() } });
+          if (Object.keys(diff).length) await activityHistory.append(tx, db, 'EVENT_UPDATED', caller, null, after,
+            { _id: id, name: after.title }, { details: diff }, historyId);
+        });
         return { success: true, id };
       } else {
-        const res = await db.collection('events').add({ data: { ...eventData, status: 'active', createdAt: now, updatedAt: now } });
-        return { success: true, id: res._id };
+        return await db.runTransaction(async tx => {
+          const res = await tx.collection('events').add({ data: {
+            ...eventData, status: 'active', createdAt: db.serverDate(), updatedAt: db.serverDate()
+          } });
+          const created = { ...eventData, _id: res._id };
+          await activityHistory.append(tx, db, 'EVENT_CREATED', caller, null, created,
+            { _id: res._id, name: created.title }, {}, historyId);
+          return { success: true, id: res._id };
+        });
       }
     } catch (e) {
       return { success: false, message: e.message };
@@ -1430,7 +1461,7 @@ exports.main = async (event, context) => {
 
   // DELETE EVENT
   if (action === 'deleteEvent') {
-    return deleteEventSafely(db, eventId || id, context);
+    return deleteEventSafely(db, eventId || id, context, caller);
   }
 
   // UNCHECK GUEST
@@ -1441,12 +1472,16 @@ exports.main = async (event, context) => {
       if (caller.role === 'counter' && event.counterSession) {
         const target = await db.collection('registrations').doc(registrationId).get().catch(() => null);
         if (!target || !target.data) return { success: false, message: 'Registration not found' };
-        return counterSession.mutate(db, caller, event.counterSession, target.data.eventId, async (tx, session) => {
+        return counterSession.mutate(db, caller, event.counterSession, target.data.eventId, async (tx, session, venue) => {
             const reg = (await tx.collection('registrations').doc(registrationId).get()).data;
             if (!reg || reg.eventId !== session.eventId) throw new Error('COUNTER_SESSION_INVALID');
             await tx.collection('registrations').doc(registrationId).update({
               data: { arrivedAt: null, checkedInAt: null, scannedAt: null, updatedAt: db.serverDate() }
             });
+            if (reg.arrivedAt || reg.scannedAt) await activityHistory.append(tx, db, 'GUEST_UNCHECKED', caller, null,
+              { _id: reg.eventId, title: reg.eventTitle, venueId: venue && venue._id, venueName: venue && venue.name },
+              { _id: registrationId, name: reg.guestName }, { sessionId: session.idHash },
+              activityHistory.id());
             return { success: true };
           });
       }
@@ -1584,6 +1619,7 @@ exports.main = async (event, context) => {
               counterSession.auditData(db, 'VENUE_PASSWORD_CHANGED', live, null, { adminId: caller._id, adminName: caller.name,
                 eventId: live.counterSession && live.counterSession.eventId,
                 eventTitle: live.counterSession && live.counterSession.eventTitle,
+                sessionId: live.counterSession && live.counterSession.idHash,
                 reason: 'password_changed', result: 'success' }) });
           });
         } else {
@@ -1603,7 +1639,14 @@ exports.main = async (event, context) => {
   if (action === 'deleteVenue') {
     try {
       if (!id) return { success: false, message: 'No ID provided' };
-      await db.collection('venues').doc(id).remove();
+      const auditId = activityHistory.id();
+      await db.runTransaction(async tx => {
+        const venue = (await tx.collection('venues').doc(id).get()).data;
+        if (!venue) return;
+        await tx.collection('venues').doc(id).remove();
+        await activityHistory.append(tx, db, 'VENUE_DELETED', caller, venue, null,
+          { _id: id, name: venue.name }, {}, auditId);
+      });
       return { success: true };
     } catch (e) {
       return { success: false, message: e.message };
@@ -1774,24 +1817,29 @@ exports.main = async (event, context) => {
       // swallowed — the close itself must always succeed.
       let purgedImages = 0;
       let reportBuilt = false;
+      let closureSnapshot = null;
       try {
         const evRes = await db.collection('events').doc(eventId).get();
         if (evRes && evRes.data) {
           const evDoc = Object.assign({ _id: eventId }, evRes.data);
+          closureSnapshot = evDoc;
           const rep = await buildEventReports(db, evDoc);
           reportBuilt = !!(rep && rep.ok);
-          purgedImages = await purgeEventImages(db, evDoc);
         }
       } catch (e) { /* closing still proceeds */ }
-      await db.collection('events').doc(eventId).update({
-        data: {
-          status: 'closed',
-          isClosed: true,
-          hasReports: reportBuilt,
-          closedAt: db.serverDate(),
-          closedBy: closedBy || 'Unknown'
-        }
+      const historyId = activityHistory.id();
+      await db.runTransaction(async tx => {
+        const before = (await tx.collection('events').doc(eventId).get()).data;
+        if (!before) throw new Error('Event not found');
+        if (before.isClosed) return;
+        await tx.collection('events').doc(eventId).update({ data: {
+          status: 'closed', isClosed: true, hasReports: reportBuilt,
+          closedAt: db.serverDate(), closedBy: caller.name || 'Administrator'
+        } });
+        await activityHistory.append(tx, db, 'EVENT_COMPLETED', caller, null, before,
+          { _id: eventId, name: before.title }, { details: { status: { from: before.status || 'active', to: 'closed' } } }, historyId);
       });
+      if (closureSnapshot) purgedImages = await purgeEventImages(db, closureSnapshot).catch(() => 0);
       return { success: true, purgedImages, reportBuilt };
     } catch (e) {
       return { success: false, message: e.message };
@@ -1957,13 +2005,7 @@ exports.main = async (event, context) => {
         const endedIds = [];
         for (const ev of openEvents) {
           if (!ev.date || !ev.endTime) continue;
-          try {
-            const [y, m, d] = String(ev.date).split('-').map(Number);
-            const [h, min] = String(ev.endTime).split(':').map(Number);
-            const endDt = new Date(y, m - 1, d, h, min, 0, 0);
-            if (h < 12) endDt.setDate(endDt.getDate() + 1);
-            if (!isNaN(endDt.getTime()) && nowMs > endDt.getTime()) endedIds.push(ev._id);
-          } catch (e) { /* keep the event open on parse issues */ }
+          if (counterSession.ended(ev, nowMs)) endedIds.push(ev._id);
         }
         if (endedIds.length > 0) {
           // Auto-closed events get the same treatment as button-closed ones:
@@ -1972,16 +2014,18 @@ exports.main = async (event, context) => {
             .filter(ev => endedIds.indexOf(ev._id) !== -1)
             .map(async ev => {
               const rep = await buildEventReports(db, ev);
-              await purgeEventImages(db, ev);
-              await db.collection('events').doc(ev._id).update({
-                data: {
-                  isClosed: true,
-                  closedBy: 'Auto',
-                  hasReports: !!(rep && rep.ok),
-                  closedAt: db.serverDate(),
-                  updatedAt: db.serverDate()
-                }
-              }).catch(() => {});
+              const auditId = activityHistory.id();
+              await db.runTransaction(async tx => {
+                const live = (await tx.collection('events').doc(ev._id).get()).data;
+                if (!live || live.isClosed || !counterSession.ended(live)) return;
+                await tx.collection('events').doc(ev._id).update({ data: {
+                  isClosed: true, closedBy: 'Auto', hasReports: !!(rep && rep.ok),
+                  closedAt: db.serverDate(), updatedAt: db.serverDate()
+                } });
+                await activityHistory.append(tx, db, 'EVENT_AUTO_COMPLETED', null, null, live,
+                  { _id: ev._id, name: live.title }, {}, auditId);
+              });
+              await purgeEventImages(db, ev).catch(() => {});
             }));
         }
 

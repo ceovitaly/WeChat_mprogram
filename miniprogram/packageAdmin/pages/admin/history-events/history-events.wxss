@@ -1,0 +1,2 @@
+@import "../../../../pages/admin/history/history.wxss";
+.history-card .history-name,.history-card .history-muted{display:block;margin-bottom:10rpx}

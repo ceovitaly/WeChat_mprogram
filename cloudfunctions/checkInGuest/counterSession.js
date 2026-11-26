@@ -44,6 +44,19 @@ async function checkIn(db, caller, token, registrationId, arrivedAt) {
       await tx.collection('registrations').doc(registrationId).update({ data: {
         arrivedAt: reg.arrivedAt || arrivedAt, checkedInAt: reg.checkedInAt || db.serverDate()
       } });
+      if (!reg.arrivedAt) {
+        const auditId = crypto.createHash('sha256').update('manual:' + registrationId + ':' + session.idHash
+          + ':' + String(reg.updatedAt && reg.updatedAt.$date || reg.updatedAt || reg.createdAt || '')).digest('hex');
+        await tx.collection('counter_session_history').doc(auditId).set({ data: {
+          type: reg.scannedAt ? 'MANUAL_CHECKIN' : 'MANUAL_CHECKIN_NO_SCAN', at: db.serverDate(),
+          venueId: venue._id, venueName: venue.name || '', eventId: reg.eventId,
+          eventTitle: ev.title || reg.eventTitle || '', eventDate: ev.date || '',
+          actorId: caller._id, actorName: caller.name || '', actorRole: 'counter',
+          staffId: caller._id, staffName: caller.name || '', targetId: registrationId,
+          targetName: String(reg.guestName || '').slice(0, 160), sessionId: session.idHash,
+          result: 'success', details: { noScan: !reg.scannedAt }
+        } });
+      }
       if (session.expiresAt <= Date.now()) throw new Error('COUNTER_SESSION_INVALID');
       return { success: true, supersededEvents: [] };
     });
