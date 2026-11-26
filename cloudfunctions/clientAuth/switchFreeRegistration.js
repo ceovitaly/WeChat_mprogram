@@ -164,6 +164,27 @@ async function switchFreeRegistration(db, options) {
         guestCount: (Number(target.guestCount) || 0) + 1,
         guestCountSyncedAt: db.serverDate(), registrationsChangedAt: db.serverDate()
       } });
+      const actorName = String(registrationData.guestName || guest.nickName || guest.name || '').slice(0, 160);
+      const joinedId = crypto.createHash('sha256').update('guest-joined:' + regId).digest('hex');
+      await tx.collection('counter_session_history').doc(joinedId).set({ data: {
+        type: cancelling ? 'GUEST_SWITCHED' : 'GUEST_REGISTERED', at: db.serverDate(),
+        venueId: target.venueId || '', venueName: target.venueName || '', eventId,
+        eventTitle: target.title || '', eventDate: target.date || '', startTime: target.startTime || '', endTime: target.endTime || '',
+        actorId: guest._id, actorName, actorRole: 'guest', targetId: regId, targetName: actorName,
+        sessionId: '', result: 'success', details: cancelling ? {
+          previousEventId: previous.eventId, previousEventTitle: outcome.eventTitle
+        } : {}
+      } });
+      if (cancelling) {
+        const cancelledId = crypto.createHash('sha256').update('guest-cancelled:' + previous._id + ':' + regId).digest('hex');
+        await tx.collection('counter_session_history').doc(cancelledId).set({ data: {
+          type: 'GUEST_REGISTRATION_CANCELLED', at: db.serverDate(),
+          venueId: previousEvent.venueId || '', venueName: previousEvent.venueName || '',
+          eventId: previous.eventId, eventTitle: outcome.eventTitle || '', eventDate: previous.eventDate || '',
+          actorId: guest._id, actorName, actorRole: 'guest', targetId: previous._id, targetName: actorName,
+          sessionId: '', result: 'success', reason: 'switch_event', details: { newEventId: eventId, newEventTitle: target.title || '' }
+        } });
+      }
       await tx.commit();
       return {
         success: true, replacedEventIds: cancelling ? [previous.eventId] : [],
