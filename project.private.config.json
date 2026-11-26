@@ -16,10 +16,11 @@
     "checkInvalidKey": true,
     "ignoreDevUnusedFiles": true,
     "bigPackageSizeSupport": false,
-    "useIsolateContext": true
+    "useIsolateContext": true,
+    "useGlassEaselForWxml": false
   },
   "condition": {},
   "description": "项目私有配置文件。此文件中的内容将覆盖 project.config.json 中的相同字段。项目的改动优先同步到此文件中。详见文档：https://developers.weixin.qq.com/miniprogram/dev/devtools/projectconfig.html",
-  "projectname": "Yue!%20Admin%20(Gaming)",
+  "projectname": "Be%20Social%20(alpha)",
   "libVersion": "3.16.1"
 }

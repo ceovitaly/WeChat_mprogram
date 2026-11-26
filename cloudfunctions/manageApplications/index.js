@@ -14,6 +14,38 @@ const { createToken: createCheckinToken } = require('./checkinTokens');
 // One code per counter tap (manual refresh); 20s display window, per spec —
 // expiry kills replays/screenshots.
 const CHECKIN_TTL_SEC = 20;
+const MAX_DELETE_BATCHES = 50;
+const DELETE_EMPTY_ROUNDS = 5;
+
+async function drainEventRegistrations(eventId) {
+  let removed = 0;
+  let batchCount = 0;
+  let emptyRounds = 0;
+  while (true) {
+    const regsRes = await db.collection('registrations')
+      .where({ eventId })
+      .field({ _id: true })
+      .limit(1000)
+      .get();
+    const registrations = regsRes.data || [];
+    if (registrations.length > 0 && batchCount >= MAX_DELETE_BATCHES) {
+      return { removed, settled: false };
+    }
+    if (registrations.length === 0) {
+      emptyRounds++;
+      if (emptyRounds >= DELETE_EMPTY_ROUNDS) break;
+      await new Promise(resolve => setTimeout(resolve, 100));
+      continue;
+    }
+    emptyRounds = 0;
+    await Promise.all(registrations.map(r =>
+      db.collection('registrations').doc(r._id).remove()
+    ));
+    removed += registrations.length;
+    batchCount++;
+  }
+  return { removed, settled: emptyRounds >= DELETE_EMPTY_ROUNDS };
+}
 
 
 async function getCallerStaff(db) {

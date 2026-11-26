@@ -78,7 +78,7 @@ test('guest feed defaults to full-width event cards', () => {
   assert.match(styles, /\.event-card\s*\{[^}]*width:\s*100%/)
 })
 
-test('Events navigation shows a two-column grid containing only paid events', () => {
+test('Events navigation shows all paid events in a two-column grid', () => {
   const template = read(path.join(guestRoot, 'miniprogram/pages/feed/feed.wxml'))
   const controller = read(path.join(guestRoot, 'miniprogram/pages/feed/feed.js'))
   const styles = read(path.join(guestRoot, 'miniprogram/pages/feed/feed.wxss'))
@@ -86,13 +86,15 @@ test('Events navigation shows a two-column grid containing only paid events', ()
   assert.match(template, /<app-tabs[\s\S]*?active-tab="\{\{showPaidEvents \? 'events' : 'feed'\}\}"/)
   assert.match(controller, /showPaidEvents:\s*false/)
   assert.match(controller, /onAppTabChange:\s*function\(e\)[\s\S]*?setFeedTab/)
-  assert.match(controller, /paidEvents\s*=\s*filtered\.filter\([\s\S]*?isPaid[\s\S]*?hasPaidPackages/)
+  assert.match(controller, /splitVisibleEvents\(filtered\)/)
+  assert.match(controller, /paidEvents\s*=\s*visible\.events/)
   assert.match(template, /wx:if="\{\{showPaidEvents && paidEvents\.length > 0\}\}"/)
   assert.match(template, /wx:for="\{\{paidEvents\}\}"[\s\S]*?class="event-tile/)
   assert.match(template, /class="event-tile-join"[\s\S]*?catchtap="goToTicketDirect"/)
   assert.match(template, /class="event-tile-wallet"[\s\S]*?catchtap="goToTickets"[\s\S]*?View in Wallet/)
   assert.match(template, /showPaidEvents && paidEvents\.length === 0[\s\S]*?wx:if="\{\{selectedDate \|\| searchKeyword\}\}"[\s\S]*?bindtap="clearAllFilters"/)
   assert.match(styles, /\.event-grid-container\s*\{[^}]*flex-direction:\s*row[^}]*flex-wrap:\s*wrap/)
+  assert.match(styles, /\.event-grid-container \.event-tile\s*\{[^}]*flex:\s*0 0 calc\(\(100% - 20rpx\) \/ 2\)/)
 })
 
 test('event detail shows photos only from its event venue', () => {
@@ -137,7 +139,8 @@ test('admin can keep a paid event exclusively in Events while Feed excludes it',
   assert.match(editor, /eventsOnly:\s*e\.eventsOnly\s*===\s*true/)
   assert.match(editor, /toggleEventsOnly\(e\)/)
   assert.match(editor, /eventData\s*=\s*\{[\s\S]*?eventsOnly/)
-  assert.match(feed, /var marked = filtered\.filter\(function\(e\) \{[\s\S]*?e\.eventsOnly !== true/)
-  assert.match(feed, /var paidEvents = filtered\.filter\(function\(e\)[\s\S]*?isPaid[\s\S]*?hasPaidPackages/)
+  assert.match(feed, /splitVisibleEvents\(filtered\)/)
+  assert.match(feed, /var marked = visible\.main/)
+  assert.match(feed, /var paidEvents = visible\.events/)
   assert.match(guestCloud, /SAFE_FIELDS[\s\S]*?eventsOnly/)
 })

@@ -160,10 +160,16 @@ function findTicket(eventDoc, ticketId) {
 // existing doc is read FIRST and written add-or-update accordingly — no
 // error-string sniffing: the old add-then-catch-duplicate path silently lost
 // paid tickets when the duplicate error text didn't match the pattern.
-// Free → paid upgrades in place; already-paid is an idempotent no-op.
+// Free → paid upgrades in place; already-paid rows may need legacy owner
+// metadata repaired so the existing Wallet query can see them.
 async function issuePaidRegistration(order) {
+  if (!order || !order.openid || !order.eventId) return false;
+  const eventRes = await db.collection('events').doc(order.eventId).get().catch(() => null);
+  const eventDoc = eventRes && eventRes.data;
+  if (!eventDoc || eventDoc.deleting === true) return false;
   const regId = order.eventId + '_' + order.openid;
   const paidPatch = {
+    _openid: order.openid,
     ticketId: order.ticketId || '',
     ticketType: order.ticketName || '',
     status: 'confirmed',
@@ -176,14 +182,28 @@ async function issuePaidRegistration(order) {
     const existingRes = await db.collection('registrations').doc(regId).get().catch(() => null);
     const existing = existingRes && existingRes.data;
     if (existing) {
-      if (existing.paid) return false; // idempotent: nothing to change
+      // Never move a registration that already belongs to another guest.
+      if (existing._openid && existing._openid !== order.openid) return false;
+      if (existing.paid) {
+        const repair = {};
+        if (!existing._openid) repair._openid = order.openid;
+        if (!existing.ticketId && order.ticketId && (!existing.orderId || existing.orderId === order._id)) {
+          repair.ticketId = order.ticketId;
+        }
+        if (Object.keys(repair).length) {
+          await db.collection('registrations').doc(regId).update({ data: repair });
+        }
+        return true; // already issued: preserve payment and ticket snapshots
+      }
       await db.collection('registrations').doc(regId).update({ data: paidPatch });
       return true; // free → paid upgrade: counter unchanged
     }
     await db.collection('registrations').add({
       data: {
         _id: regId,
+        _openid: order.openid,
         eventId: order.eventId,
+        ticketId: order.ticketId || '',
         eventTitle: order.eventTitle || '',
         eventDate: order.eventDate || '',
         guestName: order.guestName || '',
@@ -212,14 +232,31 @@ async function issuePaidRegistration(order) {
   }
 }
 
-// Self-heal for the lost-ticket bug: paid orders whose registration never got
-// the paid flag (issued before the fix above). Runs on the caller's own
-// orders whenever they touch payments (createOrder / getMyOrders) — the
-// first app open after the fix re-issues every lost ticket silently.
+// A historical "paid" row alone is not enough to re-issue a missing ticket:
+// the payment may since have been refunded or the ledger may be inconsistent.
+// Only repair missing ownership/issuance after an authoritative gateway check.
+async function repairRecordedPaidOrder(order) {
+  if (!order || order.status !== 'paid' || !order.openid || !order.eventId) return false;
+  const regRes = await db.collection('registrations')
+    .doc(order.eventId + '_' + order.openid).get().catch(() => null);
+  const reg = regRes && regRes.data;
+  if (reg && reg._openid && reg._openid !== order.openid) return false;
+  if (reg && reg.paid && reg._openid === order.openid && (reg.ticketId || !order.ticketId)) return true;
+  if (!GATEWAY.configured || !order.outTradeNo) return false;
+  const gw = await GATEWAY.queryOrder(order).catch(() => null);
+  if (!gw || gw.tradeState !== 'SUCCESS' || !gw.transactionId) return false;
+  if (order.transactionId && order.transactionId !== gw.transactionId) return false;
+  return issuePaidRegistration(order);
+}
+
+// Self-heal for the lost-ticket bug runs only on the caller's own paid
+// orders whenever they touch payments (createOrder / getMyOrders).
+// Orders are found by the server-written openid field. This legacy scan is
+// bounded to 20 paid orders; larger histories need a separate audited repair.
 async function healPaidOrders(openid) {
   try {
     const res = await db.collection('orders')
-      .where({ _openid: openid, status: 'paid' })
+      .where({ openid, status: 'paid' })
       .limit(20)
       .get();
     for (const order of (res.data || [])) {
@@ -227,8 +264,8 @@ async function healPaidOrders(openid) {
         .doc(order.eventId + '_' + order.openid)
         .get().catch(() => null);
       const reg = regRes && regRes.data;
-      if (reg && reg.paid) continue;
-      const issued = await issuePaidRegistration(order);
+      if (reg && reg.paid && reg._openid === openid && (reg.ticketId || !order.ticketId)) continue;
+      const issued = await repairRecordedPaidOrder(order);
       if (issued) console.log('[payments] healed paid order:', order._id);
     }
   } catch (e) { /* non-fatal */ }
@@ -253,7 +290,7 @@ async function markOrderPaid(order, transactionId) {
 async function closeStalePendingOrders(openid) {
   try {
     const res = await db.collection('orders')
-      .where({ _openid: openid, status: 'pending', expireAtMs: db.command.lt(Date.now()) })
+      .where({ openid, status: 'pending', expireAtMs: db.command.lt(Date.now()) })
       .limit(10)
       .get();
     for (const order of (res.data || [])) {
@@ -312,6 +349,9 @@ exports.main = async (event, context) => {
       const eventRes = await db.collection('events').doc(eventId).get().catch(() => null);
       const eventDoc = eventRes && eventRes.data;
       if (!eventDoc) return { success: false, message: 'Event not found' };
+      if (eventDoc.deleting === true) {
+        return { success: false, code: 'EVENT_DELETING', message: 'This event is being removed' };
+      }
 
       // No sales for ended/closed events — the guest UI blocks the sheet,
       // this is the enforcement behind it (night rule: an endTime before
@@ -432,7 +472,8 @@ exports.main = async (event, context) => {
         return { success: false, message: 'Order not found' };
       }
       if (order.status === 'paid') {
-        return { success: true, status: 'paid' };
+        const issued = await repairRecordedPaidOrder(order);
+        return { success: true, status: 'paid', registrationIssued: issued };
       }
       if (order.status !== 'pending') {
         return { success: true, status: order.status };
@@ -472,7 +513,7 @@ exports.main = async (event, context) => {
       await closeStalePendingOrders(openid);
       await healPaidOrders(openid);
       const res = await db.collection('orders')
-        .where({ _openid: openid })
+        .where({ openid })
         .orderBy('createdAt', 'desc')
         .limit(50)
         .get();
