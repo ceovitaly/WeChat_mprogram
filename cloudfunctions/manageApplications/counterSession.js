@@ -1,20 +1,29 @@
 const crypto = require('crypto');
 
-const TTL = 90000;
 const enforcement = () => process.env.COUNTER_SESSION_ENFORCEMENT === 'ENFORCED';
 const now = () => Date.now();
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const venueRef = (db, id) => db.collection('venues').doc(id);
 const result = (code, message) => ({ success: false, code, message });
+async function optionalDoc(ref) {
+  try { return await ref.get(); }
+  catch (e) {
+    if (String(e && e.message || e).includes('does not exist')) return { data: null };
+    throw e; // A database outage must not revoke someone else's session.
+  }
+}
 
 // Shanghai calendar date is converted to UTC explicitly; cloud runtime timezone is irrelevant.
+function eventEndMs(ev) {
+  const [h, m] = ev.endTime.split(':').map(Number);
+  return Date.parse(ev.date + 'T00:00:00+08:00') + (h * 60 + m) * 60000 + (h < 12 ? 86400000 : 0);
+}
 function ended(ev, time = now()) {
   if (!ev || ev.isClosed || ev.deleting || ev.status === 'cancelled') return true;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ev.date || '') || !/^\d{2}:\d{2}$/.test(ev.endTime || '')) return true;
   const [h, m] = ev.endTime.split(':').map(Number);
   if (h > 23 || m > 59) return true;
-  const offset = (h < 12 ? 24 : 0) * 3600000;
-  return time >= Date.parse(ev.date + 'T00:00:00+08:00') + (h * 60 + m) * 60000 + offset;
+  return time >= eventEndMs(ev);
 }
 
 function auditData(db, type, venue, caller, extra = {}) {
@@ -52,14 +61,13 @@ async function mutate(db, caller, token, eventId, change) {
       const session = venue && venue.counterSession;
       if (!session || session.idHash !== hash(token.sessionId) || session.staffId !== caller._id ||
           session.openid !== caller.lastOpenid || session.version !== (venue.passwordVersion || 0) ||
-          session.expiresAt <= now() || session.eventId !== eventId) throw new Error('COUNTER_SESSION_INVALID');
+          session.eventId !== eventId) throw new Error('COUNTER_SESSION_INVALID');
       const ev = (await tx.collection('events').doc(eventId).get()).data;
       if (ended(ev) || (ev.venueId ? ev.venueId !== venue._id : ev.venueName !== venue.name)) throw new Error('COUNTER_SESSION_INVALID');
       await tx.collection('venues').doc(venue._id).update({ data: { 'counterSession.guardAt': db.serverDate() } });
       await tx.collection('staff').doc(staff._id).update({ data: { counterSessionGuardAt: db.serverDate() } });
       await tx.collection('events').doc(eventId).update({ data: { counterSessionGuardAt: db.serverDate() } });
       const response = await change(tx, session, venue, ev);
-      if (session.expiresAt <= now()) throw new Error('COUNTER_SESSION_INVALID');
       return response;
     });
   } catch (e) {
@@ -70,11 +78,13 @@ async function mutate(db, caller, token, eventId, change) {
 }
 
 async function validate(db, caller, token, eventId, refresh = false) {
-  if (!token) return result('COUNTER_SESSION_INVALID', 'Session expired');
+  if (!token || !caller || caller.role !== 'counter') return result('COUNTER_SESSION_INVALID', 'Session expired');
   const venueId = token.venueId;
   const sessionId = token.sessionId;
   if (typeof venueId !== 'string' || typeof sessionId !== 'string' || !venueId || !sessionId) return result('COUNTER_SESSION_INVALID', 'Session expired');
-  const read = await venueRef(db, venueId).get().catch(() => null);
+  let read;
+  try { read = await optionalDoc(venueRef(db, venueId)); }
+  catch (_) { return result('COUNTER_OPERATION_RETRY', 'Session check unavailable. Please retry.'); }
   const venue = read && read.data;
   const session = venue && venue.counterSession;
   if (venue && venue.revokedCounterSessionHash === hash(sessionId)) {
@@ -84,14 +94,17 @@ async function validate(db, caller, token, eventId, refresh = false) {
     return result('COUNTER_PASSWORD_CHANGED', 'The venue password has been changed by the administrator. Please log in again using the new password.');
   }
   if (!session || session.idHash !== hash(sessionId) || session.staffId !== caller._id || session.openid !== caller.lastOpenid ||
-      session.version !== (venue.passwordVersion || 0) || session.expiresAt <= now()) {
+      session.version !== (venue.passwordVersion || 0)) {
     return result('COUNTER_SESSION_INVALID', 'Session expired');
   }
   if (eventId && session.eventId !== eventId) return result('COUNTER_SESSION_INVALID', 'Session expired');
-  const evRes = await db.collection('events').doc(session.eventId).get().catch(() => null);
+  let evRes;
+  try { evRes = await optionalDoc(db.collection('events').doc(session.eventId)); }
+  catch (_) { return result('COUNTER_OPERATION_RETRY', 'Session check unavailable. Please retry.'); }
   const ev = evRes && evRes.data;
   if (!ev || ended(ev) || (ev.venueId ? ev.venueId !== venueId : ev.venueName !== venue.name)) {
-    await release(db, caller, token, 'COUNTER_EVENT_COMPLETED');
+    const closed = await release(db, caller, token, 'COUNTER_EVENT_COMPLETED');
+    if (!closed.success && closed.code !== 'COUNTER_SESSION_INVALID') return closed;
     return result('COUNTER_SESSION_INVALID', 'Session expired');
   }
   if (refresh) {
@@ -100,16 +113,19 @@ async function validate(db, caller, token, eventId, refresh = false) {
         const fresh = (await tx.collection('venues').doc(venueId).get()).data;
         const current = fresh && fresh.counterSession;
         if (!current || current.idHash !== hash(sessionId) || current.staffId !== caller._id ||
-            current.version !== (fresh.passwordVersion || 0) || current.expiresAt <= now()) throw new Error('COUNTER_SESSION_INVALID');
+            current.openid !== caller.lastOpenid || current.version !== (fresh.passwordVersion || 0)) throw new Error('COUNTER_SESSION_INVALID');
         const currentEvent = (await tx.collection('events').doc(current.eventId).get()).data;
-        if (ended(currentEvent)) throw new Error('COUNTER_SESSION_INVALID');
+        if (ended(currentEvent) || (currentEvent.venueId ? currentEvent.venueId !== venueId
+          : currentEvent.venueName !== fresh.name)) throw new Error('COUNTER_SESSION_INVALID');
         await tx.collection('venues').doc(venueId).update({ data: {
-          'counterSession.expiresAt': now() + TTL, 'counterSession.lastActiveAt': db.serverDate()
+          'counterSession.expiresAt': eventEndMs(currentEvent), 'counterSession.lastActiveAt': db.serverDate()
         } });
       });
-    } catch (_) { return result('COUNTER_SESSION_INVALID', 'Session expired'); }
+    } catch (e) { return e.message === 'COUNTER_SESSION_INVALID'
+      ? result('COUNTER_SESSION_INVALID', 'Session expired')
+      : result('COUNTER_OPERATION_RETRY', 'Session check unavailable. Please retry.'); }
   }
-  return { success: true, venue, session };
+  return { success: true, venue, session, event: ev };
 }
 
 async function release(db, caller, token, type = 'COUNTER_LOGOUT') {
@@ -150,14 +166,17 @@ async function begin(db, caller, password, eventId) {
       if (ended(activeEvent) || (activeEvent.venueId ? activeEvent.venueId !== current._id : activeEvent.venueName !== current.name)) throw new Error('COUNTER_SESSION_INVALID');
       const old = current.counterSession;
       const sameOwner = old && old.staffId === staff._id && old.openid === staff.lastOpenid;
-      let oldActive = !!(old && /^[a-f0-9]{64}$/.test(old.idHash || '') &&
-        old.expiresAt > now() && old.version === (current.passwordVersion || 0));
+      let oldEventEnded = false;
+      let oldActive = !!(old && old.eventId && old.staffId && old.openid &&
+        /^[a-f0-9]{64}$/.test(old.idHash || '') &&
+        old.version === (current.passwordVersion || 0));
       if (oldActive) {
-        const oldEvent = await tx.collection('events').doc(old.eventId).get().catch(() => null);
+        const oldEvent = await optionalDoc(tx.collection('events').doc(old.eventId));
+        oldEventEnded = !oldEvent || !oldEvent.data || ended(oldEvent.data);
         oldActive = !!(oldEvent && oldEvent.data && !ended(oldEvent.data) &&
           (oldEvent.data.venueId ? oldEvent.data.venueId === current._id : oldEvent.data.venueName === current.name));
         if (oldActive && !sameOwner) {
-          const oldStaff = await tx.collection('staff').doc(old.staffId).get().catch(() => null);
+          const oldStaff = await optionalDoc(tx.collection('staff').doc(old.staffId));
           oldActive = !!(oldStaff && oldStaff.data && oldStaff.data.role === 'counter' &&
             oldStaff.data.lastOpenid === old.openid);
         }
@@ -165,16 +184,17 @@ async function begin(db, caller, password, eventId) {
       if (oldActive && !sameOwner) throw new Error('COUNTER_VENUE_OCCUPIED');
       const session = { idHash: hash(sessionId), staffId: caller._id, staffName: caller.name || '',
         openid: caller.lastOpenid, eventId, eventTitle: activeEvent.title || '', version: current.passwordVersion || 0,
-        startedAt: db.serverDate(), lastActiveAt: db.serverDate(), expiresAt: now() + TTL };
+        startedAt: db.serverDate(), lastActiveAt: db.serverDate(), expiresAt: eventEndMs(activeEvent) };
       await tx.collection('venues').doc(current._id).update({ data: { counterSession: session } });
       await tx.collection('staff').doc(staff._id).update({ data: { counterSessionGuardAt: db.serverDate() } });
       if (old && old.idHash) {
         const replaced = sameOwner && oldActive;
-        await tx.collection('counter_session_history').doc(hash((replaced ? 'replaced:' : 'expired:') + old.idHash)).set({ data:
-          auditData(db, replaced ? 'COUNTER_LOGOUT' : 'COUNTER_SESSION_EXPIRED', current,
+        const endType = replaced ? 'COUNTER_LOGOUT' : oldEventEnded ? 'COUNTER_EVENT_COMPLETED' : 'COUNTER_SESSION_EXPIRED';
+        await tx.collection('counter_session_history').doc(hash('ended:' + old.idHash)).set({ data:
+          auditData(db, endType, current,
             { _id: old.staffId, name: old.staffName, role: 'counter' },
             { eventId: old.eventId, eventTitle: old.eventTitle, sessionId: old.idHash,
-              reason: replaced ? 'replaced' : 'invalid_or_expired', result: 'success' }) });
+              reason: replaced ? 'replaced' : oldEventEnded ? 'event_completed' : 'invalid', result: 'success' }) });
       }
       await tx.collection('counter_session_history').doc(hash('login:' + session.idHash)).set({ data:
         auditData(db, 'COUNTER_LOGIN_SUCCESS', current, caller, { eventId, eventTitle: activeEvent.title,

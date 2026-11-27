@@ -732,7 +732,7 @@ exports.main = async (event, context) => {
   if (!caller) {
     return { success: false, message: 'Unauthorized' };
   }
-  const COUNTER_ALLOWED_ACTIONS = ['getRegistrations', 'getPromoters', 'getEventPromoters', 'getPromoterGuests', 'markAttendance', 'uncheckGuest', 'verifyVenuePassword', 'getEvents', 'issueCheckinToken', 'prepareCounterVenue', 'beginCounterSession', 'heartbeatCounterSession', 'endCounterSession'];
+  const COUNTER_ALLOWED_ACTIONS = ['getRegistrations', 'getPromoters', 'getEventPromoters', 'getPromoterGuests', 'markAttendance', 'uncheckGuest', 'verifyVenuePassword', 'getEvents', 'issueCheckinToken', 'prepareCounterVenue', 'beginCounterSession', 'restoreCounterSession', 'heartbeatCounterSession', 'endCounterSession'];
   if (caller.role !== 'admin' && !COUNTER_ALLOWED_ACTIONS.includes(action)) {
     return { success: false, message: 'Forbidden' };
   }
@@ -767,6 +767,17 @@ exports.main = async (event, context) => {
     const valid = await counterSession.validate(db, caller, event.counterSession, event.eventId, true);
     return valid.success ? { success: true } : valid;
   }
+  if (action === 'restoreCounterSession') {
+    if (caller.role !== 'counter') return counterSession.result('COUNTER_SESSION_INVALID', 'Session expired');
+    const valid = await counterSession.validate(db, caller, event.counterSession);
+    if (!valid.success) return valid;
+    const ev = valid.event;
+    return { success: true, venue: { _id: valid.venue._id, name: valid.venue.name },
+      event: { _id: ev._id, title: ev.title, date: ev.date, startTime: ev.startTime,
+        endTime: ev.endTime, venueId: ev.venueId, venueName: ev.venueName,
+        partyCapacity: ev.partyCapacity, afterPartyCapacity: ev.afterPartyCapacity,
+        lateAfterPartyCapacity: ev.lateAfterPartyCapacity } };
+  }
   if (action === 'endCounterSession') return counterSession.release(db, caller, event.counterSession);
   if (action === 'getCounterSession' || action === 'forceCounterLogout') {
     if (caller.role !== 'admin' || !id) return { success: false, message: 'Forbidden' };
@@ -774,7 +785,10 @@ exports.main = async (event, context) => {
     const venue = doc && doc.data;
     if (!venue) return { success: false, message: 'Venue not found' };
     const current = venue.counterSession;
-    if (action === 'getCounterSession') return { success: true, session: current && current.expiresAt > Date.now()
+    const sessionEvent = current && current.eventId &&
+      await db.collection('events').doc(current.eventId).get().catch(() => null);
+    if (action === 'getCounterSession') return { success: true, session: current &&
+      current.version === (venue.passwordVersion || 0) && sessionEvent && !counterSession.ended(sessionEvent.data)
       ? { staffName: current.staffName, startedAt: current.startedAt, lastActiveAt: current.lastActiveAt,
           eventTitle: current.eventTitle, eventId: current.eventId } : null };
     if (current) {

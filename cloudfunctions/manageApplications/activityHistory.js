@@ -43,15 +43,19 @@ async function venuePage(db, request) {
   const size = pageSize(request.limit), skip = offset(request.offset);
   const rows = await db.collection('venues').orderBy('name', 'asc').skip(skip).limit(size).get();
   const result = await Promise.all((rows.data || []).map(async v => {
-    const [events, latest, active] = await Promise.all([
+    const [events, latest, active, sessionEvent] = await Promise.all([
       db.collection('events').where({ venueId: v._id }).count(),
       db.collection('events').where({ venueId: v._id }).orderBy('date', 'desc').field({ date: true }).limit(1).get(),
-      db.collection('events').where({ venueId: v._id, status: 'active', isClosed: db.command.neq(true) }).count()
+      db.collection('events').where({ venueId: v._id, status: 'active', isClosed: db.command.neq(true) }).count(),
+      v.counterSession && v.counterSession.eventId
+        ? db.collection('events').doc(v.counterSession.eventId).get().catch(() => null) : null
     ]);
     return { id: v._id, name: v.name, photo: v.coverImage || v.logo || (v.galleryImages || [])[0] || '',
       eventCount: events.total, lastEventDate: (latest.data || [])[0]?.date || '',
       activeEvents: active.total,
-      occupied: !!(v.counterSession && v.counterSession.expiresAt > Date.now()) };
+      occupied: !!(v.counterSession && v.counterSession.version === (v.passwordVersion || 0) &&
+        sessionEvent && sessionEvent.data && !ended(sessionEvent.data) &&
+        (sessionEvent.data.venueId ? sessionEvent.data.venueId === v._id : sessionEvent.data.venueName === v.name)) };
   }));
   if (skip === 0) {
     const removed = await db.collection(HISTORY).where({ type: 'VENUE_DELETED' }).limit(1000).get();

@@ -13,8 +13,9 @@ const callFunction = async (name, data = {}) => {
         setTimeout(() => invoke().then(resolve, reject), 500)
       )
     )
-    if (res.result && ['COUNTER_SESSION_INVALID', 'COUNTER_PASSWORD_CHANGED'].includes(res.result.code) && session) {
-      app.endCounterSessionLocal(res.result.message)
+    if (res.result && ['COUNTER_SESSION_INVALID', 'COUNTER_PASSWORD_CHANGED'].includes(res.result.code) && session &&
+        app.globalData.counterSession && app.globalData.counterSession.sessionId === session.sessionId) {
+      app.endCounterSessionLocal(res.result.message, session)
     }
     return res.result
   } catch (err) {

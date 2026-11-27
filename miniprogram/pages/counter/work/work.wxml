@@ -1,4 +1,7 @@
 <view class="page">
+<view wx:if="{{step === 'restoring'}}" class="empty-state">
+  <text class="empty-text">Checking your work session… Reconnecting if offline.</text>
+</view>
 
 <!-- ══ STEP 1: VENUE ══ -->
 <view wx:if="{{step === 'venue'}}" class="step-venue">

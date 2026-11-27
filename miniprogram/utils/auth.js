@@ -6,6 +6,10 @@ const getStoredUser = () => {
 }
 
 const saveUser = (userData) => {
+  const saved = wx.getStorageSync('counterSession')
+  if (saved && (userData.role !== ROLES.COUNTER || saved.staffId !== userData._id)) {
+    wx.removeStorageSync('counterSession')
+  }
   wx.setStorageSync(STORAGE_KEYS.STAFF_USER, userData)
 }
 
@@ -17,6 +21,7 @@ const clearUser = () => {
   wx.removeStorageSync('currentVenueId')
   wx.removeStorageSync('currentVenueName')
   wx.removeStorageSync('currentEvent')
+  wx.removeStorageSync('counterSession')
   refCache.invalidateAll()
 }
 

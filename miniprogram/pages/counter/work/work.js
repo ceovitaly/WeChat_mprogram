@@ -89,10 +89,11 @@ Page({
   onShow() {
     this._syncTabBar()
     this._restoreSession()
-    this._startHeartbeat()
   },
 
   onHide() {
+    if (this._restoreRetry) clearTimeout(this._restoreRetry)
+    this._restoreRetry = null
     this._stopHeartbeat()
     this._stopLiveUpdates()
     this._stopQrCountdown()
@@ -100,6 +101,7 @@ Page({
   },
 
   onUnload() {
+    if (this._restoreRetry) clearTimeout(this._restoreRetry)
     this._stopHeartbeat()
     this._stopLiveUpdates()
     this._stopQrCountdown()
@@ -233,19 +235,56 @@ Page({
     }
   },
 
-  _restoreSession() {
+  async _restoreSession() {
     const user = app.globalData.userInfo || wx.getStorageSync('staffUser')
     const staffName = user ? (user.name || '') : ''
     const staffId = user ? (user._id || '') : ''
     this.setData({ staffName, staffId })
-    wx.removeStorageSync('currentVenueId')
-    wx.removeStorageSync('currentVenueName')
-    wx.removeStorageSync('currentEvent')
-    if (!app.globalData.counterSession) this.resetCounterWorkspace()
-    else this._heartbeat()
+    const session = app.globalData.counterSession
+    if (!session) { this.resetCounterWorkspace(); return }
+    if (this._restorePending) return
+    this._restorePending = true
+    this._stopHeartbeat()
+    this._stopLiveUpdates()
+    this.setData({ step: 'restoring', showCheckinQr: false })
+    try {
+      const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
+        action: 'restoreCounterSession'
+      })
+      if (app.globalData.counterSession !== session) return
+      if (res && res.success && res.venue && res.event) {
+        this.setData({ step: 'guests', venueName: res.venue.name, currentVenueId: res.venue._id,
+          currentEvent: res.event, events: [res.event] })
+        this._startHeartbeat()
+        this._fetchGuests(res.event._id)
+        this._fetchStaffAndPromoters()
+        this._startLiveUpdates(res.event._id)
+      } else if (isUnauthorized(res)) {
+        handleAuthFailure()
+      } else if (res && ['COUNTER_SESSION_INVALID', 'COUNTER_PASSWORD_CHANGED'].includes(res.code)) {
+        app.endCounterSessionLocal(res.message, session)
+      } else {
+        this._queueSessionRestore(session)
+      }
+    } catch (_) {
+      this._queueSessionRestore(session)
+    } finally {
+      this._restorePending = false
+    }
+  },
+
+  _queueSessionRestore(session) {
+    if (this._restoreRetry) clearTimeout(this._restoreRetry)
+    if (app.globalData.counterSession !== session) return
+    this._restoreRetry = setTimeout(() => {
+      this._restoreRetry = null
+      this._restoreSession()
+    }, 3000)
   },
 
   resetCounterWorkspace(message) {
+    if (this._restoreRetry) clearTimeout(this._restoreRetry)
+    this._restoreRetry = null
     this._stopHeartbeat()
     this._stopLiveUpdates()
     this._stopQrCountdown()
@@ -269,14 +308,18 @@ Page({
 
   async _heartbeat() {
     const session = app.globalData.counterSession
-    if (!session || this._heartbeatBusy) return
+    if (!session || this._heartbeatBusy || this.data.step !== 'guests') return
     this._heartbeatBusy = true
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
         action: 'heartbeatCounterSession', eventId: this.data.currentEvent && this.data.currentEvent._id
       })
-      if (!res || !res.success) app.endCounterSessionLocal(res && res.message)
-    } catch (e) { /* The server expires the lease if connectivity does not recover. */ }
+      if (res && ['COUNTER_SESSION_INVALID', 'COUNTER_PASSWORD_CHANGED'].includes(res.code)) {
+        app.endCounterSessionLocal(res.message, session)
+      } else if (isUnauthorized(res) && app.globalData.counterSession === session) {
+        handleAuthFailure()
+      }
+    } catch (e) { /* Keep the session; revalidate after connectivity returns. */ }
     finally { this._heartbeatBusy = false }
   },
 
@@ -348,16 +391,29 @@ Page({
     }
   },
 
+  async _releaseCounterSession() {
+    const session = app.globalData.counterSession
+    if (!session) return true
+    try {
+      const reply = await wx.cloud.callFunction({ name: CLOUD_FUNCTIONS.MANAGE_APPLICATIONS,
+        data: { action: 'endCounterSession', counterSession: session } })
+      const res = reply && reply.result
+      if (!res || (!res.success && res.code !== 'COUNTER_SESSION_INVALID')) throw new Error('Release failed')
+      app.endCounterSessionLocal(null, session)
+      return true
+    } catch (_) {
+      wx.showToast({ title: 'Connection error. Retry exit.', icon: 'none' })
+      return false
+    }
+  },
+
   leaveVenue() {
     wx.showModal({
       title: 'Exit venue', content: 'Finish session and exit?',
       confirmText: 'Exit', confirmColor: '#FF3B30', cancelText: 'Cancel',
       success: async ({ confirm }) => {
         if (!confirm) return
-        const session = app.globalData.counterSession
-        app.endCounterSessionLocal()
-        if (session) await wx.cloud.callFunction({ name: CLOUD_FUNCTIONS.MANAGE_APPLICATIONS,
-          data: { action: 'endCounterSession', counterSession: session } }).catch(() => {})
+        if (!(await this._releaseCounterSession())) return
         this._stopLiveUpdates()
         wx.removeStorageSync('currentVenueId')
         wx.removeStorageSync('currentVenueName')
@@ -400,11 +456,14 @@ Page({
   },
 
   async selectEvent(e) {
+    if (this._selectingEvent) return
     const { event } = e.currentTarget.dataset
     if (!this._venuePassword) { this.resetCounterWorkspace(); return }
+    this._selectingEvent = true
     const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
       action: 'beginCounterSession', password: this._venuePassword, eventId: event._id
     }).catch(() => null)
+    this._selectingEvent = false
     if (!res || !res.success) {
       if (res && res.code === 'COUNTER_VENUE_OCCUPIED') wx.showModal({ title: 'Venue is currently occupied',
         content: 'Another counter employee is currently working at this venue. Please try again later or contact your administrator.', showCancel: false })
@@ -412,9 +471,12 @@ Page({
       return
     }
     this._venuePassword = ''
-    app.globalData.counterSession = { venueId: res.venue._id, sessionId: res.sessionId }
-    this._startHeartbeat()
+    const session = { venueId: res.venue._id, sessionId: res.sessionId,
+      staffId: app.globalData.userInfo._id }
+    app.globalData.counterSession = session
+    wx.setStorageSync('counterSession', session)
     this.setData({ step: 'guests', currentEvent: event, searchQuery: '', selectedPromoter: '' })
+    this._startHeartbeat()
     this._fetchGuests(event._id)
     this._fetchStaffAndPromoters()
     // Switching events restarts the watcher against the new eventId (old one closed first).
@@ -422,11 +484,8 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden: true })
   },
 
-  backToEvents() {
-    const session = app.globalData.counterSession
-    app.endCounterSessionLocal()
-    if (session) wx.cloud.callFunction({ name: CLOUD_FUNCTIONS.MANAGE_APPLICATIONS,
-      data: { action: 'endCounterSession', counterSession: session } }).catch(() => {})
+  async backToEvents() {
+    await this._releaseCounterSession()
   },
 
   // ─── Step 3 ───────────────────────────────────────────────

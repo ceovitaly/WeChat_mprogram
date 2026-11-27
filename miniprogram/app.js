@@ -56,6 +56,15 @@ App({
       this.globalData.userInfo = cachedUser
       this.globalData.role = cachedUser.role
       this.globalData.isLogged = true
+      const saved = wx.getStorageSync('counterSession')
+      if (cachedUser.role === 'counter' && saved && saved.staffId === cachedUser._id &&
+          typeof saved.venueId === 'string' && typeof saved.sessionId === 'string') {
+        this.globalData.counterSession = saved
+      } else {
+        wx.removeStorageSync('counterSession')
+      }
+    } else {
+      wx.removeStorageSync('counterSession')
     }
   },
 
@@ -64,8 +73,11 @@ App({
     wx.reLaunch({ url })
   },
 
-  endCounterSessionLocal(message) {
+  endCounterSessionLocal(message, expectedSession) {
+    if (expectedSession && (!this.globalData.counterSession ||
+        this.globalData.counterSession.sessionId !== expectedSession.sessionId)) return
     this.globalData.counterSession = null
+    wx.removeStorageSync('counterSession')
     wx.removeStorageSync('currentVenueId')
     wx.removeStorageSync('currentVenueName')
     wx.removeStorageSync('currentEvent')
@@ -76,18 +88,19 @@ App({
     }
   },
 
-  onHide() {
-    const session = this.globalData && this.globalData.counterSession
-    if (!session) return
-    this.endCounterSessionLocal()
-    wx.cloud.callFunction({ name: 'manageApplications', data: { action: 'endCounterSession', counterSession: session } }).catch(() => {})
-  },
-
-  logout() {
+  async logout() {
     const session = this.globalData.counterSession
     if (session) {
-      this.endCounterSessionLocal()
-      wx.cloud.callFunction({ name: 'manageApplications', data: { action: 'endCounterSession', counterSession: session } }).catch(() => {})
+      try {
+        const reply = await wx.cloud.callFunction({ name: 'manageApplications',
+          data: { action: 'endCounterSession', counterSession: session } })
+        const res = reply && reply.result
+        if (!res || (!res.success && res.code !== 'COUNTER_SESSION_INVALID')) throw new Error('Release failed')
+      } catch (_) {
+        wx.showToast({ title: 'Cannot log out while offline. Retry.', icon: 'none' })
+        return
+      }
+      this.endCounterSessionLocal(null, session)
     }
     const { clearUser } = require('./utils/auth')
     clearUser()
