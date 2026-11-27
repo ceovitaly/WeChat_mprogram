@@ -127,18 +127,32 @@ Page({
   async _fetchQrToken() {
     if (this._qrFetching) return
     const eventId = (this.data.currentEvent || {})._id
-    if (!eventId) return
+    if (!eventId) {
+      wx.showToast({ title: 'Select an event first', icon: 'none' })
+      return
+    }
     this._qrFetching = true
     try {
       const res = await callFunction(CLOUD_FUNCTIONS.MANAGE_APPLICATIONS, {
         action: 'issueCheckinToken', eventId
       })
-      if (!res || !res.success) throw new Error((res && res.message) || 'failed')
+      if (!res || !res.success || typeof res.token !== 'string' || !res.token) {
+        const msg = String((res && res.message) || '')
+        const code = String((res && res.code) || '')
+        let reason = 'QR service unavailable'
+        if (code === 'COUNTER_SESSION_INVALID' || code === 'COUNTER_PASSWORD_CHANGED') reason = 'Session expired. Log in again'
+        else if (/CHECKIN_SECRET/.test(msg)) reason = 'QR server configuration missing'
+        else if (msg === 'Event not found' || msg === 'No eventId') reason = 'Selected event unavailable'
+        else if (msg === 'Unauthorized' || msg === 'Forbidden') reason = 'Counter access denied'
+        const error = new Error(reason)
+        error.qrReason = reason
+        throw error
+      }
       this._qrExpiresAt = Math.floor(Date.now() / 1000) + (res.ttl || 20)
       this.setData({ qrToken: res.token, qrSecondsLeft: res.ttl || 20, qrTtl: res.ttl || 20, qrExpired: false })
       this._drawQr(res.token)
     } catch (e) {
-      wx.showToast({ title: 'Code refresh failed', icon: 'none' })
+      wx.showToast({ title: e.qrReason || 'QR network error. Retry', icon: 'none' })
       // Offer the refresh icon as the retry path — an empty square helps nobody.
       if (this.data.showCheckinQr) this.setData({ qrExpired: true })
     } finally {
