@@ -3,7 +3,6 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const crypto = require('crypto');
 const { parseToken } = require('./checkinTokens');
-const { loadWechatConfig } = require('./wechatConfig');
 const { switchFreeRegistration } = require('./switchFreeRegistration');
 const { eventHasFinished } = require('./freeRegistrationPolicy');
 
@@ -70,52 +69,19 @@ async function phoneTakenByOther(phone, callerOpenid) {
   return !matches.some(m => m._openid === callerOpenid);
 }
 
-function httpsGet(url) {
-  return new Promise((resolve, reject) => {
-    require('https').get(url, res => {
-      let raw = '';
-      res.on('data', chunk => raw += chunk);
-      res.on('end', () => { try { resolve(JSON.parse(raw)); } catch(e) { reject(e); } });
-    }).on('error', reject);
-  });
-}
-
-function httpsPost(url, data) {
-  return new Promise((resolve, reject) => {
-    const body = JSON.stringify(data);
-    const options = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
-    };
-    const req = require('https').request(url, options, res => {
-      let raw = '';
-      res.on('data', chunk => raw += chunk);
-      res.on('end', () => { try { resolve(JSON.parse(raw)); } catch(e) { reject(e); } });
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
-}
-
-async function getPhoneNumber(code) {
+async function getPhoneNumber(code, wxContext) {
   try {
-    const { appid, secret } = loadWechatConfig();
-    const tokenRes = await httpsGet(
-      `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${encodeURIComponent(appid)}&secret=${encodeURIComponent(secret)}`
-    );
-    if (!tokenRes.access_token) {
-      return { error: 'token_failed: ' + JSON.stringify(tokenRes) };
-    }
-    const phoneRes = await httpsPost(
-      `https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=${tokenRes.access_token}`,
-      { code }
-    );
-    const info = phoneRes.phone_info;
+    // In a shared environment the default OpenAPI identity is Admin; the
+    // phone code belongs to the calling Guest mini program instead.
+    const api = wxContext.FROM_APPID
+      ? cloud.openapi({ appid: wxContext.FROM_APPID })
+      : cloud.openapi;
+    const phoneRes = await api.phonenumber.getPhoneNumber({ code });
+    const info = phoneRes.phoneInfo || phoneRes.phone_info;
     if (info && (info.phoneNumber || info.purePhoneNumber)) {
       return { phone: info.phoneNumber || info.purePhoneNumber };
     }
-    return { error: 'phone_api_failed: ' + JSON.stringify(phoneRes) };
+    return { error: 'phone_api_failed: ' + (phoneRes.errMsg || phoneRes.errmsg || 'No phone info') };
   } catch (err) {
     return { error: 'exception: ' + (err.message || String(err)) };
   }
@@ -158,7 +124,7 @@ exports.main = async (event, context) => {
         return { success: false, message: 'No phone code provided' };
       }
 
-      const result = await getPhoneNumber(phoneCode);
+      const result = await getPhoneNumber(phoneCode, wxContext);
 
       if (!result.phone) {
         return { success: false, message: 'Failed to decrypt phone number', detail: result.error };
